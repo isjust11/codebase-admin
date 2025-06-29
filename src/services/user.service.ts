@@ -181,7 +181,7 @@ export class UserService {
   }
 
   async findByUsername(username: string): Promise<User | null> {
-    return this.userRepository.findOne({ where: { username }, relations: ['roles','roles.navigators'] });
+    return this.userRepository.findOne({ where: { username }, relations: ['roles'] });
   }
 
   async findByEmail(email: string): Promise<User | null> {
