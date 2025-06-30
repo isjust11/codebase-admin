@@ -22,6 +22,12 @@ export class UploadMediaDto {
 
   @IsNumber()
   userId: number;
+
+  @IsNumber()
+  width?: number;
+
+  @IsNumber()
+  height?: number;
 }
 
 export class UpdateMediaDto {

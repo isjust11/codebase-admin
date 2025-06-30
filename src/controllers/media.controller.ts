@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator, Request, Query } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator, Request, Query, Patch, HttpCode } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { MediaService } from '../services/media.service';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
@@ -40,7 +40,7 @@ export class MediaController {
     file: Express.Multer.File,
     @Request() req,
   ): Promise<Media> {
-    return this.mediaService.uploadFile(file, req.user.id);
+    return this.mediaService.upload(file, req.user);
   }
 
   @Put(':id')
@@ -52,8 +52,19 @@ export class MediaController {
     return this.mediaService.update(parseInt(id), updateMediaDto, req.user.id);
   }
 
+  @Patch(':id/update-file')
+  @UseInterceptors(FileInterceptor('file'))
+  async updateFile(
+    @Param('id') id: number,
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req,
+  ) {
+    return this.mediaService.updateMediaFile(id, file, req.user);
+  }
+
   @Delete(':id')
-  async remove(@Param('id') id: string, @Request() req): Promise<void> {
-    return this.mediaService.deleteFile(parseInt(id), req.user.id);
+  @HttpCode(204)
+  async delete(@Param('id') id: number, @Request() req,): Promise<void> {
+    return this.mediaService.deleteFile(id, req.user);
   }
 } 
