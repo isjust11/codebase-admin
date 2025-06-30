@@ -70,7 +70,7 @@ export class PermissionService {
     const [data, total] = await queryBuilder
       .skip(skip)
       .take(size)
-      .orderBy('permission.createdAt', 'DESC')
+      .orderBy('permission.code', 'ASC')
       .getManyAndCount();
 
     return {
