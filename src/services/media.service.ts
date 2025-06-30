@@ -6,13 +6,15 @@ import { UploadMediaDto, UpdateMediaDto } from '../dtos/media.dto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
+import { User } from 'src/entities/user.entity';
+import imageSize from 'image-size';
 
 @Injectable()
 export class MediaService {
   constructor(
     @InjectRepository(Media)
     private mediaRepository: Repository<Media>,
-  ) {}
+  ) { }
 
   async findAll(userId: number): Promise<Media[]> {
     return this.mediaRepository.find({
@@ -22,7 +24,7 @@ export class MediaService {
 
   async findById(id: number, userId: number): Promise<Media> {
     const media = await this.mediaRepository.findOne({
-      where: { id, isDeleted: false, userId },
+      where: { id, userId },
     });
     if (!media) {
       throw new NotFoundException(`Media with ID ${id} not found`);
@@ -47,10 +49,50 @@ export class MediaService {
     await this.mediaRepository.save(media);
   }
 
+  async updateMediaFile(id: number, file: Express.Multer.File, user: User): Promise<Media> {
+    const media = await this.findById(id, user.id);
+    const oldFilePath = media.path;
+
+    // Delete old file
+    if (fs.existsSync(oldFilePath)) {
+      fs.unlinkSync(oldFilePath);
+    }
+
+    // Save new file
+    const uploadPath = path.join('uploads', user.id.toString());
+    const uniqueFilename = `${Date.now()}-${file.originalname}`;
+    const newFilePath = path.join(uploadPath, uniqueFilename);
+    fs.writeFileSync(newFilePath, file.buffer);
+
+    let width: number | null = null;
+    let height: number | null = null;
+    if (file.mimetype.startsWith('image/')) {
+      try {
+        const dimensions = imageSize(file.buffer);
+        width = dimensions.width;
+        height = dimensions.height;
+      } catch (error) {
+        console.error('Error getting image dimensions:', error);
+      }
+    }
+
+    // Update media entity
+    media.filename = uniqueFilename;
+    media.originalName = file.originalname;
+    media.mimeType = file.mimetype;
+    media.size = file.size;
+    media.width = width;
+    media.height = height;
+    media.path = newFilePath;
+    media.url = `/${newFilePath.replace(/\\/g, '/')}`;
+
+    return this.mediaRepository.save(media);
+  }
+
   async deleteFile(id: number, userId: number): Promise<void> {
     const media = await this.findById(id, userId);
     const filePath = path.join(process.cwd(), media.path);
-    
+
     try {
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
@@ -61,29 +103,42 @@ export class MediaService {
     }
   }
 
-  async uploadFile(file: Express.Multer.File, userId: number): Promise<Media> {
-    const userUploadDir = path.join(process.cwd(), 'uploads', userId.toString());
-    if (!fs.existsSync(userUploadDir)) {
-      fs.mkdirSync(userUploadDir, { recursive: true });
+  async upload(file: Express.Multer.File, user: User): Promise<Media> {
+    const uploadPath = path.join('uploads', user.id.toString());
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
     }
 
-    const filename = `${Date.now()}-${file.originalname}`;
-    const filePath = path.join('uploads', userId.toString(), filename);
-    const fullPath = path.join(process.cwd(), filePath);
+    const uniqueFilename = `${Date.now()}-${file.originalname}`;
+    const filePath = path.join(uploadPath, uniqueFilename);
+    fs.writeFileSync(filePath, file.buffer);
 
-    fs.writeFileSync(fullPath, file.buffer);
+    let width: number = 200;
+    let height: number = 200;
 
-    const mediaDto: UploadMediaDto = {
-      filename,
-      originalName: file.originalname,
-      mimeType: file.mimetype,
-      size: file.size,
-      path: filePath,
-      url: `/uploads/${userId}/${filename}`,
-      userId,
-    };
+    if (file.mimetype.startsWith('image/')) {
+      try {
+        const dimensions = imageSize(file.buffer);
+        width = dimensions.width;
+        height = dimensions.height;
+      } catch (error) {
+        console.error('Error getting image dimensions:', error);
+      }
+    }
 
-    return this.create(mediaDto);
+    const newMedia = new Media();
+    newMedia.filename = uniqueFilename;
+    newMedia.originalName = file.originalname;
+    newMedia.mimeType = file.mimetype;
+    newMedia.size = file.size;
+    newMedia.width = width;
+    newMedia.height = height;
+    newMedia.path = filePath;
+    newMedia.url = `/${filePath.replace(/\\/g, '/')}`;
+    newMedia.user = user;
+    newMedia.userId = user.id;
+
+    return this.mediaRepository.save(newMedia);
   }
 
   async findAllWithPagination(params: PaginationParams): Promise<PaginatedResponse<Media>> {

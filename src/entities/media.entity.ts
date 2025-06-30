@@ -18,6 +18,12 @@ export class Media {
   @Column()
   size: number;
 
+  @Column({ type: 'int', nullable: true })
+  width?: number | null;
+
+  @Column({type: 'int', nullable: true })
+  height?: number | null;
+
   @Column()
   path: string;
 
@@ -34,7 +40,7 @@ export class Media {
   @Column()
   userId: number;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
