@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like } from 'typeorm';
+import { Repository, Like, In } from 'typeorm';
 import { Media } from '../entities/media.entity';
 import { UploadMediaDto, UpdateMediaDto } from '../dtos/media.dto';
 import * as fs from 'fs';
@@ -45,8 +45,8 @@ export class MediaService {
 
   async remove(id: number, userId: number): Promise<void> {
     const media = await this.findById(id, userId);
-    media.isDeleted = true;
-    await this.mediaRepository.save(media);
+    // media.isDeleted = true;
+    await this.mediaRepository.remove(media);
   }
 
   async updateMediaFile(id: number, file: Express.Multer.File, user: User): Promise<Media> {
@@ -103,6 +103,14 @@ export class MediaService {
     }
   }
 
+  async deleteMultiple(ids: number[], userId: number): Promise<void> {
+    const medias = await this.mediaRepository.find({ where: { id: In(ids) } });
+    for (const media of medias) {
+      await this.deleteFile(media.id, userId);
+    }
+  }
+  
+
   async upload(file: Express.Multer.File, user: User): Promise<Media> {
     const uploadPath = path.join('uploads', user.id.toString());
     if (!fs.existsSync(uploadPath)) {
@@ -142,15 +150,29 @@ export class MediaService {
   }
 
   async findAllWithPagination(params: PaginationParams): Promise<PaginatedResponse<Media>> {
-    const { page = 1, size = 10, search = '' } = params;
+    const { page = 1, size = 100, search = '', mimeType ='' } = params;
     const skip = (page - 1) * size;
-
+ 
     const queryBuilder = this.mediaRepository.createQueryBuilder('media');
 
-    if (search) {
-      queryBuilder.where('media.name LIKE :search OR media.type LIKE :search', {
-        search: `%${search}%`,
-      });
+    if (search || mimeType) {
+      if (search && mimeType && mimeType !== '*') {
+        // Có cả search và mimeType (không phải tất cả)
+        queryBuilder.where('media.originalName LIKE :search AND media.mimeType LIKE :mediaType', {
+          search: `%${search}%`,
+          mediaType: `%${mimeType}%`
+        });
+      } else if (search && (!mimeType || mimeType === '*')) {
+        // Chỉ có search, không có mimeType hoặc mimeType là tất cả
+        queryBuilder.where('media.originalName LIKE :search', {
+          search: `%${search}%`
+        });
+      } else if (mimeType && mimeType !== '*' && !search) {
+        // Chỉ có mimeType (không phải tất cả), không có search
+        queryBuilder.where('media.mimeType LIKE :mediaType', {
+          mediaType: `%${mimeType}%`
+        });
+      }
     }
 
     const [data, total] = await queryBuilder

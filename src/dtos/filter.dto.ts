@@ -2,6 +2,7 @@ export interface PaginationParams {
     page?: number;
     size?: number;
     search?: string;
+    mimeType?: string;
   }
   
  export interface PaginatedResponse<T> {
