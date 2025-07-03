@@ -64,6 +64,8 @@ import { Question } from './entities/question.entity';
 import { UserAnswer } from './entities/user-answer.entity';
 import { UserExam } from './entities/user-exam.entity';
 import { ArticleModule } from './modules/article.module';
+import { Payment } from './entities/payment.entity';
+import { PaymentModule } from './modules/payment.module';
 @Module({
   imports: [
     ConfigModule,
@@ -105,6 +107,7 @@ import { ArticleModule } from './modules/article.module';
         Question,
         UserAnswer,
         UserExam,
+        Payment,
       ],
       synchronize: true,
       migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
@@ -135,6 +138,7 @@ import { ArticleModule } from './modules/article.module';
     UserExamModule,
     UserAnswerModule,
     ArticleModule,
+    PaymentModule,
     // AuthModule,
   ],
   controllers: [
