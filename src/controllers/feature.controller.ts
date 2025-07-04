@@ -26,8 +26,8 @@ export class FeatureController {
     }
 
     @Get('all')
-    findAll() {
-        return this.featureService.findAll();
+    findAll(@Query('search') search: string) {
+        return this.featureService.findAll(search);
     }
 
     @Get(':id')

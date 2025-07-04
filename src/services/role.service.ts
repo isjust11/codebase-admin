@@ -182,4 +182,61 @@ export class RoleService {
       totalPages: Math.ceil(total / size),
     };
   }
+
+  // Thêm phương thức mới để kiểm tra permission theo action và resource
+  async hasPermission(roleId: number, action: string, resource?: string): Promise<boolean> {
+    const role = await this.findById(roleId);
+    if (!role || !role.isActive) {
+      return false;
+    }
+
+    // Admin có tất cả quyền
+    if (role.code === 'ADMIN') {
+      return true;
+    }
+
+    if (!role.permissions) {
+      return false;
+    }
+
+    return role.permissions.some(permission => {
+      const actionMatch = permission.action === action;
+      const resourceMatch = !resource || permission.resource === resource;
+      return actionMatch && resourceMatch && permission.isActive;
+    });
+  }
+
+  // Kiểm tra nhiều permission cùng lúc
+  async hasAnyPermission(roleId: number, permissions: { action: string; resource?: string }[]): Promise<boolean> {
+    for (const permission of permissions) {
+      if (await this.hasPermission(roleId, permission.action, permission.resource)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Kiểm tra tất cả permission
+  async hasAllPermissions(roleId: number, permissions: { action: string; resource?: string }[]): Promise<boolean> {
+    for (const permission of permissions) {
+      if (!(await this.hasPermission(roleId, permission.action, permission.resource))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // Lấy tất cả permission của role theo action và resource
+  async getPermissionsByActionAndResource(roleId: number, action?: string, resource?: string): Promise<any[]> {
+    const role = await this.findById(roleId);
+    if (!role || !role.permissions) {
+      return [];
+    }
+
+    return role.permissions.filter(permission => {
+      const actionMatch = !action || permission.action === action;
+      const resourceMatch = !resource || permission.resource === resource;
+      return actionMatch && resourceMatch && permission.isActive;
+    });
+  }
 } 

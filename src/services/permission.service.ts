@@ -19,6 +19,7 @@ export class PermissionService {
 
   async findAll(): Promise<Permission[]> {
     return await this.permissionRepository.find({
+      relations: ['feature'],
       order: { name: 'ASC' },
     });
   }
@@ -26,6 +27,7 @@ export class PermissionService {
   async findOne(id: number): Promise<Permission> {
     const permission = await this.permissionRepository.findOne({
       where: { id },
+      relations: ['feature'],
     });
     
     if (!permission) {
@@ -50,7 +52,48 @@ export class PermissionService {
   
   async findByType(type: 'MENU' | 'FUNCTION'): Promise<Permission[]> {
     return await this.permissionRepository.find({
-      where: { code: type }, // Sử dụng type assertion để tránh lỗi kiểu
+      where: { code: type },
+      relations: ['feature'],
+      order: { name: 'ASC' },
+    });
+  }
+
+  // Thêm phương thức mới để tìm permission theo action và resource
+  async findByActionAndResource(action: string, resource?: string): Promise<Permission[]> {
+    const queryBuilder = this.permissionRepository.createQueryBuilder('permission')
+      .leftJoinAndSelect('permission.feature', 'feature')
+      .where('permission.action = :action', { action });
+
+    if (resource) {
+      queryBuilder.andWhere('permission.resource = :resource', { resource });
+    }
+
+    return await queryBuilder.getMany();
+  }
+
+  // Tìm permission theo action
+  async findByAction(action: string): Promise<Permission[]> {
+    return await this.permissionRepository.find({
+      where: { action },
+      relations: ['feature'],
+      order: { name: 'ASC' },
+    });
+  }
+
+  // Tìm permission theo resource
+  async findByResource(resource: string): Promise<Permission[]> {
+    return await this.permissionRepository.find({
+      where: { resource },
+      relations: ['feature'],
+      order: { name: 'ASC' },
+    });
+  }
+
+  // Tìm permission theo feature
+  async findByFeature(featureId: number): Promise<Permission[]> {
+    return await this.permissionRepository.find({
+      where: { featureId },
+      relations: ['feature'],
       order: { name: 'ASC' },
     });
   }
@@ -59,10 +102,11 @@ export class PermissionService {
     const { page = 1, size = 10, search = '' } = params;
     const skip = (page - 1) * size;
 
-    const queryBuilder = this.permissionRepository.createQueryBuilder('permission');
+    const queryBuilder = this.permissionRepository.createQueryBuilder('permission')
+      .leftJoinAndSelect('permission.feature', 'feature');
 
     if (search) {
-      queryBuilder.where('permission.name LIKE :search OR permission.code LIKE :search', {
+      queryBuilder.where('permission.name LIKE :search OR permission.code LIKE :search OR permission.action LIKE :search OR permission.resource LIKE :search', {
         search: `%${search}%`,
       });
     }
@@ -70,7 +114,7 @@ export class PermissionService {
     const [data, total] = await queryBuilder
       .skip(skip)
       .take(size)
-      .orderBy('permission.createdAt', 'DESC')
+      .orderBy('permission.code', 'ASC')
       .getManyAndCount();
 
     return {

@@ -1,6 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany, JoinColumn, ManyToMany, JoinTable } from 'typeorm';
 import { IconType } from 'src/enums/icon-type.enum';
 import { Category } from './category.entity';
+import { Permission } from './permission.entity';
 
 @Entity()
 export class Feature {
@@ -57,12 +58,12 @@ export class Feature {
   @Column({ nullable: true })
   featureTypeId: string;
 
+  @OneToMany(() => Permission, permission => permission.feature)
+  permissions?: Permission[];
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
   updatedAt: Date;
-
-
 } 
