@@ -1,29 +1,35 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator, Request, Query, Patch, HttpCode } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator, Request, Query, Patch, HttpCode, ClassSerializerInterceptor } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { MediaService } from '../services/media.service';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { Media } from '../entities/media.entity';
 import { UpdateMediaDto } from '../dtos/media.dto';
 import { PaginationParams } from 'src/dtos/filter.dto';
+import { BaseController } from './base.controller';
 
 @Controller('media')
 @UseGuards(JwtAuthGuard)
-export class MediaController {
-  constructor(private mediaService: MediaService) {}
+export class MediaController extends BaseController{
+  constructor(private mediaService: MediaService) {
+    super();
+  }
 
   @Get()
-  async getAll(@Query('page') page: number, @Query('size') size: number, @Query('search') search: string) {
+  async getAll(@Query('page') page: number, @Query('size') size: number, @Query('search') search: string,
+  @Query('mimeType') mimeType: string     
+) {
     const filter: PaginationParams = {
       page: page || 1,
-      size: size || 10,
-      search: search || ''
+      size: size || 100,
+      search: search || '',
+      mimeType: mimeType || ''
     };
-    return this.mediaService.findAllWithPagination(filter);
+    return await this.mediaService.findAllWithPagination(filter);
   }
 
   @Get(':id')
   async findOne(@Param('id') id: string, @Request() req): Promise<Media> {
-    return this.mediaService.findById(parseInt(id), req.user.id);
+    return this.mediaService.findById(this.decode(id), req.user.id);
   }
 
   @Post('upload')
@@ -33,7 +39,7 @@ export class MediaController {
       new ParseFilePipe({
         validators: [
           new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 10 }), // 10MB
-          new FileTypeValidator({ fileType: /(jpg|jpeg|png|gif|mp4|mp3|pdf)$/i }),
+          new FileTypeValidator({ fileType: /(jpg|jpeg|png|gif|mp3|wav|m4a|aac|ogg|flac|mp4|mov|wmv|avi|flv|mkv|webm|mpeg|mpg|3gp|m4v)$/i }),
         ],
       }),
     )
@@ -49,22 +55,28 @@ export class MediaController {
     @Body() updateMediaDto: UpdateMediaDto,
     @Request() req,
   ): Promise<Media> {
-    return this.mediaService.update(parseInt(id), updateMediaDto, req.user.id);
+    return this.mediaService.update(this.decode(id), updateMediaDto, req.user.id);
   }
 
   @Patch(':id/update-file')
   @UseInterceptors(FileInterceptor('file'))
   async updateFile(
-    @Param('id') id: number,
+    @Param('id') id: string,
     @UploadedFile() file: Express.Multer.File,
     @Request() req,
   ) {
-    return this.mediaService.updateMediaFile(id, file, req.user);
+    return this.mediaService.updateMediaFile(this.decode(id), file, req.user);
   }
 
   @Delete(':id')
   @HttpCode(204)
-  async delete(@Param('id') id: number, @Request() req,): Promise<void> {
-    return this.mediaService.deleteFile(id, req.user);
+  async delete(@Param('id') id: string, @Request() req,): Promise<void> {
+    return this.mediaService.deleteFile(this.decode(id), req.user.id);
+  }
+
+  @Delete()
+  @HttpCode(204)
+  async deleteMultiple(@Body() ids: string[], @Request() req): Promise<void> {
+    return this.mediaService.deleteMultiple(ids.map(id => this.decode(id)), req.user.id);
   }
 } 

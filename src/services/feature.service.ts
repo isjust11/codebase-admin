@@ -52,7 +52,7 @@ export class FeatureService {
         const [data, total] = await queryBuilder
             .skip(skip)
             .take(size)
-            .orderBy('feature.createdAt', 'DESC')
+            .orderBy('feature.sortOrder', 'ASC')
             .getManyAndCount();
 
         return {
@@ -64,11 +64,19 @@ export class FeatureService {
         };
     }
 
-    async findAll(): Promise<Feature[]> {
-        return await this.featureRepository.find({
-            relations: ['children'],
-            order: { label: 'ASC' },
-        });
+    async findAll(search?: string): Promise<Feature[]> {
+        const queryBuilder = this.featureRepository.createQueryBuilder('feature')
+            .leftJoinAndSelect('feature.children', 'children')
+            .leftJoinAndSelect('feature.parent', 'parent')
+            .leftJoinAndSelect('feature.featureType', 'featureType');
+
+        if (search) {
+            queryBuilder.where('feature.label LIKE :search OR feature.link LIKE :search', {
+                search: `%${search}%`,
+            });
+        }
+
+        return await queryBuilder.orderBy('feature.sortOrder', 'ASC').getMany();
     }
 
     async findOne(id: number): Promise<Feature> {

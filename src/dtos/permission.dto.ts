@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsBoolean } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsNumber } from 'class-validator';
 
 export class CreatePermissionDto {
   @IsString()
@@ -14,6 +14,18 @@ export class CreatePermissionDto {
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;
+
+  @IsString()
+  @IsOptional()
+  action?: string;
+
+  @IsString()
+  @IsOptional()
+  resource?: string;
+
+  @IsNumber()
+  @IsOptional()
+  featureId?: number;
 }
 
 export class UpdatePermissionDto extends CreatePermissionDto {} 
