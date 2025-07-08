@@ -102,6 +102,6 @@ export class JwtPayload {
   isFacebookUser: boolean;
   isGoogleUser: boolean;
   isAdmin: boolean;
-  roles: Role[];
-  permissions: Permission[];
+  roles: number[];
+  permissions: number[];
 } 

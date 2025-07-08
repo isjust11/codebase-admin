@@ -105,6 +105,7 @@ export class AuthService {
         user.picture = socialUser.picture;
         user.isGoogleUser = socialUser.isGoogleUser || false;
         user.isFacebookUser = socialUser.isFacebookUser || false;
+
         await this.userService.update(user.id, user);
       }
 
@@ -217,8 +218,8 @@ export class AuthService {
       isGoogleUser: user.isGoogleUser,
       isFacebookUser: user.isFacebookUser,
       isAdmin: user.isAdmin,
-      roles: user.roles,
-      permissions: permissions,
+      roles: user.roles.map(role => role.id),
+      permissions: permissions.map(permission => permission.id),
     };
 
     // Tạo access token
@@ -229,7 +230,8 @@ export class AuthService {
 
     // Cập nhật thời gian đăng nhập
     user.lastLogin = new Date();
-    user.permissions = permissions;
+    user.roles = user.roles.map(role => ({ ...role, permissions: [] }));
+    user.permissions = permissions.map(permission => permission.id);
     await this.userService.update(user.id, user);
     return {
       accessToken,
@@ -265,7 +267,7 @@ export class AuthService {
     if (new Date() > foundToken.expiresAt) {
       throw new UnauthorizedException('Refresh token đã hết hạn');
     }
-
+    const permissions = foundToken.user.roles.flatMap(role => role.permissions).filter(permission => permission.isActive);
     const payload: JwtPayload = {
       id: foundToken.user.id,
       username: foundToken.user.username,
@@ -277,10 +279,11 @@ export class AuthService {
       isGoogleUser: foundToken.user.isGoogleUser,
       isFacebookUser: foundToken.user.isFacebookUser,
       isAdmin: foundToken.user.isAdmin,
-      roles: foundToken.user.roles,
-      permissions: foundToken.user.roles.flatMap(role => role.permissions).filter(permission => permission.isActive),
+      roles: foundToken.user.roles.map(role => role.id),
+      permissions: permissions.map(permission => permission.id),
     };
-
+    foundToken.user.roles = foundToken.user.roles.map(role => ({ ...role, permissions: [] }));
+    foundToken.user.permissions = permissions.map(permission => permission.id);
     // Tạo access token mới
     const accessToken = this.jwtService.sign(payload);
 
@@ -310,7 +313,7 @@ export class AuthService {
       user: userInfo.user,
       accessToken: userInfo.accessToken,
       refreshToken: userInfo.refreshToken
-    });
+    }); 
 
     // Tự động xóa sau 5 phút
     setTimeout(() => {
