@@ -205,6 +205,7 @@ export class AuthService {
   }
 
   async generateToken(user: User) {
+    const permissions = user.roles.flatMap(role => role.permissions).filter(permission => permission.isActive);
     const payload: JwtPayload = {
       id: user.id,
       username: user.username,
@@ -217,6 +218,7 @@ export class AuthService {
       isFacebookUser: user.isFacebookUser,
       isAdmin: user.isAdmin,
       roles: user.roles,
+      permissions: permissions,
     };
 
     // Tạo access token
@@ -227,6 +229,7 @@ export class AuthService {
 
     // Cập nhật thời gian đăng nhập
     user.lastLogin = new Date();
+    user.permissions = permissions;
     await this.userService.update(user.id, user);
     return {
       accessToken,
@@ -252,7 +255,7 @@ export class AuthService {
   async refreshAccessToken(refreshTokenString: string) {
     const foundToken = await this.refreshTokenRepository.findOne({
       where: { token: refreshTokenString, isRevoked: false },
-      relations: ['user', 'user.roles']
+      relations: ['user', 'user.roles','user.roles.permissions']
     });
 
     if (!foundToken) {
@@ -275,6 +278,7 @@ export class AuthService {
       isFacebookUser: foundToken.user.isFacebookUser,
       isAdmin: foundToken.user.isAdmin,
       roles: foundToken.user.roles,
+      permissions: foundToken.user.roles.flatMap(role => role.permissions).filter(permission => permission.isActive),
     };
 
     // Tạo access token mới

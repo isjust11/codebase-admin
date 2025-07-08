@@ -4,6 +4,7 @@ import { Role } from './role.entity';
 import { Exclude } from 'class-transformer';
 import { Reservation } from './reservation.entity';
 import { Order } from './order.entity';
+import { Permission } from './permission.entity';
 
 @Entity()
 export class User {
@@ -81,6 +82,7 @@ export class User {
 
   @OneToMany(() => Order, order => order.account)
   orders: Order[];
+  permissions: Permission[];
 
   @BeforeInsert()
   @BeforeUpdate()

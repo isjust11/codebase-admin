@@ -1,4 +1,5 @@
 import { IsString, IsOptional, IsBoolean, IsArray } from 'class-validator';
+import { Permission } from 'src/entities/permission.entity';
 import { Role } from 'src/entities/role.entity';
 
 export class LoginDto {
@@ -102,4 +103,5 @@ export class JwtPayload {
   isGoogleUser: boolean;
   isAdmin: boolean;
   roles: Role[];
+  permissions: Permission[];
 } 

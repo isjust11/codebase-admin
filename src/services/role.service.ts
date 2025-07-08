@@ -6,6 +6,7 @@ import { RoleDto } from '../dtos/role.dto';
 import { Permission } from '../entities/permission.entity';
 import { Feature } from '../entities/feature.entity';
 import { AssignFeatureDto } from '../dtos/assign-navigator.dto';
+import { AssignPermissionDto, PermissionStatsDto } from '../dtos/assign-permission.dto';
 import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
 import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
 
@@ -238,5 +239,103 @@ export class RoleService {
       const resourceMatch = !resource || permission.resource === resource;
       return actionMatch && resourceMatch && permission.isActive;
     });
+  }
+
+  // Lấy tất cả permissions của role
+  async getPermissionsByRole(roleId: number): Promise<Permission[]> {
+    const role = await this.findById(roleId);
+    if (!role) {
+      throw new NotFoundException(`Role with ID ${roleId} not found`);
+    }
+
+    return role.permissions || [];
+  }
+
+  // Gán permissions cho role
+  async assignPermissions(roleId: number, assignPermissionDto: AssignPermissionDto): Promise<Role> {
+    const role = await this.findById(roleId);
+    if (!role) {
+      throw new NotFoundException(`Role with ID ${roleId} not found`);
+    }
+
+    // Giải mã các id permission từ base64
+    const permissionDecodes = assignPermissionDto.permissionIds.map((id) => 
+      Base64EncryptionUtil.decrypt(id)
+    );
+
+    const permissions = await this.permissionRepository.find({
+      where: { id: In(permissionDecodes) },
+    });
+
+    role.permissions = permissions;
+    return this.roleRepository.save(role);
+  }
+
+  // Bỏ gán permissions khỏi role
+  async removePermissions(roleId: number, assignPermissionDto: AssignPermissionDto): Promise<Role> {
+    const role = await this.findById(roleId);
+    if (!role) {
+      throw new NotFoundException(`Role with ID ${roleId} not found`);
+    }
+
+    // Giải mã các id permission từ base64
+    const permissionDecodes = assignPermissionDto.permissionIds.map((id) => 
+      Base64EncryptionUtil.decrypt(id)
+    );
+
+    // Lọc ra các permissions không bị xóa
+    role.permissions = role.permissions.filter(permission => 
+      !permissionDecodes.includes(permission.id.toString())
+    );
+
+    return this.roleRepository.save(role);
+  }
+
+  // Lấy thống kê permissions của role
+  async getPermissionStats(roleId: number): Promise<PermissionStatsDto> {
+    const role = await this.findById(roleId);
+    if (!role) {
+      throw new NotFoundException(`Role with ID ${roleId} not found`);
+    }
+
+    const allPermissions = await this.permissionRepository.find({
+      where: { isActive: true }
+    });
+
+    const assignedPermissions = role.permissions || [];
+    const uniqueResources = new Set(assignedPermissions.map(p => p.resource).filter(Boolean)).size;
+    const uniqueActions = new Set(assignedPermissions.map(p => p.action).filter(Boolean)).size;
+
+    // Tính thống kê theo resource
+    const resourceStats: { resource: string; total: number; assigned: number; percentage: number }[] = [];
+    const resourceGroups = allPermissions.reduce((acc: { [key: string]: Permission[] }, permission) => {
+      const resource = permission.resource || 'Unknown';
+      if (!acc[resource]) {
+        acc[resource] = [];
+      }
+      acc[resource].push(permission);
+      return acc;
+    }, {});
+
+    for (const [resource, permissions] of Object.entries(resourceGroups)) {
+      const total = permissions.length;
+      const assigned = assignedPermissions.filter(p => p.resource === resource).length;
+      const percentage = total > 0 ? Math.round((assigned / total) * 100) : 0;
+
+      resourceStats.push({
+        resource,
+        total,
+        assigned,
+        percentage
+      });
+    }
+
+    return {
+      totalPermissions: allPermissions.length,
+      assignedPermissions: assignedPermissions.length,
+      uniqueResources,
+      uniqueActions,
+      resourceStats
+    };
   }
 } 

@@ -16,6 +16,7 @@ import { Role } from '../entities/role.entity';
 import { RoleDto } from '../dtos/role.dto';
 import { Feature } from '../entities/feature.entity';
 import { AssignFeatureDto } from '../dtos/assign-navigator.dto';
+import { AssignPermissionDto } from '../dtos/assign-permission.dto';
 import { EncryptionInterceptor } from 'src/interceptors/encryption.interceptor';
 import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
 import { PaginationParams } from 'src/dtos/filter.dto';
@@ -79,6 +80,33 @@ export class RoleController {
     @Body() assignFeatureDto: AssignFeatureDto,
   ): Promise<Role> {
     return this.roleService.assignFeatures(this.decode(id), assignFeatureDto);
+  }
+
+  // Permission management endpoints
+  @Get(':id/permissions')
+  async getPermissionsByRole(@Param('id') id: string) {
+    return this.roleService.getPermissionsByRole(this.decode(id));
+  }
+
+  @Post(':id/permissions')
+  async assignPermissions(
+    @Param('id') id: string,
+    @Body() assignPermissionDto: AssignPermissionDto,
+  ): Promise<Role> {
+    return this.roleService.assignPermissions(this.decode(id), assignPermissionDto);
+  }
+
+  @Delete(':id/permissions')
+  async removePermissions(
+    @Param('id') id: string,
+    @Body() assignPermissionDto: AssignPermissionDto,
+  ): Promise<Role> {
+    return this.roleService.removePermissions(this.decode(id), assignPermissionDto);
+  }
+
+  @Get(':id/permissions/stats')
+  async getPermissionStats(@Param('id') id: string) {
+    return this.roleService.getPermissionStats(this.decode(id));
   }
 
   private decode(id: string) {

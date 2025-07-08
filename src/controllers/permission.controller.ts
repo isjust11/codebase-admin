@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Query, UseInterceptors } from '@nestjs/common';
 import { PermissionService } from '../services/permission.service';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { PermissionGuard } from '../guards/permission.guard';
@@ -13,12 +13,15 @@ import {
   getAllActions,
   getPermissionTemplate 
 } from '../constants/permission.constants';
+import { BaseController } from './base.controller';
 
 @Controller('permissions')
 @UseGuards(PermissionGuard)
 @UseGuards(JwtAuthGuard)
-export class PermissionController {
-  constructor(private permissionService: PermissionService) {}
+export class PermissionController extends BaseController{
+  constructor(private permissionService: PermissionService) {
+    super();
+  }
 
   @Get()
   @RequirePermission('READ', 'permission')
@@ -40,7 +43,7 @@ export class PermissionController {
   @Get(':id')
   @RequirePermission('READ', 'permission')
   async findOne(@Param('id') id: string) {
-    return this.permissionService.findOne(parseInt(id));
+    return this.permissionService.findOne(this.decode(id));
   }
 
   @Post()
@@ -52,13 +55,13 @@ export class PermissionController {
   @Put(':id')
   @RequirePermission('UPDATE', 'permission')
   async update(@Param('id') id: string, @Body() updatePermissionDto: UpdatePermissionDto) {
-    return this.permissionService.update(parseInt(id), updatePermissionDto);
+    return this.permissionService.update(this.decode(id), updatePermissionDto);
   }
 
   @Delete(':id')
   @RequirePermission('DELETE', 'permission')
   async remove(@Param('id') id: string) {
-    return this.permissionService.remove(parseInt(id));
+    return this.permissionService.remove(this.decode(id));
   }
 
   // API mới để frontend lấy thông tin resources và actions
