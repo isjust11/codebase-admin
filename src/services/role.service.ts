@@ -97,25 +97,9 @@ export class RoleService {
     if (updateRoleDto.features) {
       // Giải mã các id feature từ base64
       const featureDecodes = updateRoleDto.features.map((item) => Base64EncryptionUtil.decrypt(item));
-      // Hàm đệ quy lấy tất cả id con của 1 feature
-      const getAllChildIds = async (ids, visited = new Set()) => {
-        let allIds = [...ids];
-        for (const id of ids) {
-          if (visited.has(id)) continue;
-          visited.add(id);
-          const feature = await this.featureRepository.findOne({ where: { id: Number(id) }, relations: ['children'] });
-          if (feature && feature.children && feature.children.length > 0) {
-            const childIds = feature.children.map(child => child.id.toString());
-            const deeper = await getAllChildIds(childIds, visited);
-            allIds = allIds.concat(deeper);
-          }
-        }
-        return allIds;
-      };
-      // Lấy tất cả id (bao gồm cha và con, loại trùng)
-      const allFeatureIds = Array.from(new Set(await getAllChildIds(featureDecodes)));
+      // Chỉ lấy các feature được truyền lên, không tự động lấy node con
       const features = await this.featureRepository.find({
-        where: { id: In(allFeatureIds) },
+        where: { id: In(featureDecodes) },
       });
       role.features = features;
     }
