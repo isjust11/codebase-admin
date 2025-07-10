@@ -8,7 +8,6 @@ import * as crypto from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RefreshToken } from '../entities/refresh-token.entity';
-import { RoleEnum } from 'src/enums/role.enum';
 
 @Injectable()
 export class AuthService {
@@ -219,7 +218,15 @@ export class AuthService {
       isFacebookUser: user.isFacebookUser,
       isAdmin: user.isAdmin,
       roles: user.roles.map(role => role.id),
-      permissions: permissions.map(permission => permission.id),
+      permissions: permissions.map(permission => {
+        return {
+          id: permission.id,
+          code: permission.code,
+          resource: permission.resource || '',
+          action: permission.action || '',
+          isActive: permission.isActive,
+        }
+      }),
     };
 
     // Tạo access token
@@ -231,7 +238,15 @@ export class AuthService {
     // Cập nhật thời gian đăng nhập
     user.lastLogin = new Date();
     user.roles = user.roles.map(role => ({ ...role, permissions: [] }));
-    user.permissions = permissions.map(permission => permission.id);
+    user.permissions = permissions.map(permission => {
+      return {
+        id: permission.id,
+        code: permission.code,
+        resource: permission.resource || '',
+        action: permission.action || '',
+        isActive: permission.isActive,
+      }
+    });
     await this.userService.update(user.id, user);
     return {
       accessToken,
@@ -280,10 +295,26 @@ export class AuthService {
       isFacebookUser: foundToken.user.isFacebookUser,
       isAdmin: foundToken.user.isAdmin,
       roles: foundToken.user.roles.map(role => role.id),
-      permissions: permissions.map(permission => permission.id),
+      permissions: permissions.map(permission => {
+        return {
+          id: permission.id,
+          code: permission.code,
+          resource: permission.resource || '',
+          action: permission.action || '',
+          isActive: permission.isActive,
+        }
+      }),
     };
     foundToken.user.roles = foundToken.user.roles.map(role => ({ ...role, permissions: [] }));
-    foundToken.user.permissions = permissions.map(permission => permission.id);
+    foundToken.user.permissions = permissions.map(permission => {
+      return {
+        id: permission.id,
+        code: permission.code,
+        resource: permission.resource || '',
+        action: permission.action || '',
+        isActive: permission.isActive,
+      }
+    });
     // Tạo access token mới
     const accessToken = this.jwtService.sign(payload);
 

@@ -82,7 +82,14 @@ export class User {
 
   @OneToMany(() => Order, order => order.account)
   orders: Order[];
-  permissions: number[];
+
+  permissions: {
+    id: number;
+    code: string;
+    resource: string;
+    action: string;
+    isActive: boolean;
+  }[];
 
   @BeforeInsert()
   @BeforeUpdate()

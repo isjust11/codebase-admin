@@ -7,12 +7,15 @@ import { UpdateUserDto } from '../dtos/user.dto';
 import { PermissionGuard } from '../guards/permission.guard';
 import { RequirePermissions, RequirePermission, RequirePermissionsAction } from 'src/decorators/require-permissions.decorator';
 import { PaginationParams } from 'src/dtos/filter.dto';
+import { BaseController } from './base.controller';
 
 @Controller('users')
 @UseGuards(PermissionGuard)
 @UseGuards(JwtAuthGuard)
-export class UserController {
-  constructor(private userService: UserService) { }
+export class UserController extends BaseController {
+  constructor(private userService: UserService) {
+    super();
+  }
 
   @Get()
   @RequirePermission('READ', 'user')
@@ -34,7 +37,7 @@ export class UserController {
   @Get(':id')
   @RequirePermission('READ', 'user')
   async findOne(@Param('id') id: string): Promise<User | null> {
-    return this.userService.findById(parseInt(id));
+    return this.userService.findById(this.decode(id));
   }
 
   @Post()
@@ -49,25 +52,25 @@ export class UserController {
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
   ): Promise<User> {
-    return this.userService.update(parseInt(id), updateUserDto);
+    return this.userService.update(this.decode(id), updateUserDto);
   }
 
   @Delete(':id')
   @RequirePermission('DELETE', 'user')
   async remove(@Param('id') id: string): Promise<void> {
-    return this.userService.remove(parseInt(id));
+    return this.userService.remove(this.decode(id));
   }
 
   @Put(':id/block')
   @RequirePermission('UPDATE', 'user')
   async blockUser(@Param('id') id: string): Promise<User> {
-    return this.userService.blockUser(parseInt(id));
+    return this.userService.blockUser(this.decode(id));
   }
 
   @Put(':id/unblock')
   @RequirePermission('UPDATE', 'user')
   async unblockUser(@Param('id') id: string): Promise<User> {
-    return this.userService.unblockUser(parseInt(id));
+    return this.userService.unblockUser(this.decode(id));
   }
 
   // Ví dụ sử dụng RequirePermissionsAction cho nhiều permission
@@ -77,6 +80,6 @@ export class UserController {
     { action: 'READ', resource: 'profile' }
   )
   async getUserProfile(@Param('id') id: string): Promise<User | null> {
-    return this.userService.findById(parseInt(id));
+    return this.userService.findById(this.decode(id));
   }
 } 

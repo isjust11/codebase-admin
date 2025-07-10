@@ -103,5 +103,11 @@ export class JwtPayload {
   isGoogleUser: boolean;
   isAdmin: boolean;
   roles: number[];
-  permissions: number[];
+  permissions: {
+    id: number;
+    code: string;
+    resource: string;
+    action: string;
+    isActive: boolean;
+  }[];
 } 
