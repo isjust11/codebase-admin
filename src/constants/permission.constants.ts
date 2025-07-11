@@ -16,6 +16,8 @@ export const RESOURCES = {
   NOTIFICATION: 'notification',
   HISTORY: 'history',
   FOOD_ITEM: 'food_item',
+  CATEGORY_TYPE: 'category_type',
+
 } as const;
 
 // Định nghĩa các Action chuẩn
@@ -118,6 +120,71 @@ export const PERMISSION_TEMPLATES = {
       { action: ACTIONS.CREATE, name: 'Tạo quyền', code: 'PERMISSION_CREATE' },
       { action: ACTIONS.UPDATE, name: 'Cập nhật quyền', code: 'PERMISSION_UPDATE' },
       { action: ACTIONS.DELETE, name: 'Xóa quyền', code: 'PERMISSION_DELETE' },
+    ]
+  },
+  [RESOURCES.CATEGORY_TYPE]: {
+    name: 'Quản lý loại danh mục',
+    permissions: [
+      { action: ACTIONS.READ, name: 'Xem loại danh mục', code: 'CATEGORY_TYPE_READ' },
+      { action: ACTIONS.CREATE, name: 'Tạo loại danh mục', code: 'CATEGORY_TYPE_CREATE' },
+      { action: ACTIONS.UPDATE, name: 'Cập nhật loại danh mục', code: 'CATEGORY_TYPE_UPDATE' },
+      { action: ACTIONS.DELETE, name: 'Xóa loại danh mục', code: 'CATEGORY_TYPE_DELETE' },
+    ]
+  },
+  [RESOURCES.TABLE]: {
+    name: 'Quản lý bàn',
+    permissions: [
+      { action: ACTIONS.READ, name: 'Xem bàn', code: 'TABLE_READ' },
+      { action: ACTIONS.CREATE, name: 'Tạo bàn', code: 'TABLE_CREATE' },
+      { action: ACTIONS.UPDATE, name: 'Cập nhật bàn', code: 'TABLE_UPDATE' },
+      { action: ACTIONS.DELETE, name: 'Xóa bàn', code: 'TABLE_DELETE' },
+    ]
+  },
+  [RESOURCES.RESERVATION]: {
+    name: 'Quản lý đặt bàn',
+    permissions: [
+      { action: ACTIONS.READ, name: 'Xem đặt bàn', code: 'RESERVATION_READ' },
+      { action: ACTIONS.CREATE, name: 'Tạo đặt bàn', code: 'RESERVATION_CREATE' },
+      { action: ACTIONS.UPDATE, name: 'Cập nhật đặt bàn', code: 'RESERVATION_UPDATE' },
+      { action: ACTIONS.DELETE, name: 'Xóa đặt bàn', code: 'RESERVATION_DELETE' },
+    ]
+  },
+  [RESOURCES.EXAM]: {
+    name: 'Quản lý đề thi',
+    permissions: [
+      { action: ACTIONS.READ, name: 'Xem đề thi', code: 'EXAM_READ' },
+      { action: ACTIONS.CREATE, name: 'Tạo đề thi', code: 'EXAM_CREATE' },
+      { action: ACTIONS.UPDATE, name: 'Cập nhật đề thi', code: 'EXAM_UPDATE' },
+      { action: ACTIONS.DELETE, name: 'Xóa đề thi', code: 'EXAM_DELETE' },
+    ]
+  },
+  [RESOURCES.QUESTION]: {
+    name: 'Quản lý câu hỏi',
+    permissions: [
+      { action: ACTIONS.READ, name: 'Xem câu hỏi', code: 'QUESTION_READ' },
+      { action: ACTIONS.CREATE, name: 'Tạo câu hỏi', code: 'QUESTION_CREATE' },
+      { action: ACTIONS.UPDATE, name: 'Cập nhật câu hỏi', code: 'QUESTION_UPDATE' },
+      { action: ACTIONS.DELETE, name: 'Xóa câu hỏi', code: 'QUESTION_DELETE' },
+    ]
+  },
+  [RESOURCES.MEDIA]: {
+    name: 'Quản lý media',
+    permissions: [
+      { action: ACTIONS.READ, name: 'Xem media', code: 'MEDIA_READ' },
+      { action: ACTIONS.CREATE, name: 'Tạo media', code: 'MEDIA_CREATE' },
+      { action: ACTIONS.UPDATE, name: 'Cập nhật media', code: 'MEDIA_UPDATE' },
+      { action: ACTIONS.DELETE, name: 'Xóa media', code: 'MEDIA_DELETE' },
+      { action: ACTIONS.UPLOAD, name: 'Tải lên media', code: 'MEDIA_UPLOAD' },
+      { action: ACTIONS.DOWNLOAD, name: 'Tải xuống media', code: 'MEDIA_DOWNLOAD' },
+    ]
+  },
+  [RESOURCES.NOTIFICATION]: {
+    name: 'Quản lý thông báo',
+    permissions: [
+      { action: ACTIONS.READ, name: 'Xem thông báo', code: 'NOTIFICATION_READ' },
+      { action: ACTIONS.CREATE, name: 'Tạo thông báo', code: 'NOTIFICATION_CREATE' },
+      { action: ACTIONS.UPDATE, name: 'Cập nhật thông báo', code: 'NOTIFICATION_UPDATE' },
+      { action: ACTIONS.DELETE, name: 'Xóa thông báo', code: 'NOTIFICATION_DELETE' },
     ]
   },
 } as const;
