@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Param, UseGuards, Req, Res, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, UseGuards, Req, Res, HttpStatus, UseInterceptors } from '@nestjs/common';
 import { Response } from 'express';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { PaymentService } from '../services/payment.service';
@@ -6,13 +6,21 @@ import { CreatePaymentDto, PaymentWebhookDto } from '../dtos/payment.dto';
 import { GetCurrentUser } from '../decorators/get-current-user.decorator';
 import { JwtPayload } from '../dtos/auth.dto';
 import Stripe from 'stripe';
+import { RequirePermission } from 'src/decorators/require-permissions.decorator';
+import { BaseController } from './base.controller';
+import { EncryptionInterceptor } from 'src/interceptors/encryption.interceptor';
+import { PermissionGuard } from 'src/guards/permission.guard';
 
 @Controller('payments')
-export class PaymentController {
-  constructor(private readonly paymentService: PaymentService) {}
+@UseGuards(JwtAuthGuard)
+@UseGuards(PermissionGuard)
+export class PaymentController extends BaseController{
+  constructor(private readonly paymentService: PaymentService) {
+    super();
+  }
 
   @Post('create')
-  @UseGuards(JwtAuthGuard)
+  @RequirePermission('CREATE', 'payment')
   async createPayment(
     @GetCurrentUser() user: JwtPayload,
     @Body() createPaymentDto: CreatePaymentDto,
@@ -21,18 +29,19 @@ export class PaymentController {
   }
 
   @Get(':id')
-  @UseGuards(JwtAuthGuard)
+  @RequirePermission('READ', 'payment')
   async getPayment(@Param('id') id: string) {
     return this.paymentService.getPaymentById(parseInt(id));
   }
 
   @Get('user/:userId')
-  @UseGuards(JwtAuthGuard)
+  @RequirePermission('READ', 'payment')
   async getPaymentsByUser(@Param('userId') userId: string) {
     return this.paymentService.getPaymentsByUser(parseInt(userId));
   }
 
   @Post('webhook/stripe')
+  @RequirePermission('UPDATE', 'payment')
   async handleStripeWebhook(
     @Body() event: PaymentWebhookDto,
     @Req() req: any,
@@ -55,6 +64,7 @@ export class PaymentController {
   }
 
   @Post('webhook/vnpay')
+  @RequirePermission('UPDATE', 'payment')
   async handleVNPayWebhook(
     @Body() webhookData: any,
     @Res() res: Response,
@@ -69,6 +79,7 @@ export class PaymentController {
   }
 
   @Post('webhook/momo')
+  @RequirePermission('UPDATE', 'payment')
   async handleMoMoWebhook(
     @Body() webhookData: any,
     @Res() res: Response,
@@ -83,6 +94,7 @@ export class PaymentController {
   }
 
   @Post('webhook/zalopay')
+  @RequirePermission('UPDATE', 'payment')
   async handleZaloPayWebhook(
     @Body() webhookData: any,
     @Res() res: Response,

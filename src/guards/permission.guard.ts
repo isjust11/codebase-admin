@@ -8,8 +8,7 @@ import { PermissionService } from '../services/permission.service';
 export class PermissionGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
-    private roleService: RoleService,
-    private permissionService: PermissionService,
+    private roleService: RoleService
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {

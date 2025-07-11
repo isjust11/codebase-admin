@@ -1,21 +1,27 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, UseInterceptors, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, Query, UseGuards } from '@nestjs/common';
 import { ArticleService } from '../services/article.service';
 import { ArticleDto } from '../dtos/article.dto';
-import { EncryptionInterceptor } from 'src/interceptors/encryption.interceptor';
 import { PaginationParams } from 'src/dtos/filter.dto';
-import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
+import { BaseController } from './base.controller';
+import { RequirePermission } from 'src/decorators/require-permissions.decorator';
+import { PermissionGuard } from 'src/guards/permission.guard';
+import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 
 @Controller('article')
-@UseInterceptors(EncryptionInterceptor)
-export class ArticleController {
-  constructor(private readonly articleService: ArticleService) { }
+@UseGuards(JwtAuthGuard, PermissionGuard)
+export class ArticleController extends BaseController{
+  constructor(private readonly articleService: ArticleService) {
+    super();
+  }
 
   @Post()
+  @RequirePermission('CREATE', 'article')
   create(@Body() dto: ArticleDto) {
     return this.articleService.create(dto);
   }
 
   @Get()
+  @RequirePermission('READ', 'article')
   async getByPage(
     @Query('page') page: number,
     @Query('size') size: number,
@@ -31,26 +37,26 @@ export class ArticleController {
 
 
   @Get('all')
+  @RequirePermission('READ', 'article')
   findAll() {
     return this.articleService.findAll();
   }
 
   @Get(':id')
+  @RequirePermission('READ', 'article')
   findOne(@Param('id') id: string) {
     return this.articleService.findOne(this.decode(id));
   }
 
   @Put(':id')
+  @RequirePermission('UPDATE', 'article')
   update(@Param('id') id: string, @Body() dto: ArticleDto) {
     return this.articleService.update(this.decode(id), dto);
   }
 
   @Delete(':id')
+  @RequirePermission('DELETE', 'article')
   remove(@Param('id') id: string) {
     return this.articleService.remove(this.decode(id));
-  }
-  private decode(id: string) {
-    const idDecode = Base64EncryptionUtil.decrypt(id);
-    return parseInt(idDecode);
   }
 } 

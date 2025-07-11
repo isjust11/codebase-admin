@@ -20,6 +20,7 @@ import { AssignPermissionDto } from '../dtos/assign-permission.dto';
 import { EncryptionInterceptor } from 'src/interceptors/encryption.interceptor';
 import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
 import { PaginationParams } from 'src/dtos/filter.dto';
+import { RequirePermission } from 'src/decorators/require-permissions.decorator';
 
 @Controller('roles')
 @UseGuards(JwtAuthGuard)
@@ -28,6 +29,7 @@ export class RoleController {
   constructor(private roleService: RoleService) {}
 
   @Get()
+  @RequirePermission('READ', 'role')
   async getAll(
     @Query('page') page: number,
     @Query('size') size: number,
@@ -42,21 +44,25 @@ export class RoleController {
   }
 
   @Get(':id')
+  @RequirePermission('READ', 'role')
   async findOne(@Param('id') id: string): Promise<Role | null> {
     return this.roleService.findById(this.decode(id));
   }
 
   @Get('/find/:code')
+  @RequirePermission('READ', 'role')
   async findByCode(@Param('code') code: string): Promise<Role | null> {
     return this.roleService.findByCode(code);
   }
 
   @Post()
+  @RequirePermission('CREATE', 'role')
   async create(@Body() createRoleDto: RoleDto): Promise<Role> {
     return this.roleService.create(createRoleDto);
   }
 
   @Put(':id')
+  @RequirePermission('UPDATE', 'role')
   async update(
     @Param('id') id: string,
     @Body() updateRoleDto: RoleDto,
@@ -65,16 +71,19 @@ export class RoleController {
   }
 
   @Delete(':id')
+  @RequirePermission('DELETE', 'role')
   async remove(@Param('id') id: string): Promise<void> {
     return this.roleService.remove(this.decode(id));
   }
 
   @Get(':id/features')
+  @RequirePermission('READ', 'role')
   async getFeaturesByRole(@Param('id') id: string): Promise<Feature[]> {
     return this.roleService.getFeaturesByRole(this.decode(id));
   }
 
   @Post(':id/features')
+  @RequirePermission('UPDATE', 'role')
   async assignFeatures(
     @Param('id') id: string,
     @Body() assignFeatureDto: AssignFeatureDto,
@@ -84,11 +93,13 @@ export class RoleController {
 
   // Permission management endpoints
   @Get(':id/permissions')
+  @RequirePermission('READ', 'role')
   async getPermissionsByRole(@Param('id') id: string) {
     return this.roleService.getPermissionsByRole(this.decode(id));
   }
 
   @Post(':id/permissions')
+  @RequirePermission('UPDATE', 'role')
   async assignPermissions(
     @Param('id') id: string,
     @Body() assignPermissionDto: AssignPermissionDto,

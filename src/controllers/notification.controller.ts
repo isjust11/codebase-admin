@@ -15,14 +15,19 @@ import { Room } from '../decorators/room.decorator';
 import { NotificationType, NotificationPriority } from '../enums/notification.enum';
 import { CreateNotificationDto } from '../dtos/notification.dto';
 import { NOTIFICATION_EVENTS, NOTIFICATION_ROOMS } from '../constants/notification.constants';
-
+import { BaseController } from './base.controller';
+import { RequirePermission } from 'src/decorators/require-permissions.decorator';
+import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 @Controller('notifications')
-@UseGuards(NotificationGuard, EventGuard, RoomGuard)
+@UseGuards(JwtAuthGuard)
 @UseFilters(NotificationFilter, EventFilter, RoomFilter)
-export class NotificationController {
-  constructor(private readonly notificationService: NotificationService) {}
+export class NotificationController extends BaseController{
+  constructor(private readonly notificationService: NotificationService) {
+    super();
+  }
 
   @Post('new-order')
+  @RequirePermission('CREATE', 'notification')
   @UsePipes(NotificationPipe, EventPipe, RoomPipe)
   @Notification({ type: NotificationType.ORDER, priority: NotificationPriority.HIGH })
   @Event({ event: NOTIFICATION_EVENTS.NEW_ORDER, description: 'Thông báo đơn hàng mới' })
@@ -33,6 +38,7 @@ export class NotificationController {
   }
 
   @Post('food-ready')
+  @RequirePermission('CREATE', 'notification')
   @UsePipes(NotificationPipe, EventPipe, RoomPipe)
   @Notification({ type: NotificationType.ORDER, priority: NotificationPriority.MEDIUM })
   @Event({ event: NOTIFICATION_EVENTS.FOOD_READY, description: 'Thông báo món ăn đã sẵn sàng' })
@@ -43,6 +49,7 @@ export class NotificationController {
   }
 
   @Post('payment')
+  @RequirePermission('CREATE', 'notification')
   @UsePipes(NotificationPipe, EventPipe, RoomPipe)
   @Notification({ type: NotificationType.PAYMENT, priority: NotificationPriority.LOW })
   @Event({ event: NOTIFICATION_EVENTS.PAYMENT_RECEIVED, description: 'Thông báo thanh toán' })

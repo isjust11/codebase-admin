@@ -13,7 +13,7 @@ import {
   getAllActions,
   getPermissionTemplate 
 } from '../constants/permission.constants';
-import { BaseController } from './base.controller';
+import { BaseController } from './base.controller';   
 
 @Controller('permissions')
 @UseGuards(PermissionGuard)

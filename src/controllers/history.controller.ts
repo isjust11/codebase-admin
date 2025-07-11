@@ -2,22 +2,26 @@ import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { HistoryService } from '../services/history.service';
 import { GetHistoryDto } from '../dtos/history.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
-import { Roles } from '../decorators/roles.decorator';
 import { HistoryType } from 'src/entities/history.entity';
+import { BaseController } from './base.controller';
+import { RequirePermission } from 'src/decorators/require-permissions.decorator';
+import { PermissionGuard } from 'src/guards/permission.guard';
 
 @Controller('history')
-export class HistoryController {
-  constructor(private readonly historyService: HistoryService) {}
+@UseGuards(JwtAuthGuard, PermissionGuard)
+export class HistoryController extends BaseController{
+  constructor(private readonly historyService: HistoryService) {
+    super();
+  }
 
   @Get()
-  @UseGuards(JwtAuthGuard)
-  @Roles('ADMIN', 'STAFF')
+  @RequirePermission('READ', 'history')
   findAll(@Query() query: GetHistoryDto) {
     return this.historyService.findAll(query);
   }
 
   @Get('reservations')
-  @UseGuards(JwtAuthGuard)
+  @RequirePermission('READ', 'history')
   getReservationHistory(@Query() query: GetHistoryDto) {
     return this.historyService.findAll(
       query,
@@ -26,15 +30,14 @@ export class HistoryController {
   }
 
   @Get('orders')
-  @UseGuards(JwtAuthGuard)
+  @RequirePermission('READ', 'history')
   getOrderHistory(@Query() query: GetHistoryDto) {
     return this.historyService.findAll(query, HistoryType.ORDER
     );
   }
 
   @Get('payments')
-  @UseGuards(JwtAuthGuard)
-  @Roles('ADMIN', 'STAFF')
+  @RequirePermission('READ', 'history')
   getPaymentHistory(@Query() query: GetHistoryDto) {
     return this.historyService.findAll(
       query,

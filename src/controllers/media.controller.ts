@@ -1,20 +1,23 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator, Request, Query, Patch, HttpCode, ClassSerializerInterceptor } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { MediaService } from '../services/media.service';
-import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { Media } from '../entities/media.entity';
 import { UpdateMediaDto } from '../dtos/media.dto';
 import { PaginationParams } from 'src/dtos/filter.dto';
 import { BaseController } from './base.controller';
+import { RequirePermission } from 'src/decorators/require-permissions.decorator';
+import { PermissionGuard } from 'src/guards/permission.guard';
+import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 
 @Controller('media')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissionGuard)
 export class MediaController extends BaseController{
   constructor(private mediaService: MediaService) {
     super();
   }
 
   @Get()
+  @RequirePermission('READ', 'media')
   async getAll(@Query('page') page: number, @Query('size') size: number, @Query('search') search: string,
   @Query('mimeType') mimeType: string     
 ) {
@@ -28,11 +31,13 @@ export class MediaController extends BaseController{
   }
 
   @Get(':id')
+  @RequirePermission('READ', 'media')
   async findOne(@Param('id') id: string, @Request() req): Promise<Media> {
     return this.mediaService.findById(this.decode(id), req.user.id);
   }
 
   @Post('upload')
+  @RequirePermission('CREATE', 'media')
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(
     @UploadedFile(
@@ -50,6 +55,7 @@ export class MediaController extends BaseController{
   }
 
   @Put(':id')
+  @RequirePermission('UPDATE', 'media')
   async update(
     @Param('id') id: string,
     @Body() updateMediaDto: UpdateMediaDto,
@@ -59,6 +65,7 @@ export class MediaController extends BaseController{
   }
 
   @Patch(':id/update-file')
+  @RequirePermission('UPDATE', 'media')
   @UseInterceptors(FileInterceptor('file'))
   async updateFile(
     @Param('id') id: string,
@@ -69,12 +76,14 @@ export class MediaController extends BaseController{
   }
 
   @Delete(':id')
+  @RequirePermission('DELETE', 'media')
   @HttpCode(204)
   async delete(@Param('id') id: string, @Request() req,): Promise<void> {
     return this.mediaService.deleteFile(this.decode(id), req.user.id);
   }
 
   @Delete()
+  @RequirePermission('DELETE', 'media')
   @HttpCode(204)
   async deleteMultiple(@Body() ids: string[], @Request() req): Promise<void> {
     return this.mediaService.deleteMultiple(ids.map(id => this.decode(id)), req.user.id);

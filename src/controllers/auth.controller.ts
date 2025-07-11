@@ -1,16 +1,16 @@
-import { Controller, Post, Body, Get, UseGuards, Request, UseInterceptors, ClassSerializerInterceptor, Res, Query, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Request, Res, Query, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
 import { LoginDto, RegisterDto, ResendEmailDto, ResetPasswordDto } from '../dtos/auth.dto';
 import { JwtAuthGuard, Public } from '../guards/jwt-auth.guard';
 import { AuthGuard } from '@nestjs/passport';
 import { Response } from 'express';
-import { EncryptionInterceptor } from 'src/interceptors/encryption.interceptor';
+import { BaseController } from './base.controller';
 
 @Controller('auth')
-@UseInterceptors(ClassSerializerInterceptor)
-@UseInterceptors(EncryptionInterceptor)
-export class AuthController {
-  constructor(private authService: AuthService) {}
+export class AuthController extends BaseController{
+  constructor(private authService: AuthService) {
+    super();
+  }
 
   @Public()
   @Post('login')
