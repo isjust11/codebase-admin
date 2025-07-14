@@ -28,7 +28,7 @@ export class AuthService {
     }
     if (user && await user.validatePassword(password)) {
       user.lastLogin = new Date();
-      await this.userService.update(user.id, user);
+      // await this.userService.update(user.id, user);
       const { password, ...result } = user;
       return result;
     }
@@ -236,7 +236,7 @@ export class AuthService {
     const refreshToken = await this.createRefreshToken(user);
 
     // Cập nhật thời gian đăng nhập
-    user.lastLogin = new Date();
+    // user.lastLogin = new Date();
     user.roles = user.roles.map(role => ({ ...role, permissions: [] }));
     user.permissions = permissions.map(permission => {
       return {
@@ -247,7 +247,7 @@ export class AuthService {
         isActive: permission.isActive,
       }
     });
-    await this.userService.update(user.id, user);
+    // await this.userService.update(user.id, user);
     return {
       accessToken,
       refreshToken: refreshToken.token,
