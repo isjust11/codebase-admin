@@ -2,31 +2,34 @@ import { UseInterceptors } from '@nestjs/common';
 import { ClassSerializerInterceptor } from '@nestjs/common';
 import { EncryptionInterceptor } from '../interceptors/encryption.interceptor';
 import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
+import { Response } from 'express';
 
 // Decorator để áp dụng interceptor cho tất cả controller kế thừa
 @UseInterceptors(ClassSerializerInterceptor, EncryptionInterceptor)
 export abstract class BaseController {
   // Hàm trả về response thành công
-  protected success<T>(data: T, message = 'Thành công') {
-    return {
+  protected success<T>(res: Response, data: T, message = 'Thành công', code = 200) {
+    return res.status(code).json({
       status: true,
       message,
       data,
-    };
+      code,
+    });
   }
 
   // Hàm trả về response lỗi
-  protected error(message = 'Có lỗi xảy ra', code = 400) {
-    return {
+  protected error(res: Response, message = 'Có lỗi xảy ra', code = 400) {
+    return res.status(code).json({
       status: false,
       message,
       code,
-    };
+      data: null,
+    });
   }
 
   // Hàm trả về response phân trang
-  protected paginate<T>(data: T[], total: number, page: number, size: number, message = 'Thành công') {
-    return {
+  protected paginate<T>(res: Response, data: T[], total: number, page: number, size: number, message = 'Thành công', code = 200) {
+    return res.status(code).json({
       status: true,
       message,
       data,
@@ -36,7 +39,8 @@ export abstract class BaseController {
         size,
         totalPages: Math.ceil(total / size),
       },
-    };
+      code,
+    });
   }
 
   protected decode(id: string) {
