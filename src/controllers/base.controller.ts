@@ -8,23 +8,13 @@ import { Response } from 'express';
 @UseInterceptors(ClassSerializerInterceptor, EncryptionInterceptor)
 export abstract class BaseController {
   // Hàm trả về response thành công
-  protected success<T>(res: Response, data: T, message = 'Thành công', code = 200) {
-    return res.status(code).json({
-      status: true,
-      message,
-      data,
-      code,
-    });
+  protected success<T>(res: Response, data: T, code = 200) {
+    return res.status(code).json(data);
   }
 
   // Hàm trả về response lỗi
-  protected error(res: Response, message = 'Có lỗi xảy ra', code = 400) {
-    return res.status(code).json({
-      status: false,
-      message,
-      code,
-      data: null,
-    });
+  protected error(res: Response, code = 400) {
+    return res.status(code).json();
   }
 
   // Hàm trả về response phân trang

@@ -7,15 +7,15 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Launch Program",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "program": "${workspaceFolder}\\src\\controllers\\auth.controller.ts",
-            "preLaunchTask": "tsc: build - tsconfig.json",
+            "name": "Debug NestJS (dist)",
+            "program": "${workspaceFolder}/dist/main.js",
+            "cwd": "${workspaceFolder}",
+            "sourceMaps": true,
             "outFiles": [
                 "${workspaceFolder}/dist/**/*.js"
-            ]
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
         }
     ]
 }

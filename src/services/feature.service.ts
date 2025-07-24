@@ -26,7 +26,7 @@ export class FeatureService {
             parentId: Number.isNaN(decodedId) ? undefined : decodedId,
             isActive: createFeatureDto.isActive,
             sortOrder: createFeatureDto.sortOrder,
-            featureTypeId:createFeatureDto.featureTypeId,
+            featureTypeId:Base64EncryptionUtil.decrypt(createFeatureDto?.featureTypeId ?? ''),
             iconType: createFeatureDto.iconType,
             iconSize: createFeatureDto.iconSize??20,
             className: createFeatureDto.className
