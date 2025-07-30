@@ -5,6 +5,7 @@ import { Table } from './table.entity';
 import { Reservation } from './reservation.entity';
 import { Order } from './order.entity';
 import { Feature } from './feature.entity';
+import { FolkMedicine } from './folk-medicine.entity';
 import { features } from 'process';
 
 @Entity()
@@ -76,6 +77,9 @@ export class Category {
 
   @OneToMany(() => Feature, features => features.featureType)
   feature: Feature[];
+
+  @OneToMany(() => FolkMedicine, folkMedicine => folkMedicine.category)
+  folkMedicines: FolkMedicine[];
 
   @Column({
     default:0

@@ -66,6 +66,8 @@ import { UserExam } from './entities/user-exam.entity';
 import { ArticleModule } from './modules/article.module';
 import { Payment } from './entities/payment.entity';
 import { PaymentModule } from './modules/payment.module';
+import { FolkMedicine } from './entities/folk-medicine.entity';
+import { FolkMedicineModule } from './modules/folk-medicine.module';
 @Module({
   imports: [
     ConfigModule,
@@ -108,6 +110,7 @@ import { PaymentModule } from './modules/payment.module';
         UserAnswer,
         UserExam,
         Payment,
+        FolkMedicine,
       ],
       synchronize: true,
       migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
@@ -139,6 +142,7 @@ import { PaymentModule } from './modules/payment.module';
     UserAnswerModule,
     ArticleModule,
     PaymentModule,
+    FolkMedicineModule,
     // AuthModule,
   ],
   controllers: [
