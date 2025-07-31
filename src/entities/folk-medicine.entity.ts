@@ -41,12 +41,12 @@ export class FolkMedicine {
   @Column({ default: 0 })
   likeCount: number;
 
-  @ManyToOne(() => User, user => user.id, { onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'authorId' })
-  author?: User | null;
+  // @ManyToOne(() => User, user => user.id, { onDelete: 'SET NULL' })
+  // @JoinColumn({ name: 'authorId' })
+  author?: string;
 
   @Column({ nullable: true })
-  authorId?: any;
+  authorId?: string;
 
   @ManyToOne(() => Category, category => category.id, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'categoryId' })

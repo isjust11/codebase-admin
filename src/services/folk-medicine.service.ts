@@ -34,7 +34,7 @@ export class FolkMedicineService {
       where: whereConditions,
       skip,
       take: size,
-      relations: ['author', 'category'],
+      relations: [ 'category'],
       order: { id: 'DESC' },
     });
 
@@ -54,13 +54,13 @@ export class FolkMedicineService {
 
     // Xử lý authorId nếu có
     if (data.authorId != null) {
-      const authorId = Base64EncryptionUtil.decrypt(data.authorId);
-      data.authorId = parseInt(authorId, 10);
+      // const authorId = Base64EncryptionUtil.decrypt(data.authorId);
+      // data.authorId = parseInt(authorId, 10);
 
-      const author = await this.userRepository.findOne({
-        where: { id: data.authorId },
-      });
-      data.author = author ?? null;
+      // const author = await this.userRepository.findOne({
+      //   where: { id: data.authorId },
+      // });
+      // data.author = author ?? null;
     }
 
     // Xử lý categoryId nếu có
@@ -104,13 +104,13 @@ export class FolkMedicineService {
     }
 
     if (data.authorId != null) {
-      const authorId = Base64EncryptionUtil.decrypt(data.authorId);
-      folkMedicine.authorId = parseInt(authorId, 10);
+      // const authorId = Base64EncryptionUtil.decrypt(data.authorId);
+      // folkMedicine.authorId = parseInt(authorId, 10);
 
-      const author = await this.userRepository.findOne({
-        where: { id: folkMedicine.authorId },
-      });
-      folkMedicine.author = author ?? null;
+      // const author = await this.userRepository.findOne({
+      //   where: { id: folkMedicine.authorId },
+      // });
+      // folkMedicine.author = author ?? null;
     }
 
     if (data.categoryId != null) {

@@ -2,13 +2,19 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like } from 'typeorm';
 import { Category } from '../entities/category.entity';
+import { CategoryType } from '../entities/category-type.entity';
 import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
+import { CategoryTypeEnum } from '../enums/category-type.enum';
+import { EncryptionUtil } from 'src/utils/encryption.util';
+import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
 
 @Injectable()
 export class CategoryService {
   constructor(
     @InjectRepository(Category)
     private categoryRepository: Repository<Category>,
+    @InjectRepository(CategoryType)
+    private categoryTypeRepository: Repository<CategoryType>,
   ) {}
 
   async findAll(): Promise<Category[]> {
@@ -32,8 +38,58 @@ export class CategoryService {
   }
 
   async create(category: Partial<Category>): Promise<Category | null> {
+    // Đảm bảo CategoryType tồn tại trước khi tạo Category
+    if (category.categoryTypeId && category.categoryTypeId !== '') {
+      await this.ensureCategoryTypeExists(category.categoryTypeId);
+    }
+    
     const newCategory = this.categoryRepository.create(category);
     return this.categoryRepository.save(newCategory);
+  }
+
+  /**
+   * Đảm bảo CategoryType tồn tại, nếu không thì tạo mới từ enum
+   */
+  private async ensureCategoryTypeExists(categoryTypeId: string): Promise<void> {
+    const existingCategoryType = await this.categoryTypeRepository.findOne({
+      where: { id: categoryTypeId }
+    });
+
+    if (!existingCategoryType) {
+      // Thử tìm theo code
+      const categoryTypeByCode = await this.categoryTypeRepository.findOne({
+        where: { code: categoryTypeId }
+      });
+
+      if (!categoryTypeByCode) {
+        // Kiểm tra xem có phải là enum value không
+        const enumValues = Object.values(CategoryTypeEnum);
+        if (enumValues.includes(categoryTypeId as CategoryTypeEnum)) {
+          // Tạo mới CategoryType từ enum
+          const newCategoryType = this.categoryTypeRepository.create({
+            code: categoryTypeId,
+            name: this.formatEnumToName(categoryTypeId),
+            description: `Auto-generated from enum: ${categoryTypeId}`,
+            isActive: true,
+            iconType: 'lucide',
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+
+          await this.categoryTypeRepository.save(newCategoryType);
+        }
+      }
+    }
+  }
+
+  /**
+   * Format enum value thành tên hiển thị
+   */
+  private formatEnumToName(enumValue: string): string {
+    return enumValue
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, l => l.toUpperCase())
+      .trim();
   }
 
   async update(id: string, category: Partial<Category>): Promise<Category | null> {

@@ -68,6 +68,8 @@ import { Payment } from './entities/payment.entity';
 import { PaymentModule } from './modules/payment.module';
 import { FolkMedicine } from './entities/folk-medicine.entity';
 import { FolkMedicineModule } from './modules/folk-medicine.module';
+import { CategoryTypeSyncController } from './controllers/category-type-sync.controller';
+import { CategoryTypeSyncService } from './services/category-type-sync.service';
 @Module({
   imports: [
     ConfigModule,
@@ -157,6 +159,7 @@ import { FolkMedicineModule } from './modules/folk-medicine.module';
     RoleController,
     CategoryController,
     CategoryTypeController,
+    CategoryTypeSyncController,
   ],
   providers: [
     AppService,
@@ -176,6 +179,7 @@ import { FolkMedicineModule } from './modules/folk-medicine.module';
     FacebookStrategy,
     CategoryService,
     CategoryTypeService,
+    CategoryTypeSyncService,
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,

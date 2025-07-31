@@ -12,7 +12,11 @@ export class CategoryTypeService {
   ) {}
 
   async findAll(): Promise<CategoryType[]> {
-    return this.categoryTypeRepository.find();
+    return this.categoryTypeRepository.find({
+      order: {
+        createdAt: 'DESC'
+      }
+    });
   }
 
   async findOne(id: string): Promise<CategoryType | null> {

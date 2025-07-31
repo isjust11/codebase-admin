@@ -40,7 +40,7 @@ export class FolkMedicineDto {
 
   @IsOptional()
   @IsNumber()
-  authorId?: number;
+  authorId?: string;
 
   @IsOptional()
   @IsString()

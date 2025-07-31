@@ -16,13 +16,19 @@ export class CategoryTypeController extends BaseController{
 
   @Get()
   @RequirePermission('READ', 'category-type')
-  async getAll(@Query('page') page: number, @Query('size') size: number, @Query('search') search: string) {
+  async getByPagination(@Query('page') page: number, @Query('size') size: number, @Query('search') search: string) {
     const filter: PaginationParams = {
       page: page || 1,
       size: size || 10,
       search: search || ''
     };
     return this.categoryTypeService.findAllWithPagination(filter);
+  }
+
+  @Get('all')
+  @RequirePermission('READ', 'category-type')
+  async getAll(): Promise<CategoryType[]> {
+    return this.categoryTypeService.findAll();
   }
 
   @Get(':id')

@@ -42,12 +42,14 @@ export class CategoryController extends BaseController{
   async create(@Body() category: Category, @Request() req): Promise<Category | null> {
     category.createdAt = new Date();
     category.createBy = req?.user?.id; // Assuming req.user.id contains the ID of the user creating the category
+    category.categoryTypeId = this.decodeStr(category.categoryTypeId);
     return this.categoryService.create(category);
   }
 
   @Put(':id')
   @RequirePermission('UPDATE', 'category')
   async update(@Param('id') id: string, @Body() category: Category): Promise<Category | null> {
+    category.categoryTypeId = this.decodeStr(category.categoryTypeId);
     return this.categoryService.update(id, category);
   }
 

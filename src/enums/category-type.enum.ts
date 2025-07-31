@@ -7,5 +7,6 @@ export enum CategoryTypeEnum {
     FOOD_UNIT = 'FoodUnit',
     TABLE_TYPE = 'TableType',
     TABLE_STATUS = 'TableStatus',
-    TABLE_AREA = 'TableArea'
+    TABLE_AREA = 'TableArea',
+    FOLK_MEDICINE = 'FolkMedicine',
 }
