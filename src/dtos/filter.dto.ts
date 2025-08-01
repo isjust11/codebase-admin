@@ -3,6 +3,7 @@ export interface PaginationParams {
     size?: number;
     search?: string;
     mimeType?: string;
+    categoryId?: string;
   }
   
  export interface PaginatedResponse<T> {

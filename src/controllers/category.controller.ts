@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, Request, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, Request, Query, UseGuards, Res, ClassSerializerInterceptor, UseInterceptors } from '@nestjs/common';
 import { CategoryService } from '../services/category.service';
 import { Category } from '../entities/category.entity';
 import { PaginationParams } from 'src/dtos/filter.dto';
@@ -23,6 +23,17 @@ export class CategoryController extends BaseController{
       search: search || ''
     };
     return this.categoryService.findAllWithPagination(filter);
+  }
+
+  @Get('get-by-category-type/:categoryTypeCode')
+  @RequirePermission('READ', 'category')
+  async getByCategoryType(@Param('categoryTypeCode') categoryTypeCode: string, @Res() res: Response) {
+    try {
+      const categories = await this.categoryService.findByCategoryTypeCode(categoryTypeCode);
+      return this.success(res as any, categories);
+    } catch (error) {
+      return this.error(res as any, error.message);
+    }
   }
 
   @Get()

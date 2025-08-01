@@ -21,14 +21,23 @@ export class FolkMedicineService {
   ) {}
 
   async findPagination(params: PaginationParams): Promise<PaginatedResponse<FolkMedicine>> {
-    const { page = 1, size = 10, search = '' } = params;
+    const { page = 1, size = 10, search = '', categoryId = '' } = params;
     const skip = (page - 1) * size;
 
-    const whereConditions = search ? [
+    let whereConditions: any = search ? [
       { title: Like(`%${search}%`) },
       { slug: Like(`%${search}%`) },
       { summary: Like(`%${search}%`) },
     ] : {};
+
+    if (categoryId) {
+      if(Array.isArray(whereConditions)) {
+        whereConditions  = [...whereConditions, { categoryId: categoryId }];
+      } else {
+        whereConditions = { categoryId: categoryId };
+      }
+    }
+
 
     const [data, total] = await this.folkMedicineRepository.findAndCount({
       where: whereConditions,

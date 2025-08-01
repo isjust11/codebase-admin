@@ -26,14 +26,17 @@ export class FolkMedicineController extends BaseController {
     @Query('page') page: number,
     @Query('size') size: number,
     @Query('search') search: string,
+    @Query('categoryId') categoryId: string,
   ) {
     const filter: PaginationParams = {
       page: page || 1,
       size: size || 10,
       search: search || '',
+      categoryId: categoryId || '',
     };
     return this.folkMedicineService.findPagination(filter);
   }
+  
 
   @Get('all')
   @RequirePermission('READ', 'folk-medicine')
