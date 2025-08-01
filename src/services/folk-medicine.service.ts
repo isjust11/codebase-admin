@@ -89,7 +89,7 @@ export class FolkMedicineService {
 
   async findAll(): Promise<FolkMedicine[]> {
     const folkMedicines = await this.folkMedicineRepository.find({
-      relations: ['author', 'category'],
+      relations: ['category'],
       order: { id: 'DESC' },
     });
     return plainToClass(FolkMedicine, folkMedicines);
@@ -98,7 +98,7 @@ export class FolkMedicineService {
   async findOne(id: number): Promise<FolkMedicine> {
     const folkMedicine = await this.folkMedicineRepository.findOne({
       where: { id },
-      relations: ['author', 'category'],
+      relations: [ 'category'],
     });
     if (!folkMedicine) throw new NotFoundException('Folk medicine not found');
     return plainToClass(FolkMedicine, folkMedicine);
