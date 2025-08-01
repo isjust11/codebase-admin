@@ -68,6 +68,11 @@ import { Payment } from './entities/payment.entity';
 import { PaymentModule } from './modules/payment.module';
 import { FolkMedicine } from './entities/folk-medicine.entity';
 import { FolkMedicineModule } from './modules/folk-medicine.module';
+import { Herbal } from './entities/herbal.entity';
+import { HerbalImage } from './entities/herbal-image.entity';
+import { Author } from './entities/author.entity';
+import { HerbalModule } from './modules/herbal.module';
+import { AuthorModule } from './modules/author.module';
 import { CategoryTypeSyncController } from './controllers/category-type-sync.controller';
 import { CategoryTypeSyncService } from './services/category-type-sync.service';
 @Module({
@@ -113,6 +118,9 @@ import { CategoryTypeSyncService } from './services/category-type-sync.service';
         UserExam,
         Payment,
         FolkMedicine,
+        Herbal,
+        HerbalImage,
+        Author,
       ],
       synchronize: true,
       migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
@@ -145,6 +153,8 @@ import { CategoryTypeSyncService } from './services/category-type-sync.service';
     ArticleModule,
     PaymentModule,
     FolkMedicineModule,
+    HerbalModule,
+    AuthorModule,
     // AuthModule,
   ],
   controllers: [

@@ -1,11 +1,12 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { User } from './user.entity';
 import { Category } from './category.entity';
 import { Transform } from 'class-transformer';
+import { HerbalImage } from './herbal-image.entity';
 import { Author } from './author.entity';
 
 @Entity()
-export class FolkMedicine {
+export class Herbal {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -22,19 +23,40 @@ export class FolkMedicine {
   content: string;
 
   @Column({ type: 'text', nullable: true })
-  ingredients?: string;
+  scientificName?: string;
 
   @Column({ type: 'text', nullable: true })
-  preparation?: string;
+  commonNames?: string;
 
   @Column({ type: 'text', nullable: true })
-  usage?: string;
+  family?: string;
 
   @Column({ type: 'text', nullable: true })
-  notes?: string;
+  partsUsed?: string;
+
+  @Column({ type: 'text', nullable: true })
+  activeCompounds?: string;
+
+  @Column({ type: 'text', nullable: true })
+  medicinalProperties?: string;
+
+  @Column({ type: 'text', nullable: true })
+  preparationMethods?: string;
+
+  @Column({ type: 'text', nullable: true })
+  dosage?: string;
+
+  @Column({ type: 'text', nullable: true })
+  contraindications?: string;
+
+  @Column({ type: 'text', nullable: true })
+  sideEffects?: string;
 
   @Column({ length: 255, nullable: true })
   thumbnail?: string;
+
+  @OneToMany(() => HerbalImage, herbalImage => herbalImage.herbal, { cascade: true })
+  images?: HerbalImage[];
 
   @Column({ default: 0 })
   viewCount: number;
