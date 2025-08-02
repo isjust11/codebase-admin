@@ -10,10 +10,11 @@ import { Role } from '../entities/role.entity';
 import { User } from '../entities/user.entity';
 import { Permission } from '../entities/permission.entity';
 import { Feature } from '../entities/feature.entity';
+import { PermissionService } from 'src/services/permission.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Exam, Question, ExamQuestion, Role, User, Permission, Feature])],
-  providers: [ExamService, RoleService],
+  providers: [ExamService, RoleService, PermissionService],
   controllers: [ExamController],
   exports: [ExamService],
 })
