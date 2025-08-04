@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { HerbalImage, HerbalImageType } from '../entities/herbal-image.entity';
 import { plainToClass } from 'class-transformer';
+import { HerbalImageDto } from 'src/dtos/herbal-image.dto';
+import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
 
 @Injectable()
 export class HerbalImageService {
@@ -11,8 +13,11 @@ export class HerbalImageService {
     private readonly herbalImageRepository: Repository<HerbalImage>,
   ) {}
 
-  async create(data: Partial<HerbalImage>): Promise<HerbalImage> {
-    const herbalImage = this.herbalImageRepository.create(data);
+  async create(data: HerbalImageDto): Promise<HerbalImage> {
+    const herbal = Object.assign(data, {
+      herbalId: Number(Base64EncryptionUtil.decrypt(data.herbalId))
+    })
+    const herbalImage = this.herbalImageRepository.create(herbal);
     return this.herbalImageRepository.save(herbalImage);
   }
 
@@ -47,7 +52,7 @@ export class HerbalImageService {
     return plainToClass(HerbalImage, herbalImage);
   }
 
-  async update(id: number, data: Partial<HerbalImage>): Promise<HerbalImage> {
+  async update(id: number, data: HerbalImageDto): Promise<HerbalImage> {
     const herbalImage = await this.findOne(id);
     Object.assign(herbalImage, data);
     return this.herbalImageRepository.save(herbalImage);

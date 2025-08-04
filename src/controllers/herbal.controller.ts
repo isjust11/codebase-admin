@@ -69,7 +69,7 @@ export class HerbalController extends BaseController {
   @Get(':id')
   @RequirePermission('READ', 'herbal')
   async findOne(@Param('id') id: string): Promise<HerbalResponseDto> {
-    const herbal = await this.herbalService.findOne(+id);
+    const herbal = await this.herbalService.findOne(this.decode(id));
     return plainToClass(HerbalResponseDto, herbal);
   }
 
@@ -79,7 +79,7 @@ export class HerbalController extends BaseController {
     @Param('id') id: string,
     @Body() updateHerbalDto: UpdateHerbalDto,
   ): Promise<HerbalResponseDto> {
-    const herbal = await this.herbalService.update(+id, updateHerbalDto);
+    const herbal = await this.herbalService.update(this.decode(id), updateHerbalDto);
     return plainToClass(HerbalResponseDto, herbal);
   }
 
@@ -87,20 +87,20 @@ export class HerbalController extends BaseController {
   @RequirePermission('DELETE', 'herbal')
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id') id: string): Promise<void> {
-    await this.herbalService.remove(+id);
+    await this.herbalService.remove(this.decode(id));
   }
 
   @Post(':id/view')
   @RequirePermission('UPDATE', 'herbal')
   @HttpCode(HttpStatus.OK)
   async incrementViewCount(@Param('id') id: string): Promise<void> {
-    await this.herbalService.incrementViewCount(+id);
+    await this.herbalService.incrementViewCount(this.decode(id));
   }
 
   @Post(':id/like')
   @RequirePermission('UPDATE', 'herbal')
   @HttpCode(HttpStatus.OK)
   async incrementLikeCount(@Param('id') id: string): Promise<void> {
-    await this.herbalService.incrementLikeCount(+id);
+    await this.herbalService.incrementLikeCount(this.decode(id));
   }
 } 

@@ -1,7 +1,7 @@
 import { IsString, IsOptional, IsNumber, IsBoolean, IsDateString, IsEnum } from 'class-validator';
 import { HerbalImageType } from '../entities/herbal-image.entity';
 
-export class CreateHerbalImageDto {
+export class HerbalImageDto {
   @IsString()
   url: string;
 
@@ -25,36 +25,9 @@ export class CreateHerbalImageDto {
   @IsBoolean()
   isActive?: boolean;
 
-  @IsNumber()
-  herbalId: number;
+  @IsString()
+  herbalId: string;
 }
-
-export class UpdateHerbalImageDto {
-  @IsOptional()
-  @IsString()
-  url?: string;
-
-  @IsOptional()
-  @IsString()
-  alt?: string;
-
-  @IsOptional()
-  @IsString()
-  description?: string;
-
-  @IsOptional()
-  @IsEnum(HerbalImageType)
-  type?: HerbalImageType;
-
-  @IsOptional()
-  @IsNumber()
-  sortOrder?: number;
-
-  @IsOptional()
-  @IsBoolean()
-  isActive?: boolean;
-}
-
 export class HerbalImageResponseDto {
   @IsNumber()
   id: number;

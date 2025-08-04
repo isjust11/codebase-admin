@@ -66,7 +66,7 @@ export class HerbalService {
     }
 
     // Xử lý categoryId nếu có
-    if (data.categoryId != null) {
+    if (data.categoryId != null && data.categoryId != '') {
       const categoryId = Base64EncryptionUtil.decrypt(data.categoryId);
       data.categoryId = categoryId;
 
