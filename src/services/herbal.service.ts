@@ -99,7 +99,10 @@ export class HerbalService {
 
   async update(id: number, data: Partial<Herbal>): Promise<Herbal> {
     const herbal = await this.findOne(id);
-    Object.assign(herbal, data);
+    Object.assign(herbal, {
+      ...data,
+      id: id,
+    });
 
     if (data.title) {
       data.slug = slugify(data.title, { lower: true, strict: true });
@@ -113,6 +116,17 @@ export class HerbalService {
       //   where: { id: herbal.authorId },
       // });
       // herbal.author = author ?? null;
+    }
+
+    if (data.images) {
+      const images = data.images.map((image) => {
+        return {
+          ...image,
+          id: image.id ? parseInt(Base64EncryptionUtil.decrypt(image.id.toString()), 10) : 0,
+          herbalId: id,
+        };
+      });
+      herbal.images = images;
     }
 
     if (data.categoryId != null) {
