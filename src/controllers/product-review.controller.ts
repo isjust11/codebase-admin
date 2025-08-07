@@ -7,7 +7,6 @@ import { PermissionGuard } from '../guards/permission.guard';
 import { RequirePermission } from 'src/decorators/require-permissions.decorator';
 import { PaginationParams } from 'src/dtos/filter.dto';
 import { BaseController } from './base.controller';
-import { Request } from 'express';
 
 @Controller('product-reviews')
 @UseGuards(PermissionGuard)
@@ -38,8 +37,8 @@ export class ProductReviewController extends BaseController {
       rating,
       isVerified,
       isHelpful,
-      sortBy,
-      sortOrder,
+      sortBy: sortBy as 'rating' | 'createdAt' | 'helpfulCount' | undefined,
+      sortOrder: sortOrder as 'ASC' | 'DESC' | undefined,
     };
     return this.productReviewService.findAllWithPagination(filter);
   }
@@ -76,8 +75,8 @@ export class ProductReviewController extends BaseController {
 
   @Post()
   @RequirePermission('CREATE', 'product-review')
-  async create(@Body() createProductReviewDto: CreateProductReviewDto, @Req() req: Request): Promise<ProductReview> {
-    const userId = req.user['id'];
+  async create(@Body() createProductReviewDto: CreateProductReviewDto, @Req() req: any): Promise<ProductReview> {
+    const userId = req.user.id;
     return this.productReviewService.create(createProductReviewDto, userId);
   }
 
@@ -86,16 +85,16 @@ export class ProductReviewController extends BaseController {
   async update(
     @Param('id') id: string,
     @Body() updateProductReviewDto: UpdateProductReviewDto,
-    @Req() req: Request,
+    @Req() req: any,
   ): Promise<ProductReview> {
-    const userId = req.user['id'];
+    const userId = req.user.id;
     return this.productReviewService.update(this.decode(id), updateProductReviewDto, userId);
   }
 
   @Delete(':id')
   @RequirePermission('DELETE', 'product-review')
-  async remove(@Param('id') id: string, @Req() req: Request): Promise<void> {
-    const userId = req.user['id'];
+  async remove(@Param('id') id: string, @Req() req: any): Promise<void> {
+    const userId = req.user.id;
     return this.productReviewService.remove(this.decode(id), userId);
   }
 
@@ -104,9 +103,9 @@ export class ProductReviewController extends BaseController {
   async reply(
     @Param('id') id: string,
     @Body() replyDto: ReplyProductReviewDto,
-    @Req() req: Request,
+    @Req() req: any,
   ): Promise<ProductReview> {
-    const adminId = req.user['id'];
+    const adminId = req.user.id;
     return this.productReviewService.reply(this.decode(id), replyDto, adminId);
   }
 

@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like, FindOptionsWhere } from 'typeorm';
-import { ProductComplaint, ComplaintStatus, ComplaintPriority } from '../entities/product-complaint.entity';
+import { ProductComplaint, ComplaintStatus, ComplaintPriority, ComplaintType } from '../entities/product-complaint.entity';
 import { Product } from '../entities/product.entity';
 import { CreateProductComplaintDto, UpdateProductComplaintDto, AssignComplaintDto, ResolveComplaintDto, ProductComplaintFilterDto } from '../dtos/product-complaint.dto';
 import { PaginationParams } from '../dtos/filter.dto';
@@ -231,7 +231,7 @@ export class ProductComplaintService {
 
   async getComplaintsByType(type: string): Promise<ProductComplaint[]> {
     return this.productComplaintRepository.find({
-      where: { type },
+      where: { type: type as ComplaintType },
       relations: ['user', 'product', 'assignedTo'],
       order: { createdAt: 'DESC' },
     });
