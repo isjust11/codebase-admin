@@ -75,6 +75,14 @@ import { HerbalModule } from './modules/herbal.module';
 import { AuthorModule } from './modules/author.module';
 import { CategoryTypeSyncController } from './controllers/category-type-sync.controller';
 import { CategoryTypeSyncService } from './services/category-type-sync.service';
+import { Product } from './entities/product.entity';
+import { ProductReview } from './entities/product-review.entity';
+import { ProductComplaint } from './entities/product-complaint.entity';
+import { ProductModule } from './modules/product.module';
+import { ProductReviewModule } from './modules/product-review.module';
+import { ProductComplaintModule } from './modules/product-complaint.module';
+import { AdvertisingSlider } from './entities/advertising-slider.entity';
+import { AdvertisingSliderModule } from './modules/advertising-slider.module';
 @Module({
   imports: [
     ConfigModule,
@@ -121,6 +129,10 @@ import { CategoryTypeSyncService } from './services/category-type-sync.service';
         Herbal,
         HerbalImage,
         Author,
+        Product,
+        ProductReview,
+        ProductComplaint,
+        AdvertisingSlider,
       ],
       synchronize: true,
       migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
@@ -142,6 +154,10 @@ import { CategoryTypeSyncService } from './services/category-type-sync.service';
       CategoryType,
       Reservation,
       History,
+      Product,
+      ProductReview,
+      ProductComplaint,
+      AdvertisingSlider,
     ]),
     NotificationModule,
     FeatureContentModule,
@@ -155,6 +171,10 @@ import { CategoryTypeSyncService } from './services/category-type-sync.service';
     FolkMedicineModule,
     HerbalModule,
     AuthorModule,
+    ProductModule,
+    ProductReviewModule,
+    ProductComplaintModule,
+    AdvertisingSliderModule,
     // AuthModule,
   ],
   controllers: [

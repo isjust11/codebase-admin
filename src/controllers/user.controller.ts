@@ -5,7 +5,7 @@ import { User } from '../entities/user.entity';
 import { RegisterDto } from '../dtos/auth.dto';
 import { UpdateUserDto } from '../dtos/user.dto';
 import { PermissionGuard } from '../guards/permission.guard';
-import { RequirePermissions, RequirePermission, RequirePermissionsAction } from 'src/decorators/require-permissions.decorator';
+import { RequirePermission, RequirePermissionsAction } from 'src/decorators/require-permissions.decorator';
 import { PaginationParams } from 'src/dtos/filter.dto';
 import { BaseController } from './base.controller';
 
