@@ -34,6 +34,12 @@ export class RoleService {
     });
   }
 
+  async findByIds(ids: number[]): Promise<Role[]> {
+    return this.roleRepository.find({
+      where: { id: In(ids) },
+    });
+  }
+
    async findByCode(code: string): Promise<Role | null> {
     return this.roleRepository.findOne({
       where: { code },

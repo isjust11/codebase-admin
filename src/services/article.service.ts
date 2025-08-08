@@ -6,15 +6,14 @@ import slugify from 'slugify';
 import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
 import { plainToClass } from 'class-transformer';
 import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
-import { User } from 'src/entities/user.entity';
+import { UserService } from './user.service';
 
 @Injectable()
 export class ArticleService {
   constructor(
     @InjectRepository(Article)
     private readonly articleRepository: Repository<Article>,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    private readonly userService: UserService
   ) {}
 
   async findPagination(params: PaginationParams): Promise<PaginatedResponse<Article>> {
@@ -53,9 +52,7 @@ export class ArticleService {
       const authorId = Base64EncryptionUtil.decrypt(data.authorId);
       data.authorId = parseInt(authorId, 10);
       
-      const author = await this.userRepository.findOne({ 
-        where: { id: data.authorId },
-      });
+      const author = await this.userService.findById(data.authorId);
       data.author = author ?? null;
     }
     
@@ -86,9 +83,7 @@ export class ArticleService {
       const authorId = Base64EncryptionUtil.decrypt(data.authorId);
       article.authorId = parseInt(authorId, 10);
       
-      const author = await this.userRepository.findOne({ 
-        where: { id: article.authorId },
-      });
+      const author = await this.userService.findById(article.authorId);
       article.author = author ?? null;
     }
     

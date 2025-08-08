@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { NotificationsGateway } from '../gateways/notifications.gateway';
 import { NotificationService } from '../services/notification.service';
-import { NotificationController } from '../controllers/notification.controller';
+import { NotificationController } from '../controllers/notification/notification.controller';
 import { NotificationGuard } from '../guards/notification.guard';
 import { EventGuard } from '../guards/event.guard';
 import { RoomGuard } from '../guards/room.guard';
@@ -14,8 +14,11 @@ import { NotificationFilter } from '../filters/notification.filter';
 import { EventFilter } from '../filters/event.filter';
 import { RoomFilter } from '../filters/room.filter';
 import { MessageFilter } from '../filters/message.filter';
+import { CategoryModule } from './category.module';
+import { AuthModule } from './auth.module';
 
 @Module({
+  imports:[AuthModule, CategoryModule],
   providers: [
     NotificationsGateway,
     NotificationService,

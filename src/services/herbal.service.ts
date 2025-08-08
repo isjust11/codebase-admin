@@ -2,22 +2,19 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository } from 'typeorm';
 import { Herbal } from '../entities/herbal.entity';
-import { User } from '../entities/user.entity';
-import { Category } from '../entities/category.entity';
 import slugify from 'slugify';
 import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
 import { plainToClass } from 'class-transformer';
 import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
+import { UserService } from './user.service';
+import { CategoryService } from './category.service';
 
 @Injectable()
 export class HerbalService {
   constructor(
     @InjectRepository(Herbal)
     private readonly herbalRepository: Repository<Herbal>,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
-    @InjectRepository(Category)
-    private readonly categoryRepository: Repository<Category>,
+    private readonly categoryService: CategoryService
   ) {}
 
   async findPagination(params: PaginationParams): Promise<PaginatedResponse<Herbal>> {
@@ -70,9 +67,7 @@ export class HerbalService {
       const categoryId = Base64EncryptionUtil.decrypt(data.categoryId);
       data.categoryId = categoryId;
 
-      const category = await this.categoryRepository.findOne({
-        where: { id: data.categoryId },
-      });
+      const category = await this.categoryService.findOne(data.categoryId);
       data.category = category ?? null;
     }
 
@@ -133,9 +128,7 @@ export class HerbalService {
       const categoryId = Base64EncryptionUtil.decrypt(data.categoryId);
       herbal.categoryId = categoryId;
 
-      const category = await this.categoryRepository.findOne({
-        where: { id: herbal.categoryId },
-      });
+      const category = await this.categoryService.findOne(herbal.categoryId);
       herbal.category = category ?? null;
     }
 

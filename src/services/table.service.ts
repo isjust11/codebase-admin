@@ -1,22 +1,21 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Table } from '../entities/table.entity';
 import { NotificationsGateway } from '../gateways/notifications.gateway';
 import { NotificationData } from '../interfaces/notification.interface';
 import { NOTIFICATION_EVENTS, NOTIFICATION_ROOMS, NOTIFICATION_MESSAGES } from '../constants/notification.constants';
 import { NotificationStatus, NotificationType, NotificationPriority } from '../enums/notification.enum';
 import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
-import { Category } from '../entities/category.entity';
+import { CategoryService } from './category.service';
 
 @Injectable()
 export class TableService {
   constructor(
     @InjectRepository(Table)
     private tableRepository: Repository<Table>,
-    @InjectRepository(Category)
-    private categoryRepository: Repository<Category>,
-    private notificationsGateway: NotificationsGateway,
+    private readonly categoryService: CategoryService,
+    private readonly notificationsGateway: NotificationsGateway,
   ) { }
 
   async findAllWithPagination(params: PaginationParams): Promise<PaginatedResponse<Table>> {
@@ -62,21 +61,21 @@ export class TableService {
 
   async create(table: Table): Promise<Table> {
     if (table.tableTypeId) {
-      const tableType = await this.categoryRepository.findOne({ where: { id: table.tableTypeId } });
+      const tableType = await this.categoryService.findOne(table.tableTypeId);
       if (!tableType) {
         throw new NotFoundException(`Table type with ID ${table.tableTypeId} not found`);
       }
     }
 
     if (table.tableStatusId) {
-      const tableStatus = await this.categoryRepository.findOne({ where: { id: table.tableStatusId } });
+      const tableStatus = await this.categoryService.findOne(table.tableStatusId);
       if (!tableStatus) {
         throw new NotFoundException(`Table status with ID ${table.tableStatusId} not found`);
       }
     }
 
     if (table.areaId) {
-      const tableArea = await this.categoryRepository.findOne({ where: { id: table.areaId } });
+      const tableArea = await this.categoryService.findOne(table.areaId);
       if (!tableArea) {
         throw new NotFoundException(`Table area with ID ${table.areaId} not found`);
       }
@@ -108,21 +107,21 @@ export class TableService {
     }
 
     if (table.tableTypeId) {
-      const tableType = await this.categoryRepository.findOne({ where: { id: table.tableTypeId } });
+      const tableType = await this.categoryService.findOne(table.tableTypeId);
       if (!tableType) {
         throw new NotFoundException(`Table type with ID ${table.tableTypeId} not found`);
       }
     }
 
     if (table.tableStatusId) {
-      const tableStatus = await this.categoryRepository.findOne({ where: { id: table.tableStatusId } });
+      const tableStatus = await this.categoryService.findOne(table.tableStatusId);
       if (!tableStatus) {
         throw new NotFoundException(`Table status with ID ${table.tableStatusId} not found`);
       }
     }
 
     if (table.areaId) {
-      const tableArea = await this.categoryRepository.findOne({ where: { id: table.areaId } });
+      const tableArea = await this.categoryService.findOne(table.areaId);
       if (!tableArea) {
         throw new NotFoundException(`Table area with ID ${table.areaId} not found`);
       }
