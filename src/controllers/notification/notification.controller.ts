@@ -1,8 +1,5 @@
 import { Controller, Post, Body, UseGuards, UsePipes, UseFilters } from '@nestjs/common';
 import { NotificationService } from '../../services/notification.service';
-import { NotificationGuard } from '../../guards/notification.guard';
-import { EventGuard } from '../../guards/event.guard';
-import { RoomGuard } from '../../guards/room.guard';
 import { NotificationPipe } from '../../pipes/notification.pipe';
 import { EventPipe } from '../../pipes/event.pipe';
 import { RoomPipe } from '../../pipes/room.pipe';
