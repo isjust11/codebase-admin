@@ -1,21 +1,20 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Order } from '../entities/order.entity';
 import { OrderItem } from '../entities/order-item.entity';
 import { FoodItem } from '../entities/food-item.entity';
-import { CreateOrderDto, UpdateOrderStatusDto } from '../dtos/order.dto';
+import { CreateOrderDto } from '../dtos/order.dto';
 import { NotificationPriority } from 'src/enums/notification.enum';
 import { NotificationType } from 'src/enums/notification.enum';
 import { NOTIFICATION_MESSAGES, NOTIFICATION_EVENTS } from 'src/constants/notification.constants';
 import { NotificationData } from 'src/interfaces/notification.interface';
 import { NOTIFICATION_ROOMS } from 'src/constants/notification.constants';
 import { NotificationStatus } from 'src/enums/notification.enum';
-import { NotificationsGateway } from 'src/gateways/notifications.gateway';
+// import { NotificationsGateway } from 'src/gateways/notifications.gateway';
 import { TableService } from './table.service';
 import { CategoryService } from './category.service';
 import { tableStatus } from 'src/constants/table.constants';
-import { Category } from 'src/entities/category.entity';
 import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
 
 @Injectable()
@@ -29,7 +28,7 @@ export class OrderService {
     private foodItemRepository: Repository<FoodItem>,
     private tableService: TableService,
     private categoryService:CategoryService,
-    private notificationsGateway: NotificationsGateway,
+    // private notificationsGateway: NotificationsGateway,
   ) {}
 
   async create(tableId: number,createOrderDto: CreateOrderDto): Promise<Order> {
@@ -97,7 +96,7 @@ export class OrderService {
       priority: NotificationPriority.MEDIUM,
       additionalData: savedOrder
     };
-    this.notificationsGateway.notifyAll(NOTIFICATION_EVENTS.NEW_ORDER, notificationData);
+    // this.notificationsGateway.notifyAll(NOTIFICATION_EVENTS.NEW_ORDER, notificationData);
     return result;
   }
 

@@ -7,14 +7,14 @@ import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
 import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
 import { Feature } from 'src/entities/feature.entity';
 import { FeatureDto } from 'src/dtos/feature.dto';
+import { RoleService } from './role.service';
 
 @Injectable()
 export class FeatureService {
     constructor(
         @InjectRepository(Feature)
         private featureRepository: Repository<Feature>,
-        @InjectRepository(Role)
-        private roleRepository: Repository<Role>,
+        private roleService: RoleService
     ) { }
 
     async create(createFeatureDto: FeatureDto): Promise<Feature> {
@@ -122,7 +122,7 @@ export class FeatureService {
             throw new Error('Feature not found');
         }
 
-        const roles = await this.roleRepository.findByIds(assignRoleDto.roleIds);
+        const roles = await this.roleService.findByIds(assignRoleDto.roleIds);
         // feature.roles = roles;
 
         return this.featureRepository.save(feature);

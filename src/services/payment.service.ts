@@ -6,6 +6,7 @@ import Stripe from 'stripe';
 import { Payment, PaymentStatus, PaymentMethod } from '../entities/payment.entity';
 import { CreatePaymentDto, UpdatePaymentStatusDto, PaymentResponseDto } from '../dtos/payment.dto';
 import { User } from '../entities/user.entity';
+import { UserService } from './user.service';
 
 @Injectable()
 export class PaymentService {
@@ -15,9 +16,8 @@ export class PaymentService {
   constructor(
     @InjectRepository(Payment)
     private paymentRepository: Repository<Payment>,
-    @InjectRepository(User)
-    private userRepository: Repository<User>,
-    private configService: ConfigService,
+    private readonly userService: UserService,
+    private readonly configService: ConfigService,
   ) {
     // Initialize Stripe with test keys
     const stripeKey = this.configService.get('STRIPE_SECRET_KEY');
@@ -30,7 +30,7 @@ export class PaymentService {
   }
 
   async createPayment(userId: number, createPaymentDto: CreatePaymentDto): Promise<PaymentResponseDto> {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
+    const user = await this.userService.findById(userId);
     if (!user) {
       throw new BadRequestException('User not found');
     }

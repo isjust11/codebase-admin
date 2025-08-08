@@ -4,9 +4,9 @@ import { Repository } from 'typeorm';
 import { Reservation } from '../entities/reservation.entity';
 import { CreateReservationDto, UpdateReservationDto, ConfirmReservationDto } from '../dtos/reservation.dto';
 import { Table } from '../entities/table.entity';
-import { User } from '../entities/user.entity';
 import { HistoryService } from './history.service';
 import { HistoryAction } from '../entities/history.entity';
+import { UserService } from './user.service';
 
 @Injectable()
 export class ReservationService {
@@ -15,9 +15,8 @@ export class ReservationService {
     private reservationRepository: Repository<Reservation>,
     @InjectRepository(Table)
     private tableRepository: Repository<Table>,
-    @InjectRepository(User)
-    private userRepository: Repository<User>,
-    private historyService: HistoryService,
+    private readonly userService: UserService,
+    private readonly historyService: HistoryService,
   ) {}
 
   async create(createReservationDto: CreateReservationDto): Promise<Reservation> {
@@ -26,7 +25,7 @@ export class ReservationService {
       throw new NotFoundException('Table not found');
     }
 
-    const user = await this.userRepository.findOne({ where: { id: createReservationDto.userId } });
+    const user = await this.userService.findById(createReservationDto.userId);
     if (!user) {
       throw new NotFoundException('User not found');
     }
