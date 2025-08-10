@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsNumber, IsBoolean, IsDateString } from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsBoolean, IsDateString, IsArray } from 'class-validator';
 
 export class CreateAuthorDto {
   @IsString()
@@ -75,6 +75,19 @@ export class CreateAuthorDto {
   @IsOptional()
   @IsString()
   portrait?: string;
+
+  @IsOptional()
+  @IsString()
+  avatar?: string;
+
+  @IsOptional()
+  @IsString()
+  coverImage?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  galleryImages?: string[];
 
   @IsOptional()
   @IsString()
@@ -177,6 +190,19 @@ export class UpdateAuthorDto {
   @IsOptional()
   @IsString()
   portrait?: string;
+
+  @IsOptional()
+  @IsString()
+  avatar?: string;
+
+  @IsOptional()
+  @IsString()
+  coverImage?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  galleryImages?: string[];
 
   @IsOptional()
   @IsString()
@@ -284,6 +310,19 @@ export class AuthorResponseDto {
   @IsOptional()
   @IsString()
   portrait?: string;
+
+  @IsOptional()
+  @IsString()
+  avatar?: string;
+
+  @IsOptional()
+  @IsString()
+  coverImage?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  galleryImages?: string[];
 
   @IsOptional()
   @IsString()

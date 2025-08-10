@@ -41,7 +41,8 @@ export class HerbalController extends BaseController {
   @Post()
   @RequirePermission('CREATE', 'herbal')
   async create(@Body() createHerbalDto: CreateHerbalDto): Promise<HerbalResponseDto> {
-    const herbal = await this.herbalService.create(createHerbalDto);
+    const herbal = await this.herbalService.create({ ...createHerbalDto, 
+      authorId: createHerbalDto.authorId ? this.decode(createHerbalDto.authorId) : undefined });
     return plainToClass(HerbalResponseDto, herbal);
   }
 
@@ -79,7 +80,8 @@ export class HerbalController extends BaseController {
     @Param('id') id: string,
     @Body() updateHerbalDto: UpdateHerbalDto,
   ): Promise<HerbalResponseDto> {
-    const herbal = await this.herbalService.update(this.decode(id), updateHerbalDto);
+    const herbal = await this.herbalService.update(this.decode(id), 
+    { ...updateHerbalDto, authorId: updateHerbalDto.authorId ? this.decode(updateHerbalDto.authorId) : undefined });
     return plainToClass(HerbalResponseDto, herbal);
   }
 

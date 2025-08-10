@@ -68,6 +68,15 @@ export class Author {
   @Column({ length: 255, nullable: true })
   portrait?: string;
 
+  @Column({ length: 255, nullable: true })
+  avatar?: string;
+
+  @Column({ length: 255, nullable: true })
+  coverImage?: string;
+
+  @Column({ type: 'simple-array', nullable: true })
+  galleryImages?: string[];
+
   @Column({ type: 'text', nullable: true })
   quotes?: string;
 

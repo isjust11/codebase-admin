@@ -37,7 +37,6 @@ export class AuthorService {
       where: whereConditions,
       skip,
       take: size,
-      relations: ['herbals', 'folkMedicines'],
       order: { id: 'DESC' },
     });
 

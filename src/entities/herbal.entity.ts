@@ -65,7 +65,7 @@ export class Herbal {
   likeCount: number;
 
   @Column({ nullable: true })
-  authorId?: string;
+  authorId?: number;
 
   @ManyToOne(() => Author, author => author.id, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'authorId' })
