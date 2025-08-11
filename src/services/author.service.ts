@@ -60,7 +60,6 @@ export class AuthorService {
 
   async findAll(): Promise<Author[]> {
     const authors = await this.authorRepository.find({
-      relations: ['herbals', 'folkMedicines'],
       order: { id: 'DESC' },
     });
     return plainToClass(Author, authors);
@@ -69,7 +68,6 @@ export class AuthorService {
   async findOne(id: number): Promise<Author> {
     const author = await this.authorRepository.findOne({
       where: { id },
-      relations: ['herbals', 'folkMedicines'],
     });
     if (!author) throw new NotFoundException('Author not found');
     return plainToClass(Author, author);
@@ -86,7 +84,7 @@ export class AuthorService {
 
   async update(id: number, data: Partial<Author>): Promise<Author> {
     const author = await this.findOne(id);
-    Object.assign(author, data);
+    Object.assign(author, {...data, id: id});
 
     if (data.name) {
       data.slug = slugify(data.name, { lower: true, strict: true });

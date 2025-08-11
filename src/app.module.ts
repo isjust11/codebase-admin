@@ -89,7 +89,7 @@ import { ConfigModule } from '@nestjs/config';
       migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
       migrationsRun: true,
     }),
-    NotificationModule,
+    // NotificationModule,
     CategoryModule,
     FeatureModule,
     ExamModule,

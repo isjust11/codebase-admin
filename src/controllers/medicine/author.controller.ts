@@ -15,7 +15,7 @@ import { AuthorService } from '../../services/author.service';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { PaginationParams } from '../../dtos/filter.dto';
 import { plainToClass } from 'class-transformer';
-import { CreateAuthorDto, UpdateAuthorDto, AuthorResponseDto } from '../../dtos/author.dto';
+import { AuthorDto, AuthorResponseDto } from '../../dtos/author.dto';
 import { PermissionGuard } from 'src/guards/permission.guard';
 import { BaseController } from '../base/base.controller';
 import { RequirePermission } from 'src/decorators/require-permissions.decorator';
@@ -29,7 +29,13 @@ export class AuthorController extends BaseController {
 
   @Post()
   @RequirePermission('CREATE', 'author')
-  async create(@Body() createAuthorDto: CreateAuthorDto): Promise<AuthorResponseDto> {
+  async create(@Body() createAuthorDto: AuthorDto): Promise<AuthorResponseDto> {
+    if (createAuthorDto.birthDate) {
+      createAuthorDto.birthDate = new Date(createAuthorDto.birthDate);
+    }
+    if (createAuthorDto.deathDate) {
+      createAuthorDto.deathDate = new Date(createAuthorDto.deathDate);
+    }
     const author = await this.authorService.create(createAuthorDto);
     return plainToClass(AuthorResponseDto, author);
   }
@@ -45,7 +51,7 @@ export class AuthorController extends BaseController {
   }
 
   @Get('famous')
-  @RequirePermission('READ', 'author')
+  @RequirePermission('READ', 'author') 
   async findFamousAuthors(): Promise<AuthorResponseDto[]> {
     const authors = await this.authorService.findFamousAuthors();
     return plainToClass(AuthorResponseDto, authors);
@@ -89,7 +95,7 @@ export class AuthorController extends BaseController {
   @Get(':id')
   @RequirePermission('READ', 'author')
   async findOne(@Param('id') id: string): Promise<AuthorResponseDto> {
-    const author = await this.authorService.findOne(+id);
+    const author = await this.authorService.findOne(this.decode(id));
     return plainToClass(AuthorResponseDto, author);
   }
 
@@ -97,9 +103,15 @@ export class AuthorController extends BaseController {
   @RequirePermission('UPDATE', 'author')
   async update(
     @Param('id') id: string,
-    @Body() updateAuthorDto: UpdateAuthorDto,
+    @Body() updateAuthorDto: AuthorDto,
   ): Promise<AuthorResponseDto> {
-    const author = await this.authorService.update(+id, updateAuthorDto);
+    if (updateAuthorDto.birthDate) {
+      updateAuthorDto.birthDate = new Date(updateAuthorDto.birthDate);
+    }
+    if (updateAuthorDto.deathDate) {
+      updateAuthorDto.deathDate = new Date(updateAuthorDto.deathDate);
+    }
+    const author = await this.authorService.update(this.decode(id), updateAuthorDto);
     return plainToClass(AuthorResponseDto, author);
   }
 
@@ -107,20 +119,20 @@ export class AuthorController extends BaseController {
   @RequirePermission('DELETE', 'author')
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id') id: string): Promise<void> {
-    await this.authorService.remove(+id);
+    await this.authorService.remove(this.decode(id));
   }
 
   @Post(':id/view')
   @RequirePermission('UPDATE', 'author')
   @HttpCode(HttpStatus.OK)
   async incrementViewCount(@Param('id') id: string): Promise<void> {
-    await this.authorService.incrementViewCount(+id);
+    await this.authorService.incrementViewCount(this.decode(id));
   }
 
   @Post(':id/like')
   @RequirePermission('UPDATE', 'author')
   @HttpCode(HttpStatus.OK)
   async incrementLikeCount(@Param('id') id: string): Promise<void> {
-    await this.authorService.incrementLikeCount(+id);
+    await this.authorService.incrementLikeCount(this.decode(id));
   }
 } 
