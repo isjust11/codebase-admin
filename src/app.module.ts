@@ -12,7 +12,7 @@ import { Media } from './entities/media.entity';
 import { Role } from './entities/role.entity';
 import { Permission } from './entities/permission.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
-import { NotificationModule } from './modules/notification.module';
+// import { NotificationModule } from './modules/notification.module';
 import { Category } from './entities/category.entity';
 import { CategoryType } from './entities/category-type.entity';
 import { Reservation } from './entities/reservation.entity';
@@ -40,6 +40,7 @@ import { AuthModule } from './modules/auth.module';
 import { MedicineModule } from './modules/medicine.module';
 import { ECommerceModule } from './modules/e-commerce.module';
 import { MediaModule } from './modules/media.module';
+import { DashboardModule } from './modules/dashboard.module';
 import { ConfigModule } from '@nestjs/config';
 @Module({
   imports: [
@@ -98,6 +99,7 @@ import { ConfigModule } from '@nestjs/config';
     ECommerceModule,
     MediaModule,
     AuthModule,
+    DashboardModule,
   ],
 })
 export class AppModule { }

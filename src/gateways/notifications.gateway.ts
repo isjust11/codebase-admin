@@ -29,14 +29,14 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
   private userRoles: Map<string, string> = new Map(); // Lưu trữ role của user
 
   handleConnection(client: Socket) {
-    console.log(`Client connected: ${client.id}`);
-    this.connectedClients.set(client.id, client);
+    // console.log(`Client connected: ${client.id}`);
+    // this.connectedClients.set(client.id, client);
   }
 
   handleDisconnect(client: Socket) {
-    console.log(`Client disconnected: ${client.id}`);
-    this.connectedClients.delete(client.id);
-    this.userRoles.delete(client.id);
+    // console.log(`Client disconnected: ${client.id}`);
+    // this.connectedClients.delete(client.id);
+    // this.userRoles.delete(client.id);
   }
 
   @SubscribeMessage(NOTIFICATION_EVENTS.JOIN_ROOM)
