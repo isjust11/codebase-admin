@@ -7,6 +7,7 @@ import { Order } from './order.entity';
 import { Feature } from './feature.entity';
 import { FolkMedicine } from './folk-medicine.entity';
 import { features } from 'process';
+import { Product } from './product.entity';
 
 @Entity()
 export class Category {
@@ -50,6 +51,9 @@ export class Category {
 
   @Column()
   categoryTypeId: string;
+
+  @OneToMany(() => Product, product => product.category)
+  products: Product[];
 
   @OneToMany(() => FoodItem, foodItem => foodItem.foodCategory)
   foodItems: FoodItem[];

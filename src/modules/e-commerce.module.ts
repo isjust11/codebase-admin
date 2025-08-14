@@ -14,7 +14,6 @@ import { OrderItem } from 'src/entities/order-item.entity';
 import { OrderController } from 'src/controllers/ecommerce/order.controller';
 import { ReservationController } from 'src/controllers/ecommerce/reservation.controller';
 import { PaymentController } from 'src/controllers/ecommerce/payment.controller';
-import { ProductController } from 'src/controllers/exam/product.controller';
 import { ProductReviewController } from 'src/controllers/ecommerce/product-review.controller';
 import { ProductComplaintController } from 'src/controllers/ecommerce/product-complaint.controller';
 import { FoodItemController } from 'src/controllers/ecommerce/food-item.controller';
@@ -32,6 +31,7 @@ import { CategoryModule } from './category.module';
 import { History } from 'src/entities/history.entity';
 import { NotificationsGateway } from 'src/gateways/notifications.gateway';
 import { ConfigModule } from '@nestjs/config';
+import { ProductController } from 'src/controllers/ecommerce/product.controller';
 
 @Module({
   imports: [
@@ -56,10 +56,10 @@ import { ConfigModule } from '@nestjs/config';
     ReservationController,
     HistoryController,
     PaymentController,
-    ProductController,
     ProductReviewController,
     ProductComplaintController,
     FoodItemController,
+    ProductController,
   ],
   providers: [
     TableService,
@@ -79,7 +79,6 @@ import { ConfigModule } from '@nestjs/config';
     ReservationService,
     HistoryService,
     PaymentService,
-    ProductService,
     ProductReviewService,
     ProductComplaintService,
     FoodItemService,

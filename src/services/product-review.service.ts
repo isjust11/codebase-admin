@@ -209,16 +209,6 @@ export class ProductReviewService {
     if (reviews.length > 0) {
       const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
       const averageRating = totalRating / reviews.length;
-
-      await this.productRepository.update(productId, {
-        rating: Math.round(averageRating * 10) / 10, // Làm tròn đến 1 chữ số thập phân
-        reviewCount: reviews.length,
-      });
-    } else {
-      await this.productRepository.update(productId, {
-        rating: 0,
-        reviewCount: 0,
-      });
     }
   }
 } 
