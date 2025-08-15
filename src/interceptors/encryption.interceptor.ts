@@ -36,7 +36,7 @@ export class EncryptionInterceptor implements NestInterceptor {
       // Mã hóa các trường ID
       const idFields = Object.keys(encryptedEntity).filter(key => key.endsWith('Id'));
       idFields.forEach(field => {
-        if (encryptedEntity[field]) {
+        if (encryptedEntity[field] && encryptedEntity[field].toString().length < 10) {
           encryptedEntity[field] = Base64EncryptionUtil.encrypt(encryptedEntity[field].toString());
         }
       });

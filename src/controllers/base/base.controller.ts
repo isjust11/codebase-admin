@@ -13,8 +13,24 @@ export abstract class BaseController {
   }
 
   // Hàm trả về response lỗi
-  protected error(res: Response, code = 400) {
-    return res.status(code).json();
+  protected error(res: Response, error: any) {
+    try {
+      const { status, message, data } = error;
+      return res.status(status).json({
+        status: false,
+        message,
+        code: status,
+        data,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        status: false,
+        message: 'Internal server error',
+        code: 500,
+        data: error,
+      });
+    }
+
   }
 
   // Hàm trả về response phân trang

@@ -94,7 +94,7 @@ export class DashboardService {
         .createQueryBuilder('order')
         .select('SUM(order.totalAmount)', 'total')
         .where('order.createdAt >= :startDate', { startDate })
-        .andWhere('order.status = :status', { status: 'completed' })
+        .andWhere('order.statusId = :status', { status: 'completed' })
         .getRawOne(),
       this.productRepository.count({
           where: { createdAt: MoreThanOrEqual(startDate) },
@@ -117,13 +117,13 @@ export class DashboardService {
   async getRecentActivities(limit: number) {
     const activities = await this.orderRepository
       .createQueryBuilder('order')
-      .leftJoinAndSelect('order.user', 'user')
+      .leftJoinAndSelect('order.account', 'user')
       .select([
         'order.id',
         'order.totalAmount',
-        'order.status',
+        'order.statusId',
         'order.createdAt',
-        'user.name',
+        'user.fullName',
         'user.email',
       ])
       .orderBy('order.createdAt', 'DESC')
@@ -147,12 +147,8 @@ export class DashboardService {
           .createQueryBuilder('product')
           .select([
             'product.id',
-            'product.name',
-            'product.price',
-            'product.view',
-            'product.sold',
+            'product.title'
           ])
-          .orderBy('product.sold', 'DESC')
           .limit(limit)
           .getMany();
 
@@ -174,11 +170,8 @@ export class DashboardService {
           .createQueryBuilder('author')
           .select([
             'author.id',
-            'author.name',
-            'author.view',
-            'author.articleCount',
+            'author.name'
           ])
-          .orderBy('author.view', 'DESC')
           .limit(limit)
           .getMany();
 

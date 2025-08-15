@@ -29,6 +29,12 @@ export class Article {
   @Column({ nullable: true })
   authorId?: any;
 
+  @Column({ nullable: true })
+  view: number;
+
+  @Column({ nullable: true })
+  like: number;
+
   @Column({ default: true })
   isActive: boolean;
 
