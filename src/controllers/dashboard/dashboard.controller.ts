@@ -19,7 +19,7 @@ export class DashboardController extends BaseController {
       const overview = await this.dashboardService.getOverview();
       return this.success(res as any, overview);
     } catch (error) {
-      return this.error(res as any, error.message);
+      return this.error(res as any, error);
     }
   }
 
@@ -30,7 +30,7 @@ export class DashboardController extends BaseController {
       const statistics = await this.dashboardService.getStatistics(period);
       return this.success(res as any, statistics);
     } catch (error) {
-      return this.error(res as any, error.message);
+      return this.error(res as any, error);
     }
   }
 
@@ -41,7 +41,7 @@ export class DashboardController extends BaseController {
       const activities = await this.dashboardService.getRecentActivities(limit);
       return this.success(res as any, activities);
     } catch (error) {
-      return this.error(res as any, error.message);
+      return this.error(res as any, error);
     }
   }
 
@@ -52,7 +52,7 @@ export class DashboardController extends BaseController {
       const performers = await this.dashboardService.getTopPerformers(type, limit);
       return this.success(res as any, performers);
     } catch (error) {
-      return this.error(res as any, error.message);
+      return this.error(res as any, error);
     }
   }
 
@@ -63,7 +63,7 @@ export class DashboardController extends BaseController {
       const analytics = await this.dashboardService.getRevenueAnalytics(period);
       return this.success(res as any, analytics);
     } catch (error) {
-      return this.error(res as any, error.message);
+      return this.error(res as any, error);
     }
   }
 
@@ -74,7 +74,7 @@ export class DashboardController extends BaseController {
       const growth = await this.dashboardService.getUserGrowth(period);
       return this.success(res as any, growth);
     } catch (error) {
-      return this.error(res as any, error.message);
+      return this.error(res as any, error);
     }
   }
 }

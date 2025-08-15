@@ -19,7 +19,7 @@ export class AuthController extends BaseController{
       const result = await this.authService.login(loginDto);
       return this.success(res,result);
     } catch (error) {
-      return this.error(res,error.message);
+      return this.error(res, error);
     }
   }
 

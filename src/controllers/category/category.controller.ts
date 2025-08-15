@@ -32,7 +32,7 @@ export class CategoryController extends BaseController{
       const categories = await this.categoryService.findByCategoryTypeCode(categoryTypeCode);
       return this.success(res as any, categories);
     } catch (error) {
-      return this.error(res as any, error.message);
+      return this.error(res as any, error);
     }
   }
 

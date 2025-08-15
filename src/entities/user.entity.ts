@@ -83,13 +83,8 @@ export class User {
   @OneToMany(() => Order, order => order.account)
   orders: Order[];
 
-  permissions: {
-    id: number;
-    code: string;
-    resource: string;
-    action: string;
-    isActive: boolean;
-  }[];
+  @Column({ type: 'json', nullable: true })
+  permissions: string[];
 
   @BeforeInsert()
   @BeforeUpdate()
