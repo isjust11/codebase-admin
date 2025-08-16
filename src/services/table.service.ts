@@ -90,7 +90,7 @@ export class TableService {
       orderId: newTable.id.toString(),
       userId: 'system',
       userName: 'System',
-      tableStatus:'',
+      tableStatus:0,
       status: NotificationStatus.PENDING,
       type: NotificationType.ORDER,
       priority: NotificationPriority.MEDIUM,
@@ -142,7 +142,7 @@ export class TableService {
         orderId: updatedTable.id.toString(),
         userId: 'system',
         userName: 'System',
-        tableStatus:'',
+        tableStatus:0,
         status: NotificationStatus.PENDING,
         type: NotificationType.ORDER,
         priority: NotificationPriority.MEDIUM,
@@ -153,7 +153,7 @@ export class TableService {
     return updatedTable;
   }
 
-  async updateStatus(id: number, status: string): Promise<Table | null> {
+  async updateStatus(id: number, status: number): Promise<Table | null> {
     await this.tableRepository.update(id, { tableStatusId: status });
     const updatedTable = await this.tableRepository.findOne({ where: { id } });
     if (updatedTable) {
@@ -172,7 +172,7 @@ export class TableService {
       orderId: id.toString(),
       userId: 'system',
       userName: 'System',
-      tableStatus:'',
+      tableStatus:0,
       status: NotificationStatus.PENDING,
       type: NotificationType.ORDER,
       priority: NotificationPriority.MEDIUM,

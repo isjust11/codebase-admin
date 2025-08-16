@@ -48,7 +48,7 @@ export class FolkMedicineController extends BaseController {
   @RequirePermission('READ', 'folk-medicine')
   findByCategory(@Param('categoryId') categoryId: string) {
     const decodedCategoryId = this.decode(categoryId);
-    return this.folkMedicineService.findByCategory(decodedCategoryId.toString());
+    return this.folkMedicineService.findByCategory(decodedCategoryId);
   }
 
   @Get(':id')
@@ -59,8 +59,8 @@ export class FolkMedicineController extends BaseController {
 
   @Put(':id')
   @RequirePermission('UPDATE', 'folk-medicine')
-  update(@Param('id') id: string, @Body() dto: FolkMedicineDto) {
-    return this.folkMedicineService.update(this.decode(id), dto);
+  update(@Param('id') id: number, @Body() dto: FolkMedicineDto) {
+    return this.folkMedicineService.update(id, dto);
   }
 
   @Delete(':id')

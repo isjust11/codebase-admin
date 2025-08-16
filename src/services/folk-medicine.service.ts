@@ -70,8 +70,8 @@ export class FolkMedicineService {
 
     // Xử lý categoryId nếu có
     if (data.categoryId != null) {
-      const categoryId = Base64EncryptionUtil.decrypt(data.categoryId);
-      data.categoryId = categoryId;
+      const categoryId = Base64EncryptionUtil.decrypt(data.categoryId.toString());
+      data.categoryId = parseInt(categoryId, 10);
 
       const category = await this.categoryService.findOne(data.categoryId);
       data.category = category ?? null;
@@ -117,8 +117,8 @@ export class FolkMedicineService {
     }
 
     if (data.categoryId != null) {
-      const categoryId = Base64EncryptionUtil.decrypt(data.categoryId);
-      folkMedicine.categoryId = categoryId;
+      const categoryId = Base64EncryptionUtil.decrypt(data.categoryId.toString());
+      folkMedicine.categoryId = parseInt(categoryId, 10);
 
       const category = await this.categoryService.findOne(folkMedicine.categoryId);
       folkMedicine.category = category ?? null;
@@ -140,7 +140,7 @@ export class FolkMedicineService {
     await this.folkMedicineRepository.increment({ id }, 'likeCount', 1);
   }
 
-  async findByCategory(categoryId: string): Promise<FolkMedicine[]> {
+  async findByCategory(categoryId: number): Promise<FolkMedicine[]> {
     const folkMedicines = await this.folkMedicineRepository.find({
       where: { categoryId, isActive: true },
       relations: ['author', 'category'],

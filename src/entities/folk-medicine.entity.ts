@@ -43,7 +43,7 @@ export class FolkMedicine {
   likeCount: number;
 
   @Column({ nullable: true })
-  authorId?: string;
+  authorId?: number;
 
   @ManyToOne(() => Author, author => author.id, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'authorId' })
@@ -54,7 +54,7 @@ export class FolkMedicine {
   category?: Category | null;
 
   @Column({ nullable: true })
-  categoryId?: string;
+  categoryId?: number;
 
   @Column({ default: true })
   isActive: boolean;

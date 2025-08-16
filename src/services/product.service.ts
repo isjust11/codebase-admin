@@ -6,6 +6,7 @@ import slugify from 'slugify';
 import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
 import { plainToClass } from 'class-transformer';
 import { CategoryService } from './category.service';
+import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
 
 @Injectable()
 export class ProductService {
@@ -48,10 +49,10 @@ export class ProductService {
     }
 
     if (data.categoryId != null) {
-      const categoryId = data.categoryId;
-      data.categoryId = categoryId;
+      const categoryId = Base64EncryptionUtil.decrypt(data.categoryId.toString());
+      data.categoryId = parseInt(categoryId, 10);
 
-      const category = await this.categoryService.findOne(data.categoryId.toString());
+      const category = await this.categoryService.findOne(data.categoryId);
       data.category = category ?? undefined;
     }
 
@@ -83,7 +84,7 @@ export class ProductService {
       const categoryId = data.categoryId;
       product.categoryId = categoryId;
 
-      const category = await this.categoryService.findOne(product.categoryId.toString());
+      const category = await this.categoryService.findOne(product.categoryId);
       // product.category = category;
     }
 

@@ -42,14 +42,14 @@ export class HerbalController extends BaseController {
   @RequirePermission('CREATE', 'herbal')
   async create(@Body() createHerbalDto: CreateHerbalDto): Promise<HerbalResponseDto> {
     const herbal = await this.herbalService.create({ ...createHerbalDto, 
-      authorId: createHerbalDto.authorId ? this.decode(createHerbalDto.authorId) : undefined });
+      authorId: createHerbalDto.authorId ? this.decode(createHerbalDto.authorId.toString()) : undefined });
     return plainToClass(HerbalResponseDto, herbal);
   }
 
   @Get('category/:categoryId')
   @RequirePermission('READ', 'herbal')
   async findByCategory(@Param('categoryId') categoryId: string): Promise<HerbalResponseDto[]> {
-    const herbals = await this.herbalService.findByCategory(categoryId);
+    const herbals = await this.herbalService.findByCategory(this.decode(categoryId.toString()));
     return plainToClass(HerbalResponseDto, herbals);
   }
 
@@ -81,7 +81,7 @@ export class HerbalController extends BaseController {
     @Body() updateHerbalDto: UpdateHerbalDto,
   ): Promise<HerbalResponseDto> {
     const herbal = await this.herbalService.update(this.decode(id), 
-    { ...updateHerbalDto, authorId: updateHerbalDto.authorId ? this.decode(updateHerbalDto.authorId) : undefined });
+    { ...updateHerbalDto, authorId: updateHerbalDto.authorId ? this.decode(updateHerbalDto.authorId.toString()) : undefined });
     return plainToClass(HerbalResponseDto, herbal);
   }
 

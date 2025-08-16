@@ -33,7 +33,7 @@ export class CategoryTypeController extends BaseController{
 
   @Get(':id')
   @RequirePermission('READ', 'category-type')
-  async findOne(@Param('id') id: string): Promise<CategoryType | null> {
+  async findOne(@Param('id') id: number): Promise<CategoryType | null> {
     return this.categoryTypeService.findOne(id);
   }
 
@@ -52,7 +52,7 @@ export class CategoryTypeController extends BaseController{
   @Put(':id')
   @RequirePermission('UPDATE', 'category-type')
   async update(
-    @Param('id') id: string,
+    @Param('id') id: number,
     @Body() categoryType: CategoryType,
   ): Promise<CategoryType | null> {
     return this.categoryTypeService.update(id, categoryType);
@@ -60,7 +60,7 @@ export class CategoryTypeController extends BaseController{
 
   @Delete(':id')
   @RequirePermission('DELETE', 'category-type')
-  async remove(@Param('id') id: string) {
+  async remove(@Param('id') id: number) {
     return this.categoryTypeService.remove(id);
   }
 } 

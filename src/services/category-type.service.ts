@@ -19,7 +19,7 @@ export class CategoryTypeService {
     });
   }
 
-  async findOne(id: string): Promise<CategoryType | null> {
+  async findOne(id: number): Promise<CategoryType | null> {
     return this.categoryTypeRepository.findOneBy({ id });
   }
 
@@ -34,12 +34,12 @@ export class CategoryTypeService {
     return this.categoryTypeRepository.save(categoryType);
   }
 
-  async update(id: string, categoryType: CategoryType): Promise<CategoryType | null> {
+  async update(id: number, categoryType: CategoryType): Promise<CategoryType | null> {
     await this.categoryTypeRepository.update(id, categoryType);
     return this.findOne(id);
   }
 
-  async remove(id: string) {
+  async remove(id: number) {
     return await this.categoryTypeRepository.delete(id);
   }
 

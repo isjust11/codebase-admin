@@ -63,9 +63,9 @@ export class HerbalService {
     }
 
     // Xử lý categoryId nếu có
-    if (data.categoryId != null && data.categoryId != '') {
-      const categoryId = Base64EncryptionUtil.decrypt(data.categoryId);
-      data.categoryId = categoryId;
+    if (data.categoryId != null) {
+      const categoryId = Base64EncryptionUtil.decrypt(data.categoryId.toString());
+      data.categoryId = parseInt(categoryId, 10);
 
       const category = await this.categoryService.findOne(data.categoryId);
       data.category = category ?? null;
@@ -125,8 +125,8 @@ export class HerbalService {
     }
 
     if (data.categoryId != null) {
-      const categoryId = Base64EncryptionUtil.decrypt(data.categoryId);
-      herbal.categoryId = categoryId;
+      const categoryId = Base64EncryptionUtil.decrypt(data.categoryId.toString());
+      herbal.categoryId = parseInt(categoryId, 10);
 
       const category = await this.categoryService.findOne(herbal.categoryId);
       herbal.category = category ?? null;
@@ -148,7 +148,7 @@ export class HerbalService {
     await this.herbalRepository.increment({ id }, 'likeCount', 1);
   }
 
-  async findByCategory(categoryId: string): Promise<Herbal[]> {
+  async findByCategory(categoryId: number): Promise<Herbal[]> {
     const herbals = await this.herbalRepository.find({
       where: { categoryId, isActive: true },
       relations: ['category', 'images'],

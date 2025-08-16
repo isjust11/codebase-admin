@@ -53,7 +53,7 @@ export class OrderService {
     //   this.categoryService.create(categoryUsing);
     // }
     // cập nhật trạng thái bàn
-    const table = await this.tableService.updateStatus(tableId, category?.id ?? createOrderDto.statusId);
+    const table = await this.tableService.updateStatus(tableId, category?.id ?? parseInt(createOrderDto.statusId, 10));
     // 
     console.log('update trạng thái bàn thành công')
     let totalAmount = 0;
@@ -90,7 +90,7 @@ export class OrderService {
       orderId: savedOrder.id.toString(),
       userId: 'system',
       userName: 'System',
-      tableStatus: table?.tableStatusId ??'',
+      tableStatus: table?.tableStatusId ?? 0,
       status: NotificationStatus.PENDING,
       type: NotificationType.ORDER,
       priority: NotificationPriority.MEDIUM,
