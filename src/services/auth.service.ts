@@ -8,7 +8,6 @@ import * as crypto from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RefreshToken } from '../entities/refresh-token.entity';
-import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
 
 @Injectable()
 export class AuthService {
@@ -219,7 +218,7 @@ export class AuthService {
       isFacebookUser: user.isFacebookUser,
       isAdmin: user.isAdmin,
       roles: user.roles.map(role => role.id),
-      permissions: permissions.map(permission => Base64EncryptionUtil.encrypt(permission.id.toString())),
+      permissions: permissions.map(permission => permission.code),
     };
 
     // Tạo access token
@@ -231,7 +230,7 @@ export class AuthService {
     // Cập nhật thời gian đăng nhập
     // user.lastLogin = new Date();
     user.roles = user.roles.map(role => ({ ...role, permissions: [] }));
-    user.permissions = permissions.map(permission => Base64EncryptionUtil.encrypt(permission.id.toString()));
+    user.permissions = permissions.map(permission => permission.code);
     // await this.userService.update(user.id, user);
     return {
       accessToken,
@@ -280,10 +279,10 @@ export class AuthService {
       isFacebookUser: foundToken.user.isFacebookUser,
       isAdmin: foundToken.user.isAdmin,
       roles: foundToken.user.roles.map(role => role.id),
-      permissions: permissions.map(permission => Base64EncryptionUtil.encrypt(permission.id.toString())),
+      permissions: permissions.map(permission => permission.code),
     };
     foundToken.user.roles = foundToken.user.roles.map(role => ({ ...role, permissions: [] }));
-    foundToken.user.permissions = permissions.map(permission => Base64EncryptionUtil.encrypt(permission.id.toString()));
+    foundToken.user.permissions = permissions.map(permission => permission.code);
     // Tạo access token mới
     const accessToken = this.jwtService.sign(payload);
 

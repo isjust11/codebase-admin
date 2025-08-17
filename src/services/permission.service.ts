@@ -125,4 +125,11 @@ export class PermissionService {
       totalPages: Math.ceil(total / size),
     };
   }
+
+  async hasPermissionByCode(permission: string): Promise<boolean> {
+    const result = await this.permissionRepository.findOne({
+      where: { code: permission },
+    });
+    return result ? true : false;
+  }
 } 

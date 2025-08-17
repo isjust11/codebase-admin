@@ -1,23 +1,25 @@
 // Định nghĩa các Resource chuẩn
 export const RESOURCES = {
-  USER: 'user',
-  ROLE: 'role',
-  PERMISSION: 'permission',
-  FEATURE: 'feature',
-  ARTICLE: 'article',
-  CATEGORY: 'category',
-  ORDER: 'order',
-  PAYMENT: 'payment',
-  RESERVATION: 'reservation',
-  TABLE: 'table',
-  EXAM: 'exam',
-  QUESTION: 'question',
-  MEDIA: 'media',
-  NOTIFICATION: 'notification',
-  HISTORY: 'history',
-  FOOD_ITEM: 'food_item',
-  CATEGORY_TYPE: 'category_type',
-
+  USER: 'USER',
+  ROLE: 'ROLE',
+  PERMISSION: 'PERMISSION',
+  FEATURE: 'FEATURE',
+  ARTICLE: 'ARTICLE',
+  CATEGORY: 'CATEGORY',
+  ORDER: 'ORDER',
+  PAYMENT: 'PAYMENT',
+  RESERVATION: 'RESERVATION',
+  TABLE: 'TABLE',
+  EXAM: 'EXAM',
+  QUESTION: 'QUESTION',
+  MEDIA: 'MEDIA',
+  NOTIFICATION: 'NOTIFICATION',
+  HISTORY: 'HISTORY',
+  FOOD_ITEM: 'FOOD_ITEM',
+  CATEGORY_TYPE: 'CATEGORY_TYPE',
+  AUTHOR: 'AUTHOR',
+  FOLK_MEDICINE: 'FOLK_MEDICINE',
+  HERBAL: 'HERBAL',
 } as const;
 
 // Định nghĩa các Action chuẩn
@@ -185,6 +187,33 @@ export const PERMISSION_TEMPLATES = {
       { action: ACTIONS.CREATE, name: 'Tạo thông báo', code: 'NOTIFICATION_CREATE' },
       { action: ACTIONS.UPDATE, name: 'Cập nhật thông báo', code: 'NOTIFICATION_UPDATE' },
       { action: ACTIONS.DELETE, name: 'Xóa thông báo', code: 'NOTIFICATION_DELETE' },
+    ]
+  },
+  [RESOURCES.AUTHOR]: {
+    name: 'Quản lý tác giả',
+    permissions: [
+      { action: ACTIONS.READ, name: 'Xem tác giả', code: 'AUTHOR_READ' },
+      { action: ACTIONS.CREATE, name: 'Tạo tác giả', code: 'AUTHOR_CREATE' },
+      { action: ACTIONS.UPDATE, name: 'Cập nhật tác giả', code: 'AUTHOR_UPDATE' },
+      { action: ACTIONS.DELETE, name: 'Xóa tác giả', code: 'AUTHOR_DELETE' },
+    ]
+  },
+  [RESOURCES.FOLK_MEDICINE]: {
+    name: 'Quản lý thuốc dân tộc',
+    permissions: [
+      { action: ACTIONS.READ, name: 'Xem thuốc dân tộc', code: 'FOLK_MEDICINE_READ' },
+      { action: ACTIONS.CREATE, name: 'Tạo thuốc dân tộc', code: 'FOLK_MEDICINE_CREATE' },
+      { action: ACTIONS.UPDATE, name: 'Cập nhật thuốc dân tộc', code: 'FOLK_MEDICINE_UPDATE' },
+      { action: ACTIONS.DELETE, name: 'Xóa thuốc dân tộc', code: 'FOLK_MEDICINE_DELETE' },
+    ]
+  },
+  [RESOURCES.HERBAL]: {
+    name: 'Quản lý thuốc thảo dược',
+    permissions: [
+      { action: ACTIONS.READ, name: 'Xem thuốc thảo dược', code: 'HERBAL_READ' },
+      { action: ACTIONS.CREATE, name: 'Tạo thuốc thảo dược', code: 'HERBAL_CREATE' },
+      { action: ACTIONS.UPDATE, name: 'Cập nhật thuốc thảo dược', code: 'HERBAL_UPDATE' },
+      { action: ACTIONS.DELETE, name: 'Xóa thuốc thảo dược', code: 'HERBAL_DELETE' },
     ]
   },
 } as const;

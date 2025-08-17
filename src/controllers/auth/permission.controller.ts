@@ -155,4 +155,10 @@ export class PermissionController extends BaseController{
   ) {
     return this.permissionService.findByActionAndResource(action, resource);
   }
+
+  @Get('has-permission')
+  @RequirePermission('READ', 'permission')
+  async hasPermission(@Query('permission') permission: string) {
+    return this.permissionService.hasPermissionByCode(permission);
+  }
 } 
