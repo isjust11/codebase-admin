@@ -1,11 +1,10 @@
 import { UseInterceptors } from '@nestjs/common';
-import { ClassSerializerInterceptor } from '@nestjs/common';
 import { EncryptionInterceptor } from '../../interceptors/encryption.interceptor';
 import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
 import { Response } from 'express';
 
 // Decorator để áp dụng interceptor cho tất cả controller kế thừa
-@UseInterceptors(ClassSerializerInterceptor, EncryptionInterceptor)
+@UseInterceptors(EncryptionInterceptor)
 export abstract class BaseController {
   // Hàm trả về response thành công
   protected success<T>(res: Response, data: T, code = 200) {

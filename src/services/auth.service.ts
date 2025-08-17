@@ -206,7 +206,7 @@ export class AuthService {
   }
 
   async generateToken(user: User) {
-    const permissions = user.roles.flatMap(role => role.permissions)?.filter(permission => permission.isActive);
+    const permissions = user.roles.flatMap(role => role.permissions);
     const payload: JwtPayload = {
       id: user.id,
       username: user.username,

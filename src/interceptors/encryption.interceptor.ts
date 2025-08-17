@@ -8,6 +8,15 @@ export class EncryptionInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
       map(data => {
+        // Bỏ qua khi data là đối tượng Response/stream hoặc buffer
+        if (!data) return data;
+        const isBuffer = typeof Buffer !== 'undefined' && Buffer.isBuffer(data as any);
+        const isStream = typeof (data as any)?.pipe === 'function';
+        const isHttpResponseLike = typeof (data as any)?.setHeader === 'function' && typeof (data as any)?.end === 'function';
+        if (isBuffer || isStream || isHttpResponseLike) {
+          return data;
+        }
+
         if (Array.isArray(data)) {
           return data.map(item => this.encryptEntity(item));
         }
