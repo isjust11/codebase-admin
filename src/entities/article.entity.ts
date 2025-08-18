@@ -1,6 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { User } from './user.entity';
 import { Transform } from 'class-transformer';
+import { Category } from './category.entity';
 
 @Entity()
 export class Article {
@@ -22,12 +23,32 @@ export class Article {
   @Column({ length: 255, nullable: true })
   thumbnail?: string;
 
+  @Column({ nullable: true })
+  createdById?: number;
+
   @ManyToOne(() => User, user => user.id, { onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'authorId' })
-  author?: User | null;
+  @JoinColumn({ name: 'createdById' })
+  createdBy?: User;
 
   @Column({ nullable: true })
-  authorId?: any;
+  updatedById?: number;
+
+  @ManyToOne(() => User, user => user.id, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'updatedById' })
+  updatedBy?: User;
+
+  @Column({ nullable: true })
+  categoryId?: number;
+
+  @ManyToOne(() => Category, category => category.id)
+  @JoinColumn({ name: 'categoryId' })
+  category?: Category;
+
+  @Column({ nullable: true })
+  view: number;
+
+  @Column({ nullable: true })
+  like: number;
 
   @Column({ default: true })
   isActive: boolean;

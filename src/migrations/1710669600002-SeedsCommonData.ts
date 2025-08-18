@@ -20,14 +20,14 @@ export class SeedsCommonData1710669600002 implements MigrationInterface {
         // Insert category types
         await queryRunner.query(`
             INSERT INTO category_type (id, name, code, description, isActive) VALUES
-            ('${uuidv4()}', 'Menu chức năng', '${CategoryTypeEnum.FEATURE_TYPE}', 'Danh mục các chức năng trong hệ thống', true),
-            ('${uuidv4()}', 'Danh mục món ăn', '${CategoryTypeEnum.FOOD_CATEGORY}', 'Danh mục phân loại món ăn', true),
-            ('${uuidv4()}', 'Loại món ăn', '${CategoryTypeEnum.FOOD_TYPE}', 'Phân loại món ăn theo loại', true),
-            ('${uuidv4()}', 'Trạng thái món ăn', '${CategoryTypeEnum.FOOD_STATUS}', 'Trạng thái của món ăn', true),
-            ('${uuidv4()}', 'Đơn vị món ăn', '${CategoryTypeEnum.FOOD_UNIT}', 'Đơn vị tính của món ăn', true),
-            ('${uuidv4()}', 'Loại bàn', '${CategoryTypeEnum.TABLE_TYPE}', 'Phân loại bàn', true),
-            ('${uuidv4()}', 'Trạng thái bàn', '${CategoryTypeEnum.TABLE_STATUS}', 'Trạng thái của bàn', true),
-            ('${uuidv4()}', 'Khu vực bàn', '${CategoryTypeEnum.TABLE_AREA}', 'Khu vực đặt bàn', true)
+            (1, 'Menu chức năng', '${CategoryTypeEnum.FEATURE_TYPE}', 'Danh mục các chức năng trong hệ thống', true),
+            (2, 'Danh mục món ăn', '${CategoryTypeEnum.FOOD_CATEGORY}', 'Danh mục phân loại món ăn', true),
+            (3, 'Loại món ăn', '${CategoryTypeEnum.FOOD_TYPE}', 'Phân loại món ăn theo loại', true),
+            (4, 'Trạng thái món ăn', '${CategoryTypeEnum.FOOD_STATUS}', 'Trạng thái của món ăn', true),
+            (5, 'Đơn vị món ăn', '${CategoryTypeEnum.FOOD_UNIT}', 'Đơn vị tính của món ăn', true),
+            (6, 'Loại bàn', '${CategoryTypeEnum.TABLE_TYPE}', 'Phân loại bàn', true),
+            (7, 'Trạng thái bàn', '${CategoryTypeEnum.TABLE_STATUS}', 'Trạng thái của bàn', true),
+            (8, 'Khu vực bàn', '${CategoryTypeEnum.TABLE_AREA}', 'Khu vực đặt bàn', true)
         `);
 
         // Lấy category type ID cho FEATURE_TYPE
@@ -39,8 +39,8 @@ export class SeedsCommonData1710669600002 implements MigrationInterface {
         // Insert categories cho FEATURE_TYPE
         await queryRunner.query(`
             INSERT INTO category (id, name, code, description, categoryTypeId,sortOrder , isActive) VALUES
-            ('${uuidv4()}', 'Menu', '${CategoryCodeEnum.FEATURE_MENU}', 'Menu chức năng chính', '${featureTypeId}',1, true),
-            ('${uuidv4()}', 'Khác', '${CategoryCodeEnum.FEATURE_OTHERS}', 'Các chức năng khác', '${featureTypeId}',2,true)
+            (1, 'Menu', '${CategoryCodeEnum.FEATURE_MENU}', 'Menu chức năng chính', '${featureTypeId}',1, true),
+            (2, 'Khác', '${CategoryCodeEnum.FEATURE_OTHERS}', 'Các chức năng khác', '${featureTypeId}',2,true)
         `);
 
         // Lấy category ID cho Menu

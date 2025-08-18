@@ -11,8 +11,8 @@ import { Product } from './product.entity';
 
 @Entity()
 export class Category {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn()
+  id: number;
 
   @Column()
   name: string;
@@ -50,7 +50,7 @@ export class Category {
   type: CategoryType;
 
   @Column()
-  categoryTypeId: string;
+  categoryTypeId: number;
 
   @OneToMany(() => Product, product => product.category)
   products: Product[];

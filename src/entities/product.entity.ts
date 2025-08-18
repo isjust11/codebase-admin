@@ -28,6 +28,12 @@ export class Product {
   @Column()
   categoryId: number;
 
+  @Column({ nullable: true })
+  view: number;
+
+  @Column({ nullable: true })
+  like: number;
+
   @Column()
   slug: string;
 

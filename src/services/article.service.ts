@@ -6,14 +6,17 @@ import slugify from 'slugify';
 import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
 import { plainToClass } from 'class-transformer';
 import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
-import { UserService } from './user.service';
+import { AuthorService } from './author.service';
+import { CategoryService } from './category.service';
+
 
 @Injectable()
 export class ArticleService {
   constructor(
     @InjectRepository(Article)
     private readonly articleRepository: Repository<Article>,
-    private readonly userService: UserService
+    private readonly authorService: AuthorService,
+    private readonly categoryService: CategoryService
   ) {}
 
   async findPagination(params: PaginationParams): Promise<PaginatedResponse<Article>> {
@@ -47,14 +50,7 @@ export class ArticleService {
       data.slug = slugify(data.title, { lower: true, strict: true }); 
     }
     
-    // Xử lý authorId nếu có
-    if (data.authorId != null) {
-      const authorId = Base64EncryptionUtil.decrypt(data.authorId);
-      data.authorId = parseInt(authorId, 10);
-      
-      const author = await this.userService.findById(data.authorId);
-      data.author = author ?? null;
-    }
+    
     
     const article = this.articleRepository.create(data);
     return this.articleRepository.save(article);
@@ -79,12 +75,14 @@ export class ArticleService {
       data.slug = slugify(article.title, { lower: true, strict: true }); 
     }
     
-    if (data.authorId != null) {
-      const authorId = Base64EncryptionUtil.decrypt(data.authorId);
-      article.authorId = parseInt(authorId, 10);
+
+
+    if(data.categoryId != null) {
+      const categoryId = Base64EncryptionUtil.decrypt(data.categoryId.toString());
+      article.categoryId = parseInt(categoryId, 10);
       
-      const author = await this.userService.findById(article.authorId);
-      article.author = author ?? null;
+      const category = await this.categoryService.findOne(parseInt(categoryId, 10));
+      article.category = category ?? undefined;
     }
     
     return this.articleRepository.save(article);

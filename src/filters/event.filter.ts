@@ -29,7 +29,7 @@ export class EventFilter implements ExceptionFilter {
       status: NotificationStatus.FAILED,
       type: NotificationType.SYSTEM,
       priority: NotificationPriority.LOW,
-      tableStatus: ''
+      tableStatus: 0
     });
 
     response.status(status).json({

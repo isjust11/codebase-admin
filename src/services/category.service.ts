@@ -38,7 +38,7 @@ export class CategoryService {
     });
   }
 
-  async findOne(id: string): Promise<Category | null> {
+  async findOne(id: number): Promise<Category | null> {
     return this.categoryRepository.findOne({ 
       where: { id },
       relations: ['type']
@@ -54,7 +54,7 @@ export class CategoryService {
 
   async create(category: Partial<Category>): Promise<Category | null> {
     // Đảm bảo CategoryType tồn tại trước khi tạo Category
-    if (category.categoryTypeId && category.categoryTypeId !== '') {
+      if (category.categoryTypeId && category.categoryTypeId !== 0) {
       await this.ensureCategoryTypeExists(category.categoryTypeId);
     }
     
@@ -65,7 +65,7 @@ export class CategoryService {
   /**
    * Đảm bảo CategoryType tồn tại, nếu không thì tạo mới từ enum
    */
-  private async ensureCategoryTypeExists(categoryTypeId: string): Promise<void> {
+  private async ensureCategoryTypeExists(categoryTypeId: number): Promise<void> {
     const existingCategoryType = await this.categoryTypeRepository.findOne({
       where: { id: categoryTypeId }
     });
@@ -73,17 +73,17 @@ export class CategoryService {
     if (!existingCategoryType) {
       // Thử tìm theo code
       const categoryTypeByCode = await this.categoryTypeRepository.findOne({
-        where: { code: categoryTypeId }
+        where: { id: categoryTypeId }
       });
 
       if (!categoryTypeByCode) {
         // Kiểm tra xem có phải là enum value không
         const enumValues = Object.values(CategoryTypeEnum);
-        if (enumValues.includes(categoryTypeId as CategoryTypeEnum)) {
+        if (enumValues.includes(categoryTypeId as unknown as CategoryTypeEnum)) {
           // Tạo mới CategoryType từ enum
           const newCategoryType = this.categoryTypeRepository.create({
-            code: categoryTypeId,
-            name: this.formatEnumToName(categoryTypeId),
+            code: categoryTypeId.toString(),
+            name: this.formatEnumToName(categoryTypeId.toString()),
             description: `Auto-generated from enum: ${categoryTypeId}`,
             isActive: true,
             iconType: 'lucide',
@@ -107,7 +107,7 @@ export class CategoryService {
       .trim();
   }
 
-  async update(id: string, category: Partial<Category>): Promise<Category | null> {
+  async update(id: number, category: Partial<Category>): Promise<Category | null> {
     await this.categoryRepository.update(id, category);
     return this.categoryRepository.findOne({ 
       where: { id },
@@ -115,7 +115,7 @@ export class CategoryService {
     });
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: number): Promise<void> {
     await this.categoryRepository.delete(id);
   }
 

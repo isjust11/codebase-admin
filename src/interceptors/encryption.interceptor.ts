@@ -21,33 +21,68 @@ export class EncryptionInterceptor implements NestInterceptor {
     );
   }
 
-  private encryptEntity(entity: any): any {
+  private encryptEntity(entity: any, depth: number = 0, visited: WeakSet<any> = new WeakSet()): any {
+    // Giới hạn độ sâu để tránh stack overflow
+    if (depth > 10) {
+      console.warn('Encryption depth limit reached, stopping encryption for this branch');
+      return entity;
+    }
+
     if (!entity) return entity;
 
+    // Kiểm tra vòng lặp để tránh infinite recursion
+    if (typeof entity === 'object' && visited.has(entity)) {
+      return entity;
+    }
+
     if (typeof entity === 'object') {
-      // Không tạo object mới nếu entity đã là class instance
-      const encryptedEntity = entity;
+      // Đánh dấu entity đã được xử lý
+      visited.add(entity);
+
+      // Tạo bản sao để tránh thay đổi entity gốc
+      const encryptedEntity = { ...entity };
 
       // Mã hóa ID chính
-      if (encryptedEntity.id) {
+      if (encryptedEntity.id && typeof encryptedEntity.id === 'number') {
         encryptedEntity.id = Base64EncryptionUtil.encrypt(encryptedEntity.id);
       }
 
       // Mã hóa các trường ID
       const idFields = Object.keys(encryptedEntity).filter(key => key.endsWith('Id'));
       idFields.forEach(field => {
-        if (encryptedEntity[field] && encryptedEntity[field].toString().length < 10) {
-          encryptedEntity[field] = Base64EncryptionUtil.encrypt(encryptedEntity[field].toString());
+        const value = encryptedEntity[field];
+        if (value && typeof value === 'number' && value.toString().length < 10) {
+          encryptedEntity[field] = Base64EncryptionUtil.encrypt(value.toString());
         }
       });
 
-      // Mã hóa các trường quan hệ
+      // Mã hóa các trường quan hệ với kiểm tra vòng lặp
       Object.keys(encryptedEntity).forEach(key => {
-        if (typeof encryptedEntity[key] === 'object' && encryptedEntity[key] !== null) {
-          if (Array.isArray(encryptedEntity[key])) {
-            encryptedEntity[key] = encryptedEntity[key].map(item => this.encryptEntity(item));
+        const value = encryptedEntity[key];
+        
+        // Bỏ qua các trường đặc biệt có thể gây vòng lặp
+        if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+          return;
+        }
+
+        // Bỏ qua các trường không cần mã hóa
+        if (key === 'createdAt' || key === 'updatedAt' || key === 'deletedAt') {
+          return;
+        }
+
+        if (typeof value === 'object' && value !== null) {
+          // Kiểm tra xem có phải là Date object không
+          if (value instanceof Date) {
+            return;
+          }
+
+          if (Array.isArray(value)) {
+            encryptedEntity[key] = value.map(item => this.encryptEntity(item, depth + 1, visited));
           } else {
-            encryptedEntity[key] = this.encryptEntity(encryptedEntity[key]);
+            // Kiểm tra xem object này đã được xử lý chưa
+            if (!visited.has(value)) {
+              encryptedEntity[key] = this.encryptEntity(value, depth + 1, visited);
+            }
           }
         }
       });

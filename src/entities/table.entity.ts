@@ -39,13 +39,13 @@ export class Table {
   reservationId: number;
 
   @Column({ nullable: true, default: null})
-  areaId: string; // ID của khu vực bàn
+  areaId: number; // ID của khu vực bàn
 
   @Column({ nullable: true, default: null })
-  tableStatusId: string;
+  tableStatusId: number;
 
   @Column({ nullable: true, default: null })
-  tableTypeId: string;
+  tableTypeId: number;
 
   @Column({ default: true })
   isAvailable: boolean;

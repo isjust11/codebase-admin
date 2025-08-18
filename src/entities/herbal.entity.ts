@@ -76,7 +76,7 @@ export class Herbal {
   category?: Category | null;
 
   @Column({ nullable: true })
-  categoryId?: string;
+  categoryId?: number;
 
   @Column({ default: true })
   isActive: boolean;

@@ -9,4 +9,5 @@ export enum CategoryTypeEnum {
     TABLE_STATUS = 'TableStatus',
     TABLE_AREA = 'TableArea',
     FOLK_MEDICINE = 'FolkMedicine',
+    ARTICLE_STATUS = 'ArticleStatus',
 }
