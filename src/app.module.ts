@@ -49,6 +49,7 @@ import { ConfigModule } from '@nestjs/config';
     }),
     TypeOrmModule.forRoot({
       type: 'mysql',
+      driver: require('mysql2'),
       host: process.env.DB_HOST ?? '',
       port: parseInt(process.env.DB_PORT ?? '3306'),
       username: process.env.DB_USERNAME ?? '',
@@ -89,6 +90,22 @@ import { ConfigModule } from '@nestjs/config';
       synchronize: true,
       migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
       migrationsRun: true,
+      // Cấu hình để hỗ trợ MySQL 8.0+ với caching_sha2_password
+      extra: {
+        charset: 'utf8mb4',
+        supportBigNumbers: true,
+        bigNumberStrings: true,
+        dateStrings: true,
+        debug: false,
+        trace: false,
+        multipleStatements: true,
+        // Hỗ trợ authentication plugin mới
+        authPlugins: {
+          mysql_clear_password: () => () => Buffer.from([0x00]),
+        },
+      },
+      // Cấu hình SSL
+      ssl: false,
     }),
     // NotificationModule,
     CategoryModule,

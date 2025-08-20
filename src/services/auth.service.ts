@@ -218,7 +218,7 @@ export class AuthService {
       isFacebookUser: user.isFacebookUser,
       isAdmin: user.isAdmin,
       roles: user.roles.map(role => role.id),
-      permissions: permissions.map(permission => permission.code),
+      permissions: permissions?.map(permission => permission.code),
     };
 
     // Tạo access token
@@ -230,7 +230,7 @@ export class AuthService {
     // Cập nhật thời gian đăng nhập
     // user.lastLogin = new Date();
     user.roles = user.roles.map(role => ({ ...role, permissions: [] }));
-    user.permissions = permissions.map(permission => permission.code);
+    user.permissions = permissions?.map(permission => permission.code);
     // await this.userService.update(user.id, user);
     return {
       accessToken,
@@ -279,10 +279,10 @@ export class AuthService {
       isFacebookUser: foundToken.user.isFacebookUser,
       isAdmin: foundToken.user.isAdmin,
       roles: foundToken.user.roles.map(role => role.id),
-      permissions: permissions.map(permission => permission.code),
+      permissions: permissions?.map(permission => permission.code),
     };
     foundToken.user.roles = foundToken.user.roles.map(role => ({ ...role, permissions: [] }));
-    foundToken.user.permissions = permissions.map(permission => permission.code);
+    foundToken.user.permissions = permissions?.map(permission => permission.code);
     // Tạo access token mới
     const accessToken = this.jwtService.sign(payload);
 
