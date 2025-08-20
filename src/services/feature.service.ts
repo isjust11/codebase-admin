@@ -101,6 +101,7 @@ export class FeatureService {
         } else {
             const parentId = parseInt(Base64EncryptionUtil.decrypt(updateFeatureDto.parentId ?? ''));
             feature.parent = await this.featureRepository.findOne({ where: { id: parentId } }) ?? undefined;
+            feature.featureTypeId = Base64EncryptionUtil.decrypt(updateFeatureDto.featureTypeId ?? '');
         }
         return await this.featureRepository.save(feature);
     }

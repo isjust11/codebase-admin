@@ -32,7 +32,7 @@ export class ArticleService {
                  where: whereConditions,
                  skip,
                  take: size,
-                 relations: ['author',],
+                 relations: ['createdBy',],
                  order: { id: 'DESC' },
              });
      
