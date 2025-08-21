@@ -44,8 +44,8 @@ export class CategoryController extends BaseController{
 
   @Get(':id')
   @RequirePermission('READ', 'category')
-  async findOne(@Param('id') id: number): Promise<Category | null> {
-    return this.categoryService.findOne(id);
+  async findOne(@Param('id') id: string): Promise<Category | null> {
+    return this.categoryService.findOne(this.decode(id));
   }
 
   @Post()
@@ -59,14 +59,20 @@ export class CategoryController extends BaseController{
 
   @Put(':id')
   @RequirePermission('UPDATE', 'category')
-  async update(@Param('id') id: number, @Body() category: Category): Promise<Category | null> {
+  async update(@Param('id') id: string, @Body() category: Category): Promise<Category | null> {
     category.categoryTypeId = this.decode(category.categoryTypeId.toString());
-    return this.categoryService.update(id, category);
+    return this.categoryService.update(this.decode(id), category);
+  }
+
+  @Put('update-status/:id')
+  @RequirePermission('UPDATE', 'category')
+  async updateStatus(@Param('id') id: string, @Body() category: Category): Promise<Category | null> {
+    return this.categoryService.updateStatus(this.decode(id), category);
   }
 
   @Delete(':id')
   @RequirePermission('DELETE', 'category')
-  async remove(@Param('id') id: number): Promise<void> {
-    return this.categoryService.remove(id);
+  async remove(@Param('id') id: string): Promise<void> {
+    return this.categoryService.remove(this.decode(id));
   }
 } 
