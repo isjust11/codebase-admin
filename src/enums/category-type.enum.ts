@@ -9,5 +9,7 @@ export enum CategoryTypeEnum {
     TABLE_STATUS = 'TableStatus',
     TABLE_AREA = 'TableArea',
     FOLK_MEDICINE = 'FolkMedicine',
-    ARTICLE_STATUS = 'ArticleStatus',
+    ARTICLE_STATUS = 'ArticleStatus', // TRẠNG THÁI BÀI VIẾT
+    ARTICLE_TYPE = 'ArticleType',// lOẠI BÀI VIẾT
+    
 }
