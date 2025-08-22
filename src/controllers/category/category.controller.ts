@@ -64,6 +64,12 @@ export class CategoryController extends BaseController{
     return this.categoryService.update(this.decode(id), category);
   }
 
+  @Put('update-status/:id')
+  @RequirePermission('UPDATE', 'category')
+  async updateStatus(@Param('id') id: string, @Body() category: Category): Promise<Category | null> {
+    return this.categoryService.updateStatus(this.decode(id), category);
+  }
+
   @Delete(':id')
   @RequirePermission('DELETE', 'category')
   async remove(@Param('id') id: string): Promise<void> {

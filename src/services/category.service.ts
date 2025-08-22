@@ -115,6 +115,11 @@ export class CategoryService {
     });
   }
 
+  async updateStatus(id: number, category: Partial<Category>): Promise<Category | null> {
+    await this.categoryRepository.update(id, { isActive: category.isActive });
+    return this.categoryRepository.findOne({ where: { id } });
+  }
+
   async remove(id: number): Promise<void> {
     await this.categoryRepository.delete(id);
   }
