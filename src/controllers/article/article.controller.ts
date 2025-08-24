@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, Query, UseGuards, Request } from '@nestjs/common';
 import { ArticleService } from '../../services/article.service';
 import { ArticleDto } from '../../dtos/article.dto';
 import { PaginationParams } from 'src/dtos/filter.dto';
@@ -6,6 +6,7 @@ import { BaseController } from '../base/base.controller';
 import { RequirePermission } from 'src/decorators/require-permissions.decorator';
 import { PermissionGuard } from 'src/guards/permission.guard';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { Article } from 'src/entities/article.entity';
 
 @Controller('article')
 @UseGuards(JwtAuthGuard, PermissionGuard)
@@ -16,8 +17,11 @@ export class ArticleController extends BaseController{
 
   @Post()
   @RequirePermission('CREATE', 'article')
-  create(@Body() dto: ArticleDto) {
-    return this.articleService.create(dto);
+  create(@Body() dto: ArticleDto, @Request() req) {
+    return this.articleService.create({
+      ...dto,
+      createdBy: req.user.id,
+    });
   }
 
   @Get()
@@ -50,8 +54,11 @@ export class ArticleController extends BaseController{
 
   @Put(':id')
   @RequirePermission('UPDATE', 'article')
-  update(@Param('id') id: string, @Body() dto: ArticleDto) {
-    return this.articleService.update(this.decode(id), dto);
+  update(@Param('id') id: string, @Body() dto: ArticleDto, @Request() req) {
+    return this.articleService.update(this.decode(id), {
+      ...dto,
+      updatedBy: req.user.id,
+    });
   }
 
   @Delete(':id')

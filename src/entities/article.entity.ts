@@ -37,6 +37,13 @@ export class Article {
   @JoinColumn({ name: 'updatedById' })
   updatedBy?: User;
 
+  @ManyToOne(() => Category, category => category.id)
+  @JoinColumn({ name: 'statusId' })
+  status?: Category;
+
+  @Column({ nullable: true })
+  statusId?: number;
+
   @Column({ nullable: true })
   categoryId?: number;
 

@@ -1,15 +1,16 @@
 import { IsString, IsNumber, IsOptional, IsBoolean } from 'class-validator';
+import { Article } from 'src/entities/article.entity';
 
 export class ArticleDto {
   @IsOptional()
   @IsNumber()
-  id?: number;
+  id: number;
 
   @IsString()
-  title: string;
+  title: string | undefined;
 
   @IsString()
-  slug: string;
+  slug: string | undefined;
 
   @IsOptional()
   @IsString()
@@ -23,8 +24,21 @@ export class ArticleDto {
   thumbnail?: string;
 
   @IsOptional()
+  @IsString()
+  categoryId?: string;
+
+
+  @IsOptional()
   @IsNumber()
-  authorId?: number;
+  createdBy?: number;
+
+  @IsOptional()
+  @IsNumber()
+  updatedBy?: number;
+
+  @IsOptional()
+  @IsNumber()
+  statusId?: string;
 
   @IsOptional()
   @IsBoolean()

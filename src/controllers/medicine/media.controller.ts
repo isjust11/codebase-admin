@@ -44,7 +44,7 @@ export class MediaController extends BaseController{
       new ParseFilePipe({
         validators: [
           new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 10 }), // 10MB
-          new FileTypeValidator({ fileType: /(jpg|jpeg|png|gif|mp3|wav|m4a|aac|ogg|flac|mp4|mov|wmv|avi|flv|mkv|webm|mpeg|mpg|3gp|m4v)$/i }),
+          new FileTypeValidator({ fileType: /(jpg|jpeg|png|gif|webp|mp3|wav|m4a|aac|ogg|flac|mp4|mov|wmv|avi|flv|mkv|webm|mpeg|mpg|3gp|m4v)$/i }),
         ],
       }),
     )
