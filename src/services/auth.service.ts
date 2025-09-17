@@ -2,6 +2,8 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from './user.service';
 import { LoginDto, RegisterDto, JwtPayload, ResendEmailDto, RegisterResultDto, RegisterCode } from '../dtos/auth.dto';
+import { MobileSocialLoginDto } from '../dtos/mobile-social-login.dto';
+import { SocialTokenVerificationService } from './social-token-verification.service';
 import { User } from '../entities/user.entity';
 import { EmailService } from './email.service';
 import * as crypto from 'crypto';
@@ -17,6 +19,7 @@ export class AuthService {
     private userService: UserService,
     private jwtService: JwtService,
     private emailService: EmailService,
+    private socialTokenVerificationService: SocialTokenVerificationService,
     @InjectRepository(RefreshToken)
     private refreshTokenRepository: Repository<RefreshToken>,
   ) { }
@@ -36,7 +39,7 @@ export class AuthService {
     return null;
   }
 
-  async validateWebsiteUser(registerDto: RegisterDto): Promise<RegisterResultDto> {
+  async validateRegisterUser(registerDto: RegisterDto): Promise<RegisterResultDto> {
     const existingUser = await this.userService.findByUsername(registerDto.username);
     // trường hợp đã tồn tại tài khoản và email trùng nhau
     if (existingUser) {
@@ -115,6 +118,59 @@ export class AuthService {
     }
   }
 
+  /**
+   * Xử lý đăng nhập social cho mobile app
+   * @param mobileSocialLoginDto - Dữ liệu từ mobile app
+   * @returns Token và thông tin user
+   */
+  async mobileSocialLogin(mobileSocialLoginDto: MobileSocialLoginDto) {
+    try {
+      const { platformId, email, fullName, picture, platform, accessToken } = mobileSocialLoginDto;
+
+      // Bước 1: Verify token với Google/Facebook servers
+      const verifiedData = await this.socialTokenVerificationService.verifyToken(platform, accessToken);
+
+      // Bước 2: Kiểm tra dữ liệu từ mobile có khớp với dữ liệu verified không
+      if (verifiedData.platformId !== platformId || verifiedData.email !== email) {
+        throw new UnauthorizedException('Dữ liệu từ mobile không khớp với token verified');
+      }
+
+      // Bước 3: Tìm user theo email và platformId
+      let user = await this.userService.findByEmailSocial(email, platformId);
+
+      if (!user) {
+        // Tạo user mới nếu chưa tồn tại
+        const registerDto: RegisterDto = {
+          username: email,
+          email: email,
+          fullName: fullName,
+          password: Math.random().toString(36).slice(-8), // Tạo mật khẩu ngẫu nhiên
+          platformId: platformId,
+          picture: picture,
+          isGoogleUser: platform === 'google',
+          isFacebookUser: platform === 'facebook',
+        };
+        user = await this.userService.create(registerDto);
+      } else {
+        // Cập nhật thông tin nếu user đã tồn tại
+        user.platformId = platformId ?? '';
+        user.picture = picture ?? '';
+        user.isGoogleUser = platform === 'google';
+        user.isFacebookUser = platform === 'facebook';
+
+        await this.userService.update(user.id, user);
+      }
+
+      return this.generateToken(user);
+    } catch (error) {
+      console.error('Error in mobileSocialLogin:', error);
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      throw new UnauthorizedException('Đăng nhập social không thành công');
+    }
+  }
+
   async login(loginDto: LoginDto) {
     const { username, password } = loginDto;
     const user = await this.validateUser(username, password);
@@ -131,7 +187,7 @@ export class AuthService {
   }
 
   async register(registerDto: RegisterDto) {
-    const validateUser = await this.validateWebsiteUser(registerDto);
+    const validateUser = await this.validateRegisterUser(registerDto);
     if (validateUser.code === RegisterCode.Ok) {
       const verificationToken = crypto.randomBytes(32).toString('hex');
       const user = await this.userService.create({

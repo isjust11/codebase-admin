@@ -1,6 +1,7 @@
 import { Controller, Post, Body, Get, UseGuards, Request, Res, Query, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from '../../services/auth.service';
 import { LoginDto, RegisterDto, ResendEmailDto, ResetPasswordDto } from '../../dtos/auth.dto';
+import { MobileSocialLoginDto } from '../../dtos/mobile-social-login.dto';
 import { JwtAuthGuard, Public } from '../../guards/jwt-auth.guard';
 import { AuthGuard } from '@nestjs/passport';
 import { Response } from 'express';
@@ -130,5 +131,16 @@ export class AuthController extends BaseController{
   @Get('validate-token')
   async validateToken(@Query('token') token: string) {
     return this.authService.validateToken(token);
+  }
+
+  @Public()
+  @Post('mobile/social-login')
+  async mobileSocialLogin(@Body() mobileSocialLoginDto: MobileSocialLoginDto, @Res() res: Response) {
+    try {
+      const result = await this.authService.mobileSocialLogin(mobileSocialLoginDto);
+      return this.success(res, result);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 } 

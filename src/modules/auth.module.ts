@@ -25,6 +25,7 @@ import { FacebookStrategy } from 'src/guards/strategies/facebook.strategy';
 import { JwtStrategy } from 'src/guards/jwt.strategy';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { GoogleStrategy } from 'src/guards/strategies/google.strategy';
+import { SocialTokenVerificationService } from 'src/services/social-token-verification.service';
 import { APP_GUARD } from '@nestjs/core';
 
 @Module({
@@ -58,6 +59,7 @@ import { APP_GUARD } from '@nestjs/core';
     PermissionService, 
     AuthService,
     EmailService,
+    SocialTokenVerificationService,
     JwtStrategy,
     GoogleStrategy,
     FacebookStrategy,
