@@ -55,6 +55,12 @@ export class User {
   verificationToken: string;
 
   @Column({ nullable: true })
+  pinCode?: string;
+
+  @Column({ nullable: true })
+  pinExpiresAt?: Date;
+
+  @Column({ nullable: true })
   lastLogin: Date;
 
   @ManyToMany(() => Role)

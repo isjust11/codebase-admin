@@ -91,6 +91,19 @@ export class ResetPasswordDto {
   password: string;
 }
 
+export class VerifyPinDto {
+  @IsString()
+  email: string;
+
+  @IsString()
+  pin: string;
+}
+
+export class ResendPinDto {
+  @IsString()
+  email: string;
+}
+
 export class JwtPayload {
   id: number;
   username: string;

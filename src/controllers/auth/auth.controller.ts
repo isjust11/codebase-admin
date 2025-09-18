@@ -1,6 +1,6 @@
 import { Controller, Post, Body, Get, UseGuards, Request, Res, Query, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from '../../services/auth.service';
-import { LoginDto, RegisterDto, ResendEmailDto, ResetPasswordDto } from '../../dtos/auth.dto';
+import { LoginDto, RegisterDto, ResendEmailDto, ResetPasswordDto, VerifyPinDto, ResendPinDto } from '../../dtos/auth.dto';
 import { MobileSocialLoginDto } from '../../dtos/mobile-social-login.dto';
 import { JwtAuthGuard, Public } from '../../guards/jwt-auth.guard';
 import { AuthGuard } from '@nestjs/passport';
@@ -138,6 +138,28 @@ export class AuthController extends BaseController{
   async mobileSocialLogin(@Body() mobileSocialLoginDto: MobileSocialLoginDto, @Res() res: Response) {
     try {
       const result = await this.authService.mobileSocialLogin(mobileSocialLoginDto);
+      return this.success(res, result);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Public()
+  @Post('verify-pin')
+  async verifyPin(@Body() verifyPinDto: VerifyPinDto, @Res() res: Response) {
+    try {
+      const result = await this.authService.verifyPin(verifyPinDto);
+      return this.success(res, result);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Public()
+  @Post('resend-pin')
+  async resendPin(@Body() resendPinDto: ResendPinDto, @Res() res: Response) {
+    try {
+      const result = await this.authService.resendPin(resendPinDto);
       return this.success(res, result);
     } catch (error) {
       return this.error(res, error);

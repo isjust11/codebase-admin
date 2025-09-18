@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from './user.service';
-import { LoginDto, RegisterDto, JwtPayload, ResendEmailDto, RegisterResultDto, RegisterCode } from '../dtos/auth.dto';
+import { LoginDto, RegisterDto, JwtPayload, ResendEmailDto, RegisterResultDto, RegisterCode, VerifyPinDto, ResendPinDto } from '../dtos/auth.dto';
 import { MobileSocialLoginDto } from '../dtos/mobile-social-login.dto';
 import { SocialTokenVerificationService } from './social-token-verification.service';
 import { User } from '../entities/user.entity';
@@ -189,42 +189,51 @@ export class AuthService {
   async register(registerDto: RegisterDto) {
     const validateUser = await this.validateRegisterUser(registerDto);
     if (validateUser.code === RegisterCode.Ok) {
-      const verificationToken = crypto.randomBytes(32).toString('hex');
       const user = await this.userService.create({
         ...registerDto,
-        verificationToken,
         isEmailVerified: false,
         isWebsiteUser: true,
       });
 
-      // Gửi email xác thực
+      // Tạo và gửi mã PIN
       if (user.email) {
-        await this.emailService.sendVerificationEmail(
+        const pin = await this.generateAndSavePin(user);
+        await this.emailService.sendPinEmail(
           user.email,
-          verificationToken,
+          pin,
           user.fullName || user.username
         );
+        
+        return {
+          code: RegisterCode.Ok,
+          message: 'Mã PIN đã được gửi đến email của bạn',
+          data: {
+            ...user,
+            pin: pin // Trả về PIN để test (trong production nên bỏ dòng này)
+          }
+        };
       }
       return {
         code: RegisterCode.Ok,
-        message: 'Email đã được gửi đến bạn',
+        message: 'Đăng ký thành công',
         data: user
       };
     } else {
       // trường hợp tài khoản đã tồn tại
       if (validateUser.code === RegisterCode.ExistUsernameNotVerified) {
-        const verificationToken = crypto.randomBytes(32).toString('hex');
-        validateUser.data.verificationToken = verificationToken;
-        await this.userService.update(validateUser.data.id, validateUser.data);
-        await this.emailService.sendVerificationEmail(
+        const pin = await this.generateAndSavePin(validateUser.data);
+        await this.emailService.sendPinEmail(
           validateUser.data.email,
-          verificationToken,
+          pin,
           validateUser.data.fullName || validateUser.data.username
         );
         return {
           code: RegisterCode.Ok,
-          message: 'Email đã được gửi đến bạn',
-          data: validateUser.data
+          message: 'Mã PIN đã được gửi đến email của bạn',
+          data: {
+            ...validateUser.data,
+            pin: pin // Trả về PIN để test (trong production nên bỏ dòng này)
+          }
         };
       }
       return validateUser;
@@ -420,5 +429,93 @@ export class AuthService {
     } catch (error) {
       throw new UnauthorizedException('Token không hợp lệ hoặc đã hết hạn');
     }
+  }
+
+  /**
+   * Tạo mã PIN 4 số ngẫu nhiên
+   */
+  private generatePin(): string {
+    return Math.floor(1000 + Math.random() * 9000).toString();
+  }
+
+  /**
+   * Tạo và lưu mã PIN cho user
+   */
+  async generateAndSavePin(user: User): Promise<string> {
+    const pin = this.generatePin();
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + 10); // PIN hết hạn sau 10 phút
+
+    user.pinCode = pin;
+    user.pinExpiresAt = expiresAt;
+    await this.userService.update(user.id, user);
+
+    return pin;
+  }
+
+  /**
+   * Xác thực mã PIN
+   */
+  async verifyPin(verifyPinDto: VerifyPinDto) {
+    const { email, pin } = verifyPinDto;
+    
+    const user = await this.userService.findByEmail(email);
+    if (!user) {
+      throw new UnauthorizedException('Email không tồn tại');
+    }
+
+    if (!user.pinCode || !user.pinExpiresAt) {
+      throw new UnauthorizedException('Mã PIN không tồn tại hoặc đã hết hạn');
+    }
+
+    if (new Date() > user.pinExpiresAt) {
+      throw new UnauthorizedException('Mã PIN đã hết hạn');
+    }
+
+    if (user.pinCode !== pin) {
+      throw new UnauthorizedException('Mã PIN không chính xác');
+    }
+
+    // Xác thực thành công, cập nhật trạng thái user
+    user.isEmailVerified = true;
+    user.pinCode = '';
+    user.pinExpiresAt = undefined;
+    user.verificationToken = '';
+    await this.userService.update(user.id, user);
+
+    return {
+      message: 'Xác thực mã PIN thành công',
+      user: user
+    };
+  }
+
+  /**
+   * Gửi lại mã PIN
+   */
+  async resendPin(resendPinDto: ResendPinDto) {
+    const { email } = resendPinDto;
+    
+    const user = await this.userService.findByEmail(email);
+    if (!user) {
+      throw new UnauthorizedException('Email không tồn tại');
+    }
+
+    if (user.isEmailVerified) {
+      throw new UnauthorizedException('Tài khoản đã được xác thực');
+    }
+
+    const pin = await this.generateAndSavePin(user);
+
+    // Gửi email chứa mã PIN
+    await this.emailService.sendPinEmail(
+      user.email,
+      pin,
+      user.fullName || user.username
+    );
+
+    return {
+      message: 'Mã PIN mới đã được gửi đến email của bạn',
+      pin: pin // Trả về PIN để test (trong production nên bỏ dòng này)
+    };
   }
 } 
