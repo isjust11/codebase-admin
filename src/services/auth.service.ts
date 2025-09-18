@@ -269,6 +269,10 @@ export class AuthService {
     return { message: 'Email đã được xác thực thành công' };
   }
 
+  async getProfile(user: User) {
+    return user;
+  }
+
   async generateToken(user: User) {
     const permissions = user.roles.flatMap(role => role.permissions);
     const payload: JwtPayload = {

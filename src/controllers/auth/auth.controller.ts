@@ -26,26 +26,46 @@ export class AuthController extends BaseController{
 
   @Public()
   @Post('register')
-  async register(@Body() registerDto: RegisterDto) {
-    return this.authService.register(registerDto);
+  async register(@Body() registerDto: RegisterDto, @Res() res: Response) {
+    try {
+    const result = await this.authService.register(registerDto);
+      return this.success(res, result);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 
   @Public()
   @Post('resend-email')
-  async resendEmail(@Body() resendEmailDto: ResendEmailDto) {
-    return this.authService.resendEmail(resendEmailDto);
+  async resendEmail(@Body() resendEmailDto: ResendEmailDto, @Res() res: Response) {
+    try {
+      const result = await this.authService.resendEmail(resendEmailDto);
+      return this.success(res, result);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 
   @Public()
   @Get('verify-email')
-  async verifyEmail(@Query('token') token: string) {
-    return this.authService.verifyEmail(token);
+  async verifyEmail(@Query('token') token: string, @Res() res: Response) {
+      try {
+      const result = await this.authService.verifyEmail(token);
+      return this.success(res, result);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('profile')
-  getProfile(@Request() req) {
-    return req.user;
+  async getProfile(@Request() req, @Res() res: Response) {
+    try {
+        const result = await this.authService.getProfile(req.userß);
+      return this.success(res, result);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 
   @Public()
@@ -92,45 +112,70 @@ export class AuthController extends BaseController{
 
   @Public()
   @Get('token-info')
-  async getTokenInfo(@Query('token') token: string) {
-    return this.authService.getTempTokenInfo(token);
+  async getTokenInfo(@Query('token') token: string, @Res() res: Response) {
+      try {
+      const result = await this.authService.getTempTokenInfo(token);
+      return this.success(res, result);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 
   @Public()
   @Post('refresh-token')
-  async refreshToken(@Body('refreshToken') refreshToken: string) {
+  async refreshToken(@Body('refreshToken') refreshToken: string, @Res() res: Response) {
     if (!refreshToken) {
       throw new UnauthorizedException('Refresh token is required');
     }
-    return this.authService.refreshAccessToken(refreshToken);
+    try {
+      const result = await this.authService.refreshAccessToken(refreshToken);
+      return this.success(res, result);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 
   @Post('logout')
   @UseGuards(JwtAuthGuard)
-  async logout(@Body('refreshToken') refreshToken: string) {
+  async logout(@Body('refreshToken') refreshToken: string, @Res() res: Response) {
     if (!refreshToken) {
       throw new UnauthorizedException('Refresh token is required');
     }
     await this.authService.revokeRefreshToken(refreshToken);
-    return { message: 'Đăng xuất thành công' };
+    return this.success(res, { message: 'Đăng xuất thành công' });
   }
 
   @Public()
   @Get('forgot-password')
-  async forgotPassword(@Query('username') username: string) {
-    return this.authService.forgotPassword(username);
+  async forgotPassword(@Query('username') username: string, @Res() res: Response) {
+        try {
+      const result = await this.authService.forgotPassword(username);
+      return this.success(res, result);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 
   @Public()
   @Post('reset-password')
-  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
-    return this.authService.resetPassword(resetPasswordDto.token, resetPasswordDto.password);
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto, @Res() res: Response) {
+      try {
+      const result = await this.authService.resetPassword(resetPasswordDto.token, resetPasswordDto.password);
+      return this.success(res, result);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 
   @Public()
   @Get('validate-token')
-  async validateToken(@Query('token') token: string) {
-    return this.authService.validateToken(token);
+  async validateToken(@Query('token') token: string, @Res() res: Response) {
+      try {
+      const result = await this.authService.validateToken(token);
+      return this.success(res, result);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 
   @Public()
