@@ -4,7 +4,6 @@ import { Role } from './role.entity';
 import { Exclude } from 'class-transformer';
 import { Reservation } from './reservation.entity';
 import { Order } from './order.entity';
-import { Permission } from './permission.entity';
 
 @Entity()
 export class User {
@@ -93,14 +92,13 @@ export class User {
   permissions: string[];
 
   @BeforeInsert()
-  @BeforeUpdate()
   async hashPassword() {
-    this.password = await bcrypt.hash(this.password, 12);
+    if (this.password && !this.password.startsWith('$2b$')) {
+      this.password = await bcrypt.hash(this.password, 12);
+    }
   }
 
   async validatePassword(password: string): Promise<boolean> {
     return bcrypt.compare(password, this.password);
   }
-
-
 } 

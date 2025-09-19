@@ -488,8 +488,8 @@ export class AuthService {
     await this.userService.update(user.id, user);
 
     return {
-      message: 'Xác thực mã PIN thành công',
-      user: user
+      code:'verify',
+      message: 'Xác thực mã PIN thành công'
     };
   }
 
@@ -518,6 +518,7 @@ export class AuthService {
     );
 
     return {
+      code:'resend',
       message: 'Mã PIN mới đã được gửi đến email của bạn',
       pin: pin // Trả về PIN để test (trong production nên bỏ dòng này)
     };

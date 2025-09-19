@@ -18,30 +18,30 @@ export class UserService {
   ) { }
 
   async findAllWithPagination(params: PaginationParams): Promise<PaginatedResponse<User>> {
-          const { page = 1, size = 10, search = '' } = params;
-          const skip = (page - 1) * size;
-  
-          const whereConditions = search ? [
-              { username: Like(`%${search}%`) },
-              { fullName: Like(`%${search}%`) },
-          ] : {};
-  
-          const [data, total] = await this.userRepository.findAndCount({
-              where: whereConditions,
-              skip,
-              take: size,
-              relations: ['roles',],
-              order: { id: 'DESC' },
-          });
-  
-          return {
-              data,
-              total,
-              page,
-              size,
-              totalPages: Math.ceil(total / size),
-          };
-      }
+    const { page = 1, size = 10, search = '' } = params;
+    const skip = (page - 1) * size;
+
+    const whereConditions = search ? [
+      { username: Like(`%${search}%`) },
+      { fullName: Like(`%${search}%`) },
+    ] : {};
+
+    const [data, total] = await this.userRepository.findAndCount({
+      where: whereConditions,
+      skip,
+      take: size,
+      relations: ['roles',],
+      order: { id: 'DESC' },
+    });
+
+    return {
+      data,
+      total,
+      page,
+      size,
+      totalPages: Math.ceil(total / size),
+    };
+  }
 
   async findAll(): Promise<User[]> {
     return this.userRepository.find({
@@ -161,6 +161,20 @@ export class UserService {
       user.lastLogin = updateUserDto.lastLogin;
     }
 
+    // update pinCode và pinExpiresAt
+    if (updateUserDto.pinCode !== undefined) {
+      user.pinCode = updateUserDto.pinCode;
+    }
+    user.pinExpiresAt = updateUserDto.pinExpiresAt;
+
+    if (updateUserDto.isEmailVerified !== undefined) {
+      user.isEmailVerified = updateUserDto.isEmailVerified;
+    }
+
+    if (updateUserDto.verificationToken !== undefined) {
+      user.verificationToken = updateUserDto.verificationToken;
+    }
+
     user.updatedAt = new Date();
 
     if (updateUserDto.roleIds) {
@@ -181,15 +195,15 @@ export class UserService {
   }
 
   async findByUsername(username: string): Promise<User | null> {
-    return this.userRepository.findOne({ where: { username }, relations: ['roles','roles.permissions'] });
+    return this.userRepository.findOne({ where: { username }, relations: ['roles', 'roles.permissions'] });
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    return this.userRepository.findOne({ where: { email }, relations: ['roles','roles.permissions'] });
+    return this.userRepository.findOne({ where: { email }, relations: ['roles', 'roles.permissions'] });
   }
 
   async findByEmailSocial(email: string, platformId: string): Promise<User | null> {
-    return this.userRepository.findOne({ where: { email, platformId }, relations: ['roles','roles.permissions'] });
+    return this.userRepository.findOne({ where: { email, platformId }, relations: ['roles', 'roles.permissions'] });
   }
 
   async findByVerificationToken(token: string): Promise<User | null> {

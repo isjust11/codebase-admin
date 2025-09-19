@@ -49,5 +49,12 @@ export class UpdateUserDto {
   @IsOptional()
   lastLogin?: Date;
 
+  @IsString()
+  @IsOptional()
+  pinCode?: string;
+
+  @IsDate()
+  @IsOptional()
+  pinExpiresAt?: Date;
 
 } 
