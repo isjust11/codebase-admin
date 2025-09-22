@@ -76,6 +76,10 @@ export class FolkMedicineService {
       const category = await this.categoryService.findOne(data.categoryId);
       data.category = category ?? null;
     }
+    if (data.authorId != null) {
+      const authorId = Base64EncryptionUtil.decrypt(data.authorId.toString());
+      data.authorId = parseInt(authorId, 10);
+    }
 
     const folkMedicine = this.folkMedicineRepository.create(data);
     return this.folkMedicineRepository.save(folkMedicine);

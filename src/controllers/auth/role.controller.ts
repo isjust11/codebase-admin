@@ -79,7 +79,7 @@ export class RoleController {
   @Get(':id/features')
   @RequirePermission('READ', 'role')
   async getFeaturesByRole(@Param('id') id: string): Promise<Feature[]> {
-    return this.roleService.getFeaturesByRole(this.decode(id));
+    return this.roleService.getFeaturesByRole(parseInt(id));
   }
 
   @Post(':id/features')
