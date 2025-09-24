@@ -50,7 +50,7 @@ export class HerbalService {
     if (data.title) {
       data.slug = slugify(data.title, { lower: true, strict: true });
     }
-
+    data.id = undefined;
     // Xử lý authorId nếu có
     if (data.authorId != null) {
       // const authorId = Base64EncryptionUtil.decrypt(data.authorId);
@@ -70,6 +70,7 @@ export class HerbalService {
       const category = await this.categoryService.findOne(data.categoryId);
       data.category = category ?? null;
     }
+
 
     const herbal = this.herbalRepository.create(data);
     return this.herbalRepository.save(herbal);
