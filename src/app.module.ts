@@ -12,7 +12,11 @@ import { Media } from './entities/media.entity';
 import { Role } from './entities/role.entity';
 import { Permission } from './entities/permission.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
-// import { NotificationModule } from './modules/notification.module';
+import { NotificationModule } from './modules/notification.module';
+import { Notification } from './entities/notification.entity';
+import { NotificationTemplate } from './entities/notification-template.entity';
+import { NotificationConfig } from './entities/notification-config.entity';
+import { FcmToken } from './entities/fcm-token.entity';
 import { Category } from './entities/category.entity';
 import { CategoryType } from './entities/category-type.entity';
 import { Reservation } from './entities/reservation.entity';
@@ -86,6 +90,10 @@ import { ConfigModule } from '@nestjs/config';
         ProductReview,
         ProductComplaint,
         AdvertisingSlider,
+        Notification,
+        NotificationTemplate,
+        NotificationConfig,
+        FcmToken,
       ],
       synchronize: true,
       migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
@@ -107,7 +115,7 @@ import { ConfigModule } from '@nestjs/config';
       // Cấu hình SSL
       ssl: false,
     }),
-    // NotificationModule,
+    NotificationModule,
     CategoryModule,
     FeatureModule,
     ExamModule,
