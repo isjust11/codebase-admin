@@ -15,11 +15,12 @@ import { NOTIFICATION_EVENTS, NOTIFICATION_ROOMS } from '../../constants/notific
 import { BaseController } from '../base/base.controller';
 import { RequirePermission } from 'src/decorators/require-permissions.decorator';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { FcmService } from '../../services/fcm.service';
 @Controller('notifications')
 @UseGuards(JwtAuthGuard)
 @UseFilters(NotificationFilter, EventFilter, RoomFilter)
 export class NotificationController extends BaseController{
-  constructor(private readonly notificationService: NotificationService) {
+  constructor(private readonly notificationService: NotificationService, private readonly fcmService: FcmService) {
     super();
   }
 
@@ -54,5 +55,26 @@ export class NotificationController extends BaseController{
   async notifyPayment(@Body() data: CreateNotificationDto & { timestamp: Date }) {
     await this.notificationService.notifyPayment(data);
     return { success: true, message: 'Thông báo thanh toán đã được gửi' };
+  }
+
+  @Post('fcm/send-token')
+  @RequirePermission('CREATE', 'notification')
+  async sendFcmToToken(@Body() body: { token: string; title: string; body: string; data?: Record<string, string> }) {
+    const result = await this.fcmService.sendToToken(body.token, { title: body.title, body: body.body, data: body.data });
+    return { success: true, messageId: result };
+  }
+
+  @Post('fcm/send-tokens')
+  @RequirePermission('CREATE', 'notification')
+  async sendFcmToTokens(@Body() body: { tokens: string[]; title: string; body: string; data?: Record<string, string> }) {
+    const result = await this.fcmService.sendToTokens(body.tokens, { title: body.title, body: body.body, data: body.data });
+    return { success: true, ...result };
+  }
+
+  @Post('fcm/send-topic')
+  @RequirePermission('CREATE', 'notification')
+  async sendFcmToTopic(@Body() body: { topic: string; title: string; body: string; data?: Record<string, string> }) {
+    const result = await this.fcmService.sendToTopic(body.topic, { title: body.title, body: body.body, data: body.data });
+    return { success: true, messageId: result };
   }
 } 

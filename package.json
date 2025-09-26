@@ -4,7 +4,8 @@
   "description": "",
   "author": "",
   "private": true,
-  "license": "UNLICENSED",   "scripts": {
+  "license": "UNLICENSED",
+  "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
@@ -39,6 +40,7 @@
     "cookie-parser": "^1.4.7",
     "crypto-js": "^4.2.0",
     "dotenv": "^16.4.7",
+    "firebase-admin": "^13.5.0",
     "image-size": "^2.0.2",
     "mysql2": "^3.9.2",
     "nodemailer": "^6.10.0",
