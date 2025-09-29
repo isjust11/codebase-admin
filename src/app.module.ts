@@ -46,6 +46,7 @@ import { ECommerceModule } from './modules/e-commerce.module';
 import { MediaModule } from './modules/media.module';
 import { DashboardModule } from './modules/dashboard.module';
 import { ConfigModule } from '@nestjs/config';
+import { FcmController } from './controllers/fcm/fcm.controller';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -126,5 +127,6 @@ import { ConfigModule } from '@nestjs/config';
     AuthModule,
     DashboardModule,
   ],
+  controllers: [FcmController],
 })
 export class AppModule { }

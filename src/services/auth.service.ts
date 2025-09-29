@@ -149,6 +149,7 @@ export class AuthService {
           picture: picture,
           isGoogleUser: platform === 'google',
           isFacebookUser: platform === 'facebook',
+          isEmailVerified: true,
         };
         user = await this.userService.create(registerDto);
       } else {
