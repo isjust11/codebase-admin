@@ -11,5 +11,5 @@ export enum CategoryTypeEnum {
     FOLK_MEDICINE = 'FolkMedicine',
     ARTICLE_STATUS = 'ArticleStatus', // TRẠNG THÁI BÀI VIẾT
     ARTICLE_TYPE = 'ArticleType',// lOẠI BÀI VIẾT
-    
+    HERBAL = 'Herbal',
 }
