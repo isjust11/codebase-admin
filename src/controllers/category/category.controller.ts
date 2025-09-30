@@ -6,23 +6,29 @@ import { BaseController } from '../base/base.controller';
 import { RequirePermission } from 'src/decorators/require-permissions.decorator';
 import { PermissionGuard } from 'src/guards/permission.guard';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { Response } from 'express';
 
 @Controller('categories')
 @UseGuards(JwtAuthGuard, PermissionGuard)
-export class CategoryController extends BaseController{
+export class CategoryController extends BaseController {
   constructor(private readonly categoryService: CategoryService) {
     super();
   }
 
   @Get()
   @RequirePermission('READ', 'category')
-  async getAll(@Query('page') page: number, @Query('size') size: number, @Query('search') search: string){
+  async getAll(@Query('page') page: number, @Query('size') size: number, @Query('search') search: string, @Res() res: Response) {
     const filter: PaginationParams = {
       page: page || 1,
       size: size || 10,
       search: search || ''
     };
-    return this.categoryService.findAllWithPagination(filter);
+    try {
+      const data = await this.categoryService.findAllWithPagination(filter);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 
   @Get('get-by-category-type/:categoryTypeCode')
@@ -38,41 +44,71 @@ export class CategoryController extends BaseController{
 
   @Get()
   @RequirePermission('READ', 'category')
-  async findAll(): Promise<Category[]> {
-    return this.categoryService.findAll();
+  async findAll(@Res() res: Response) {
+    try {
+      const data = await this.categoryService.findAll();
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 
   @Get(':id')
   @RequirePermission('READ', 'category')
-  async findOne(@Param('id') id: string): Promise<Category | null> {
-    return this.categoryService.findOne(this.decode(id));
+  async findOne(@Param('id') id: string, @Res() res: Response) {
+    try {
+      const data = await this.categoryService.findOne(this.decode(id));
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 
   @Post()
   @RequirePermission('CREATE', 'category')
-  async create(@Body() category: Category, @Request() req): Promise<Category | null> {
+  async create(@Body() category: Category, @Request() req, @Res() res: Response) {
     category.createdAt = new Date();
     category.createBy = req?.user?.id; // Assuming req.user.id contains the ID of the user creating the category
     category.categoryTypeId = this.decode(category.categoryTypeId.toString());
-    return this.categoryService.create(category);
+    try {
+      const data = await this.categoryService.create(category);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 
   @Put(':id')
   @RequirePermission('UPDATE', 'category')
-  async update(@Param('id') id: string, @Body() category: Category): Promise<Category | null> {
+  async update(@Param('id') id: string, @Body() category: Category, @Res() res: Response) {
     category.categoryTypeId = this.decode(category.categoryTypeId.toString());
-    return this.categoryService.update(this.decode(id), category);
+    try {
+      const data = await this.categoryService.update(this.decode(id), category);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 
   @Put('update-status/:id')
   @RequirePermission('UPDATE', 'category')
-  async updateStatus(@Param('id') id: string, @Body() category: Category): Promise<Category | null> {
-    return this.categoryService.updateStatus(this.decode(id), category);
+  async updateStatus(@Param('id') id: string, @Body() category: Category, @Res() res: Response) {
+    try {
+      const data = await this.categoryService.updateStatus(this.decode(id), category);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 
   @Delete(':id')
   @RequirePermission('DELETE', 'category')
-  async remove(@Param('id') id: string): Promise<void> {
-    return this.categoryService.remove(this.decode(id));
+  async remove(@Param('id') id: string, @Res() res: Response) {
+    try {
+      const data = await this.categoryService.remove(this.decode(id));
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 } 
