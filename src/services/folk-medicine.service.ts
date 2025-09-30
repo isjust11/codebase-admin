@@ -7,6 +7,7 @@ import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
 import { plainToClass } from 'class-transformer';
 import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
 import { CategoryService } from './category.service';
+import { AuthorService } from './author.service';
 
 @Injectable()
 export class FolkMedicineService {
@@ -14,7 +15,8 @@ export class FolkMedicineService {
     @InjectRepository(FolkMedicine)
     private readonly folkMedicineRepository: Repository<FolkMedicine>,
     private readonly categoryService: CategoryService,
-  ) {}
+    private readonly authorService: AuthorService,
+  ) { }
 
   async findPagination(params: PaginationParams): Promise<PaginatedResponse<FolkMedicine>> {
     const { page = 1, size = 10, search = '', categoryId = '' } = params;
@@ -27,8 +29,8 @@ export class FolkMedicineService {
     ] : {};
 
     if (categoryId) {
-      if(Array.isArray(whereConditions)) {
-        whereConditions  = [...whereConditions, { categoryId: categoryId }];
+      if (Array.isArray(whereConditions)) {
+        whereConditions = [...whereConditions, { categoryId: categoryId }];
       } else {
         whereConditions = { categoryId: categoryId };
       }
@@ -39,7 +41,7 @@ export class FolkMedicineService {
       where: whereConditions,
       skip,
       take: size,
-      relations: [ 'category'],
+      relations: ['category'],
       order: { id: 'DESC' },
     });
 
@@ -73,7 +75,7 @@ export class FolkMedicineService {
       const categoryId = Base64EncryptionUtil.decrypt(data.categoryId.toString());
       data.categoryId = parseInt(categoryId, 10);
 
-      const category = await this.categoryService.findOne(data.categoryId);
+      const category = await this.categoryService.findOne(parseInt(categoryId, 10));
       data.category = category ?? null;
     }
     if (data.authorId != null) {
@@ -96,7 +98,7 @@ export class FolkMedicineService {
   async findOne(id: number): Promise<FolkMedicine> {
     const folkMedicine = await this.folkMedicineRepository.findOne({
       where: { id },
-      relations: [ 'category'],
+      relations: ['category'],
     });
     if (!folkMedicine) throw new NotFoundException('Folk medicine not found');
     return plainToClass(FolkMedicine, folkMedicine);
@@ -111,21 +113,25 @@ export class FolkMedicineService {
     }
 
     if (data.authorId != null) {
-      // const authorId = Base64EncryptionUtil.decrypt(data.authorId);
-      // folkMedicine.authorId = parseInt(authorId, 10);
-
-      // const author = await this.userRepository.findOne({
-      //   where: { id: folkMedicine.authorId },
-      // });
-      // folkMedicine.author = author ?? null;
+      const authorId = Base64EncryptionUtil.decrypt(data.authorId.toString());
+      folkMedicine.authorId = parseInt(authorId, 10);
+      try {
+        const author = await this.authorService.findOne(folkMedicine.authorId);
+        folkMedicine.author = author ?? null;
+      } catch (error) {
+        folkMedicine.author = null;
+      }
     }
 
     if (data.categoryId != null) {
       const categoryId = Base64EncryptionUtil.decrypt(data.categoryId.toString());
       folkMedicine.categoryId = parseInt(categoryId, 10);
-
-      const category = await this.categoryService.findOne(folkMedicine.categoryId);
-      folkMedicine.category = category ?? null;
+      try {
+        const category = await this.categoryService.findOne(parseInt(categoryId, 10));
+        folkMedicine.category = category ?? null;
+      } catch (error) {
+        folkMedicine.category = null;
+      }
     }
 
     return this.folkMedicineRepository.save(folkMedicine);

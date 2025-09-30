@@ -16,8 +16,13 @@ export class FolkMedicineController extends BaseController {
 
   @Post()
   @RequirePermission('CREATE', 'folk-medicine')
-  create(@Body() dto: FolkMedicineDto) {
-    return this.folkMedicineService.create(dto);
+  create(@Body() dto: FolkMedicineDto, @Res() res: Response) {
+    try{
+      const data = this.folkMedicineService.create(dto);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 
   @Get()
@@ -46,9 +51,9 @@ export class FolkMedicineController extends BaseController {
 
   @Get('all')
   @RequirePermission('READ', 'folk-medicine')
-  findAll(@Res() res: Response) {
+  async findAll(@Res() res: Response) {
     try {
-      const data = this.folkMedicineService.findAll();
+      const data = await this.folkMedicineService.findAll();
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -57,9 +62,9 @@ export class FolkMedicineController extends BaseController {
 
   @Get('category/:categoryId')
   @RequirePermission('READ', 'folk-medicine')
-  findByCategory(@Param('categoryId') categoryId: string, @Res() res: Response) {
+  async findByCategory(@Param('categoryId') categoryId: string, @Res() res: Response) {
     try {
-      const data = this.folkMedicineService.findByCategory(this.decode(categoryId));
+      const data = await this.folkMedicineService.findByCategory(this.decode(categoryId));
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -68,9 +73,9 @@ export class FolkMedicineController extends BaseController {
 
   @Get(':id')
   @RequirePermission('READ', 'folk-medicine')
-  findOne(@Param('id') id: string, @Res() res: Response) {
+  async findOne(@Param('id') id: string, @Res() res: Response) {
     try {
-      const data = this.folkMedicineService.findOne(this.decode(id));
+      const data = await this.folkMedicineService.findOne(this.decode(id));
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -79,9 +84,9 @@ export class FolkMedicineController extends BaseController {
 
   @Put(':id')
   @RequirePermission('UPDATE', 'folk-medicine')
-  update(@Param('id') id: number, @Body() dto: FolkMedicineDto, @Res() res: Response) {
+  async update(@Param('id') id: string, @Body() dto: FolkMedicineDto, @Res() res: Response) {
     try {
-      const data = this.folkMedicineService.update(id, dto);
+      const data = await this.folkMedicineService.update(this.decode(id), dto);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -90,9 +95,9 @@ export class FolkMedicineController extends BaseController {
 
   @Delete(':id')
   @RequirePermission('DELETE', 'folk-medicine')
-  remove(@Param('id') id: string, @Res() res: Response) {
+  async remove(@Param('id') id: string, @Res() res: Response) {
     try {
-      const data = this.folkMedicineService.remove(this.decode(id));
+      const data = await this.folkMedicineService.remove(this.decode(id));
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -101,9 +106,9 @@ export class FolkMedicineController extends BaseController {
 
   @Post(':id/view')
   @RequirePermission('READ', 'folk-medicine')
-  incrementViewCount(@Param('id') id: string, @Res() res: Response) {
+  async incrementViewCount(@Param('id') id: string, @Res() res: Response) {
     try {
-      const data = this.folkMedicineService.incrementViewCount(this.decode(id));
+      const data = await this.folkMedicineService.incrementViewCount(this.decode(id));
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -112,9 +117,9 @@ export class FolkMedicineController extends BaseController {
 
   @Post(':id/like')
   @RequirePermission('READ', 'folk-medicine')
-  incrementLikeCount(@Param('id') id: string, @Res() res: Response) {
+  async incrementLikeCount(@Param('id') id: string, @Res() res: Response) {
     try {
-      const data = this.folkMedicineService.incrementLikeCount(this.decode(id));
+      const data = await this.folkMedicineService.incrementLikeCount(this.decode(id));
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);

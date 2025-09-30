@@ -7,7 +7,6 @@ import {
   Body,
   Param,
   UseGuards,
-  UseInterceptors,
   Query,
 } from '@nestjs/common';
 import { RoleService } from '../../services/role.service';
@@ -17,16 +16,16 @@ import { RoleDto } from '../../dtos/role.dto';
 import { Feature } from '../../entities/feature.entity';
 import { AssignFeatureDto } from '../../dtos/assign-navigator.dto';
 import { AssignPermissionDto } from '../../dtos/assign-permission.dto';
-import { EncryptionInterceptor } from 'src/interceptors/encryption.interceptor';
-import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
 import { PaginationParams } from 'src/dtos/filter.dto';
 import { RequirePermission } from 'src/decorators/require-permissions.decorator';
+import { BaseController } from '../base/base.controller';
 
 @Controller('roles')
 @UseGuards(JwtAuthGuard)
-@UseInterceptors(EncryptionInterceptor)
-export class RoleController {
-  constructor(private roleService: RoleService) {}
+export class RoleController extends BaseController {
+  constructor(private roleService: RoleService) {
+    super();
+  }
 
   @Get()
   @RequirePermission('READ', 'role')
@@ -79,7 +78,7 @@ export class RoleController {
   @Get(':id/features')
   @RequirePermission('READ', 'role')
   async getFeaturesByRole(@Param('id') id: string): Promise<Feature[]> {
-    return this.roleService.getFeaturesByRole(parseInt(id));
+    return this.roleService.getFeaturesByRole(this.decode(id));
   }
 
   @Post(':id/features')
@@ -118,10 +117,5 @@ export class RoleController {
   @Get(':id/permissions/stats')
   async getPermissionStats(@Param('id') id: string) {
     return this.roleService.getPermissionStats(this.decode(id));
-  }
-
-  private decode(id: string) {
-    const idDecode = Base64EncryptionUtil.decrypt(id);
-    return parseInt(idDecode);
   }
 }
