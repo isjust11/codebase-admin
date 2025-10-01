@@ -8,13 +8,41 @@ import * as path from 'path';
 import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
 import { User } from 'src/entities/user.entity';
 import imageSize from 'image-size';
+import axios from 'axios';
+import { ConfigService } from '@nestjs/config';
+import FormData from 'form-data';
 
 @Injectable()
 export class MediaService {
   constructor(
     @InjectRepository(Media)
     private mediaRepository: Repository<Media>,
+    private readonly configService: ConfigService,
   ) { }
+
+  private get storageServiceUrl(): string {
+    const url = this.configService.get<string>('STORAGE_SERVICE_URL') || 'http://localhost:3005';
+    return url.endsWith('/') ? url.slice(0, -1) : url;
+  }
+
+  private get storageClientKey(): string {
+    const key = this.configService.get<string>('STORAGE_CLIENT_KEY') || '';
+    return key;
+  }
+
+  private get storageClientHeaderName(): string {
+    // Matches default of storage service; can be overridden if needed
+    return this.configService.get<string>('STORAGE_CLIENT_HEADER') || 'x-client-key';
+  }
+
+  private buildAbsoluteUrl(relativeOrAbsolute: string): string {
+    try {
+      // If already absolute, URL constructor with base will keep it
+      return new URL(relativeOrAbsolute, this.storageServiceUrl).toString();
+    } catch (_err) {
+      return relativeOrAbsolute;
+    }
+  }
 
   async findAll(userId: number): Promise<Media[]> {
     return this.mediaRepository.find({
@@ -51,18 +79,28 @@ export class MediaService {
 
   async updateMediaFile(id: number, file: Express.Multer.File, user: User): Promise<Media> {
     const media = await this.findById(id, user.id);
-    const oldFilePath = media.path;
+    const oldFilename = media.filename;
 
-    // Delete old file
-    if (fs.existsSync(oldFilePath)) {
-      fs.unlinkSync(oldFilePath);
+    // Attempt to delete old remote file (ignore if not found)
+    if (oldFilename) {
+      try {
+        await axios.delete(`${this.storageServiceUrl}/storage/${encodeURIComponent(oldFilename)}`, {
+          headers: { [this.storageClientHeaderName]: this.storageClientKey },
+        });
+      } catch (_err) {
+        // Ignore storage delete errors to not block update
+      }
     }
 
-    // Save new file
-    const uploadPath = path.join('uploads', user.id.toString());
-    const uniqueFilename = `${Date.now()}-${file.originalname}`;
-    const newFilePath = path.join(uploadPath, uniqueFilename);
-    fs.writeFileSync(newFilePath, file.buffer);
+    // Upload new file to storage service
+    const form = new FormData();
+    form.append('file', file.buffer, { filename: file.originalname, contentType: file.mimetype, knownLength: file.size });
+    const uploadRes = await axios.post(`${this.storageServiceUrl}/storage/upload`, form, {
+      headers: { ...form.getHeaders(), [this.storageClientHeaderName]: this.storageClientKey },
+      maxBodyLength: Infinity,
+      maxContentLength: Infinity,
+    });
+    const stored = uploadRes.data as { filename: string; size: number; mimeType: string; url: string };
 
     let width: number | null = null;
     let height: number | null = null;
@@ -76,26 +114,30 @@ export class MediaService {
       }
     }
 
-    // Update media entity
-    media.filename = uniqueFilename;
+    // Update media entity with storage service data
+    media.filename = stored.filename;
     media.originalName = file.originalname;
     media.mimeType = file.mimetype;
-    media.size = file.size;
+    media.size = stored.size ?? file.size;
     media.width = width;
     media.height = height;
-    media.path = newFilePath;
-    media.url = `/${newFilePath.replace(/\\/g, '/')}`;
+    media.path = stored.url; // keep original relative for traceability
+    media.url = this.buildAbsoluteUrl(stored.url);
 
     return this.mediaRepository.save(media);
   }
 
   async deleteFile(id: number, userId: number): Promise<void> {
     const media = await this.findById(id, userId);
-    const filePath = path.join(process.cwd(), media.path);
-
     try {
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
+      if (media.filename) {
+        try {
+          await axios.delete(`${this.storageServiceUrl}/storage/${encodeURIComponent(media.filename)}`, {
+            headers: { [this.storageClientHeaderName]: this.storageClientKey },
+          });
+        } catch (_err) {
+          // Ignore remote not found
+        }
       }
       await this.remove(id, userId);
     } catch (_error) {
@@ -112,18 +154,18 @@ export class MediaService {
   
 
   async upload(file: Express.Multer.File, user: User): Promise<Media> {
-    const uploadPath = path.join('uploads', user.id.toString());
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-
-    const uniqueFilename = `${Date.now()}-${file.originalname}`;
-    const filePath = path.join(uploadPath, uniqueFilename);
-    fs.writeFileSync(filePath, file.buffer);
+    // Upload buffer to centralized storage service
+    const form = new FormData();
+    form.append('file', file.buffer, { filename: file.originalname, contentType: file.mimetype, knownLength: file.size });
+    const uploadRes = await axios.post(`${this.storageServiceUrl}/storage/upload`, form, {
+      headers: { ...form.getHeaders(), [this.storageClientHeaderName]: this.storageClientKey },
+      maxBodyLength: Infinity,
+      maxContentLength: Infinity,
+    });
+    const stored = uploadRes.data as { filename: string; size: number; mimeType: string; url: string };
 
     let width: number = 200;
     let height: number = 200;
-
     if (file.mimetype.startsWith('image/')) {
       try {
         const dimensions = imageSize(file.buffer);
@@ -135,14 +177,14 @@ export class MediaService {
     }
 
     const newMedia = new Media();
-    newMedia.filename = uniqueFilename;
+    newMedia.filename = stored.filename;
     newMedia.originalName = file.originalname;
     newMedia.mimeType = file.mimetype;
-    newMedia.size = file.size;
+    newMedia.size = stored.size ?? file.size;
     newMedia.width = width;
     newMedia.height = height;
-    newMedia.path = filePath;
-    newMedia.url = `/${filePath.replace(/\\/g, '/')}`;
+    newMedia.path = stored.url; // keep relative
+    newMedia.url = this.buildAbsoluteUrl(stored.url);
     newMedia.user = user;
     newMedia.userId = user.id;
 
