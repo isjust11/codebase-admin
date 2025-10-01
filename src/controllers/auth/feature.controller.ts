@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Delete, Query, Put, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Query, Put, UseGuards, Res } from '@nestjs/common';
 import { AssignRoleDto } from '../../dtos/assign-role.dto';
 import { PaginationParams } from 'src/dtos/filter.dto';
 import { FeatureDto } from 'src/dtos/feature.dto';
@@ -7,65 +7,106 @@ import { BaseController } from '../base/base.controller';
 import { RequirePermission } from 'src/decorators/require-permissions.decorator';
 import { PermissionGuard } from 'src/guards/permission.guard';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { Response } from 'express';
 
 @Controller('feature')
 @UseGuards(JwtAuthGuard, PermissionGuard)
-export class FeatureController extends BaseController{
+export class FeatureController extends BaseController {
     constructor(private readonly featureService: FeatureService) {
         super();
     }
 
     @Get()
     @RequirePermission('READ', 'feature')
-    async getAll(@Query('page') page: number, @Query('size') size: number, @Query('search') search: string) {
+    async getAll(@Query('page') page: number, @Query('size') size: number, @Query('search') search: string, @Res() res: Response) {
         const filter: PaginationParams = {
             page: page || 1,
             size: size || 10,
             search: search || ''
         };
-        return this.featureService.findAllWithPagination(filter);
+        try {
+            const result = await this.featureService.findAllWithPagination(filter);
+            return this.success(res, result);
+        } catch (error) {
+            this.error(res, error);
+        }
     }
     
     @Post()
     @RequirePermission('CREATE', 'feature')
-    create(@Body() createFeatureDto: FeatureDto) {
-        return this.featureService.create(createFeatureDto);
+    async create(@Body() createFeatureDto: FeatureDto, @Res() res: Response) {
+        try {
+            const result = await this.featureService.create(createFeatureDto);
+            return this.success(res, result);
+        } catch (error) {
+            this.error(res, error);
+        }
     }
 
     @Get('all')
     @RequirePermission('READ', 'feature')
-    findAll(@Query('search') search: string) {
-        return this.featureService.findAll(search);
+    async findAll(@Query('search') search: string, @Res() res: Response) {
+        try {
+            const result = await this.featureService.findAll(search);
+            return this.success(res, result);
+        } catch (error) {
+            this.error(res, error);
+        }
     }
 
     @Get(':id')
     @RequirePermission('READ', 'feature')
-    findOne(@Param('id') id: string) {
-        return this.featureService.findOne(this.decode(id));
+    async findOne(@Param('id') id: string, @Res() res: Response) {
+        try {
+            const result = await this.featureService.findOne(this.decode(id));
+            return this.success(res, result);
+        } catch (error) {
+            this.error(res, error);
+        }
     }
 
     @Put(':id')
     @RequirePermission('UPDATE', 'feature')
-    update(@Param('id') id: string, @Body() updateFeatureDto: FeatureDto) {
-        return this.featureService.update(this.decode(id), updateFeatureDto);
+    async update(@Param('id') id: string, @Body() updateFeatureDto: FeatureDto, @Res() res: Response) {
+        try {
+            const result = await this.featureService.update(this.decode(id), updateFeatureDto);
+            return this.success(res, result);
+        } catch (error) {
+            this.error(res, error);
+        }
     }
 
     @Delete(':id')
     @RequirePermission('DELETE', 'feature')
-    remove(@Param('id') id: string) {
-        return this.featureService.remove(this.decode(id));
+    async remove(@Param('id') id: string, @Res() res: Response) {
+        try {
+            const result = await this.featureService.remove(this.decode(id));
+            return this.success(res, result);
+        } catch (error) {
+            this.error(res, error);
+        }
     }
 
     @Post(':id/roles')
     @RequirePermission('UPDATE', 'feature')
-    assignRoles(@Param('id') id: string, @Body() assignRoleDto: AssignRoleDto) {
-        return this.featureService.assignRoles(this.decode(id), assignRoleDto);
+    async assignRoles(@Param('id') id: string, @Body() assignRoleDto: AssignRoleDto, @Res() res: Response) {
+        try {
+            const result = await this.featureService.assignRoles(this.decode(id), assignRoleDto);
+            return this.success(res, result);
+        } catch (error) {
+            this.error(res, error);
+        }
     }
 
     @Delete(':id/roles')
     @RequirePermission('UPDATE', 'feature')
-    removeRoles(@Param('id') id: string, @Body() roleIds: number[]) {
-        return this.featureService.removeRoles(this.decode(id), roleIds);
+    async removeRoles(@Param('id') id: string, @Body() roleIds: number[], @Res() res: Response) {
+        try {
+            const result = await this.featureService.removeRoles(this.decode(id), roleIds);
+            return this.success(res, result);
+        } catch (error) {
+            this.error(res, error);
+        }
     }
 
 }

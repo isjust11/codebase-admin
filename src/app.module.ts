@@ -39,6 +39,7 @@ import { Product } from './entities/product.entity';
 import { ProductReview } from './entities/product-review.entity';
 import { ProductComplaint } from './entities/product-complaint.entity';
 import { AdvertisingSlider } from './entities/advertising-slider.entity';
+import { DataSource } from './entities/data-source.entity';
 import { CategoryModule } from './modules/category.module';
 import { AuthModule } from './modules/auth.module';
 import { MedicineModule } from './modules/medicine.module';
@@ -91,6 +92,7 @@ import { FcmController } from './controllers/fcm/fcm.controller';
         ProductReview,
         ProductComplaint,
         AdvertisingSlider,
+        DataSource,
         Notification,
         NotificationTemplate,
         NotificationConfig,
@@ -125,7 +127,7 @@ import { FcmController } from './controllers/fcm/fcm.controller';
     ECommerceModule,
     MediaModule,
     AuthModule,
-    DashboardModule,
+    DashboardModule
   ],
   controllers: [FcmController],
 })

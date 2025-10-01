@@ -1,13 +1,15 @@
-import { IsString, IsNumber, IsOptional, IsBoolean } from 'class-validator';
+import { IsString, IsNumber, IsOptional, IsBoolean, IsNotEmpty, IsDefined } from 'class-validator';
 
 export class FolkMedicineDto {
   @IsOptional()
   @IsNumber()
   id?: number;
 
+  @IsNotEmpty()
   @IsString()
   title: string;
 
+  @IsNotEmpty()
   @IsString()
   slug: string;
 
@@ -15,6 +17,7 @@ export class FolkMedicineDto {
   @IsString()
   summary?: string;
 
+  @IsNotEmpty()
   @IsString()
   content: string;
 
@@ -39,12 +42,16 @@ export class FolkMedicineDto {
   thumbnail?: string;
 
   @IsOptional()
-  @IsNumber()
-  authorId?: number;
+  @IsString()
+  authorId?: string;
 
   @IsOptional()
   @IsString()
-  categoryId?: number;
+  categoryId?: string;
+
+  @IsOptional()
+  @IsString()
+  dataSourceId?: string;
 
   @IsOptional()
   @IsBoolean()

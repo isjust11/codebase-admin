@@ -14,6 +14,9 @@ import { FolkMedicineService } from '../services/folk-medicine.service';
 import { Author } from '../entities/author.entity';
 import { AuthorService } from '../services/author.service';
 import { AuthorController } from 'src/controllers/medicine/author.controller';
+import { DataSourceController } from 'src/controllers/media/data-source.controller';
+import { DataSourceService } from 'src/services/data-source.service';
+import { DataSource } from 'src/entities/data-source.entity';
 
 @Module({
   imports: [
@@ -23,26 +26,30 @@ import { AuthorController } from 'src/controllers/medicine/author.controller';
       Herbal, 
       HerbalImage, 
       FolkMedicine, 
-      Author
+      Author,
+      DataSource,
     ])
   ],
   controllers: [
     HerbalController, 
     HerbalImageController, 
     FolkMedicineController, 
-    AuthorController
+    AuthorController,
+    DataSourceController
   ],
   providers: [
     HerbalService, 
     HerbalImageService, 
     FolkMedicineService, 
-    AuthorService
+    AuthorService,
+    DataSourceService
   ],
   exports: [
     HerbalService, 
     HerbalImageService, 
     FolkMedicineService, 
-    AuthorService
+    AuthorService,
+    DataSourceService
   ],
 })
 export class MedicineModule {} 

@@ -7,6 +7,8 @@ import { RequirePermission } from 'src/decorators/require-permissions.decorator'
 import { PermissionGuard } from 'src/guards/permission.guard';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { Response } from 'express';
+import { DeepPartial } from 'typeorm';
+import { FolkMedicine } from 'src/entities/folk-medicine.entity';
 @Controller('folk-medicine')
 @UseGuards(JwtAuthGuard, PermissionGuard)
 export class FolkMedicineController extends BaseController {
@@ -16,9 +18,9 @@ export class FolkMedicineController extends BaseController {
 
   @Post()
   @RequirePermission('CREATE', 'folk-medicine')
-  create(@Body() dto: FolkMedicineDto, @Res() res: Response) {
+  async create(@Body() dto: FolkMedicineDto, @Res() res: Response) {
     try{
-      const data = this.folkMedicineService.create(dto);
+      const data = await this.folkMedicineService.create(dto);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);

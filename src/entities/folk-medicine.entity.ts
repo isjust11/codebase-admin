@@ -3,6 +3,7 @@ import { User } from './user.entity';
 import { Category } from './category.entity';
 import { Transform } from 'class-transformer';
 import { Author } from './author.entity';
+import { DataSource } from './data-source.entity';
 
 @Entity()
 export class FolkMedicine {
@@ -55,6 +56,13 @@ export class FolkMedicine {
 
   @Column({ nullable: true })
   categoryId?: number;
+
+  @Column({ nullable: true })
+  dataSourceId?: number;
+
+  @ManyToOne(() => DataSource, dataSource => dataSource.id, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'dataSourceId' })
+  dataSource?: DataSource | null;
 
   @Column({ default: true })
   isActive: boolean;

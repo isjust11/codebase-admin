@@ -8,17 +8,17 @@ import {
   Param,
   UseGuards,
   Query,
+  Res,
 } from '@nestjs/common';
 import { RoleService } from '../../services/role.service';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
-import { Role } from '../../entities/role.entity';
 import { RoleDto } from '../../dtos/role.dto';
-import { Feature } from '../../entities/feature.entity';
 import { AssignFeatureDto } from '../../dtos/assign-navigator.dto';
 import { AssignPermissionDto } from '../../dtos/assign-permission.dto';
 import { PaginationParams } from 'src/dtos/filter.dto';
 import { RequirePermission } from 'src/decorators/require-permissions.decorator';
 import { BaseController } from '../base/base.controller';
+import { Response } from 'express';
 
 @Controller('roles')
 @UseGuards(JwtAuthGuard)
@@ -33,31 +33,52 @@ export class RoleController extends BaseController {
     @Query('page') page: number,
     @Query('size') size: number,
     @Query('search') search: string,
+    @Res() res: Response,
   ) {
     const filter: PaginationParams = {
       page: page || 1,
       size: size || 10,
       search: search || '',
     };
-    return this.roleService.findAllWithPagination(filter);
+    try {
+      const result = await this.roleService.findAllWithPagination(filter);
+      return this.success(res, result);
+    } catch (error) {
+      this.error(res, error);
+    }
   }
 
   @Get(':id')
   @RequirePermission('READ', 'role')
-  async findOne(@Param('id') id: string): Promise<Role | null> {
-    return this.roleService.findById(this.decode(id));
+  async findOne(@Param('id') id: string, @Res() res: Response) {
+    try {
+      const result = await this.roleService.findById(this.decode(id));
+      return this.success(res, result);
+    } catch (error) {
+      this.error(res, error);
+    }
   }
 
   @Get('/find/:code')
   @RequirePermission('READ', 'role')
-  async findByCode(@Param('code') code: string): Promise<Role | null> {
-    return this.roleService.findByCode(code);
+  async findByCode(@Param('code') code: string, @Res() res: Response) {
+    try {
+      const result = await this.roleService.findByCode(code);
+      return this.success(res, result);
+    } catch (error) {
+      this.error(res, error);
+    }
   }
 
   @Post()
   @RequirePermission('CREATE', 'role')
-  async create(@Body() createRoleDto: RoleDto): Promise<Role> {
-    return this.roleService.create(createRoleDto);
+  async create(@Body() createRoleDto: RoleDto, @Res() res: Response) {
+    try {
+      const result = await this.roleService.create(createRoleDto);
+      return this.success(res, result);
+    } catch (error) {
+      this.error(res, error);
+    }
   }
 
   @Put(':id')
@@ -65,20 +86,36 @@ export class RoleController extends BaseController {
   async update(
     @Param('id') id: string,
     @Body() updateRoleDto: RoleDto,
-  ): Promise<Role> {
-    return this.roleService.update(this.decode(id), updateRoleDto);
+    @Res() res: Response,
+  ) {
+    try {
+      const result = await this.roleService.update(this.decode(id), updateRoleDto);
+      return this.success(res, result);
+    } catch (error) {
+      this.error(res, error);
+    }
   }
 
   @Delete(':id')
   @RequirePermission('DELETE', 'role')
-  async remove(@Param('id') id: string): Promise<void> {
-    return this.roleService.remove(this.decode(id));
+  async remove(@Param('id') id: string, @Res() res: Response) {
+    try {
+      const result = await this.roleService.remove(this.decode(id));
+      return this.success(res, result);
+    } catch (error) {
+      this.error(res, error);
+    }
   }
 
   @Get(':id/features')
   @RequirePermission('READ', 'role')
-  async getFeaturesByRole(@Param('id') id: string): Promise<Feature[]> {
-    return this.roleService.getFeaturesByRole(this.decode(id));
+  async getFeaturesByRole(@Param('id') id: string, @Res() res: Response) {
+    try {
+      const result = await this.roleService.getFeaturesByRole(this.decode(id));
+      return this.success(res, result);
+    } catch (error) {
+      this.error(res, error);
+    }
   }
 
   @Post(':id/features')
@@ -86,15 +123,26 @@ export class RoleController extends BaseController {
   async assignFeatures(
     @Param('id') id: string,
     @Body() assignFeatureDto: AssignFeatureDto,
-  ): Promise<Role> {
-    return this.roleService.assignFeatures(this.decode(id), assignFeatureDto);
+    @Res() res: Response,
+  ) {
+    try {
+      const result = await this.roleService.assignFeatures(this.decode(id), assignFeatureDto);
+      return this.success(res, result);
+    } catch (error) {
+      this.error(res, error);
+    }
   }
 
   // Permission management endpoints
   @Get(':id/permissions')
   @RequirePermission('READ', 'role')
-  async getPermissionsByRole(@Param('id') id: string) {
-    return this.roleService.getPermissionsByRole(this.decode(id));
+  async getPermissionsByRole(@Param('id') id: string, @Res() res: Response) {
+    try {
+      const result = await this.roleService.getPermissionsByRole(this.decode(id));
+      return this.success(res, result);
+    } catch (error) {
+      this.error(res, error);
+    }
   }
 
   @Post(':id/permissions')
@@ -102,20 +150,37 @@ export class RoleController extends BaseController {
   async assignPermissions(
     @Param('id') id: string,
     @Body() assignPermissionDto: AssignPermissionDto,
-  ): Promise<Role> {
-    return this.roleService.assignPermissions(this.decode(id), assignPermissionDto);
+    @Res() res: Response,
+  ) {
+    try {
+      const result = await this.roleService.assignPermissions(this.decode(id), assignPermissionDto);
+      return this.success(res, result);
+    } catch (error) {
+      this.error(res, error);
+    }
   }
 
   @Delete(':id/permissions')
   async removePermissions(
     @Param('id') id: string,
     @Body() assignPermissionDto: AssignPermissionDto,
-  ): Promise<Role> {
-    return this.roleService.removePermissions(this.decode(id), assignPermissionDto);
+    @Res() res: Response,
+  ) {
+    try {
+      const result = await this.roleService.removePermissions(this.decode(id), assignPermissionDto);
+      return this.success(res, result);
+    } catch (error) {
+      this.error(res, error);
+    }
   }
 
   @Get(':id/permissions/stats')
-  async getPermissionStats(@Param('id') id: string) {
-    return this.roleService.getPermissionStats(this.decode(id));
+  async getPermissionStats(@Param('id') id: string, @Res() res: Response) {
+    try {
+      const result = await this.roleService.getPermissionStats(this.decode(id));
+      return this.success(res, result);
+    } catch (error) {
+      this.error(res, error);
+    }
   }
 }
