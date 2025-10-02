@@ -10,7 +10,7 @@ import { User } from 'src/entities/user.entity';
 import imageSize from 'image-size';
 import axios from 'axios';
 import { ConfigService } from '@nestjs/config';
-import FormData from 'form-data';
+import FormData = require('form-data');
 
 @Injectable()
 export class MediaService {
