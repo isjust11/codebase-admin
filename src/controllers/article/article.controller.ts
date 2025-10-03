@@ -18,12 +18,13 @@ export class ArticleController extends BaseController{
 
   @Post()
   @RequirePermission('CREATE', 'article')
-  create(@Body() dto: ArticleDto, @Request() req, @Res() res: Response) {
+  async create(@Body() dto: ArticleDto, @Request() req, @Res() res: Response) {
     try {
-      return this.articleService.create({
+      const data = await this.articleService.create({
       ...dto,
         createdBy: req.user.id,
       });
+      return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
     }
@@ -53,9 +54,9 @@ export class ArticleController extends BaseController{
 
   @Get('all')
   @RequirePermission('READ', 'article')
-  findAll(@Res() res: Response) {
+  async findAll(@Res() res: Response) {
     try {
-      const data = this.articleService.findAll();
+      const data = await this.articleService.findAll();
       return this.success(res, data); 
     } catch (error) {
       return this.error(res, error);
@@ -64,9 +65,9 @@ export class ArticleController extends BaseController{
 
   @Get(':id')
   @RequirePermission('READ', 'article')
-  findOne(@Param('id') id: string, @Res() res: Response) {
+  async findOne(@Param('id') id: string, @Res() res: Response) {
     try {
-      const data = this.articleService.findOne(this.decode(id));
+      const data = await this.articleService.findOne(this.decode(id));
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -75,9 +76,9 @@ export class ArticleController extends BaseController{
 
   @Put(':id')
   @RequirePermission('UPDATE', 'article')
-  update(@Param('id') id: string, @Body() dto: ArticleDto, @Request() req, @Res() res: Response) {
+  async update(@Param('id') id: string, @Body() dto: ArticleDto, @Request() req, @Res() res: Response) {
     try {
-      const data = this.articleService.update(this.decode(id), {
+      const data = await this.articleService.update(this.decode(id), {
       ...dto, 
         updatedBy: req.user.id,
       });
@@ -89,9 +90,9 @@ export class ArticleController extends BaseController{
 
   @Delete(':id')
   @RequirePermission('DELETE', 'article')
-  remove(@Param('id') id: string, @Res() res: Response) {
+  async remove(@Param('id') id: string, @Res() res: Response) {
     try {
-      const data = this.articleService.remove(this.decode(id));
+      const data = await this.articleService.remove(this.decode(id));
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);

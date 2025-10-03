@@ -9,6 +9,7 @@ export class ArticleDto {
   @IsString()
   title: string | undefined;
 
+  @IsOptional()
   @IsString()
   slug: string | undefined;
 
@@ -29,16 +30,13 @@ export class ArticleDto {
 
 
   @IsOptional()
-  @IsNumber()
-  createdBy?: number;
+  createdBy?: any;
 
   @IsOptional()
-  @IsNumber()
-  updatedBy?: number;
+  updatedBy?: any;
 
   @IsOptional()
-  @IsNumber()
-  statusId?: string;
+  statusId?: any;
 
   @IsOptional()
   @IsBoolean()

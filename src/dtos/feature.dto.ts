@@ -1,8 +1,9 @@
-import { IsString, IsNumber, IsEnum, IsBoolean } from 'class-validator';
+import { IsString, IsNumber, IsEnum, IsBoolean, IsOptional } from 'class-validator';
 import { Optional } from '@nestjs/common';
 import { IconType } from 'src/enums/icon-type.enum';
 
 export class FeatureDto {
+  @IsOptional()
   @IsString()
   id: string;
 
@@ -22,9 +23,8 @@ export class FeatureDto {
   @IsBoolean()
   isActive: boolean;
 
-  @IsNumber()
   @Optional()
-  sortOrder?:number;
+  sortOrder?: any;
 
   @IsEnum(IconType)
   @Optional()
@@ -36,7 +36,8 @@ export class FeatureDto {
 
   @Optional()
   @IsNumber()
-  iconSize: number;
-    
+  iconSize: any;
+
+  @Optional()
   className: string;
 }

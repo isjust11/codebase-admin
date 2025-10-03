@@ -4,7 +4,6 @@ import { DeepPartial, Like, Repository } from 'typeorm';
 import { Article } from '../entities/article.entity';
 import slugify from 'slugify';
 import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
-import { plainToClass } from 'class-transformer';
 import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
 import { AuthorService } from './author.service';
 import { CategoryService } from './category.service';
@@ -38,7 +37,7 @@ export class ArticleService {
     });
 
     return {
-      data: plainToClass(Article, data),
+      data: data,
       total,
       page,
       size,
@@ -66,13 +65,13 @@ export class ArticleService {
 
   async findAll(): Promise<Article[]> {
     const articles = await this.articleRepository.find();
-    return plainToClass(Article, articles);
+    return articles;
   }
 
   async findOne(id: number): Promise<Article> {
     const article = await this.articleRepository.findOne({ where: { id } });
     if (!article) throw new NotFoundException('Article not found');
-    return plainToClass(Article, article);
+    return article;
   }
 
   async update(id: number, data: ArticleDto): Promise<Article> {

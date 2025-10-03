@@ -162,7 +162,7 @@ export class MediaService {
       maxBodyLength: Infinity,
       maxContentLength: Infinity,
     });
-    const stored = uploadRes.data as { filename: string; size: number; mimeType: string; url: string };
+    const stored = uploadRes.data as { filename: string; size: number; mimeType: string; url: string, publicUrl: string };
 
     let width: number = 200;
     let height: number = 200;
@@ -183,12 +183,13 @@ export class MediaService {
     newMedia.size = stored.size ?? file.size;
     newMedia.width = width;
     newMedia.height = height;
-    newMedia.path = stored.url; // keep relative
-    newMedia.url = this.buildAbsoluteUrl(stored.url);
+    newMedia.path = stored.publicUrl; // keep relative
+    newMedia.url = this.buildAbsoluteUrl(stored.publicUrl);
     newMedia.user = user;
     newMedia.userId = user.id;
 
-    return this.mediaRepository.save(newMedia);
+    await this.mediaRepository.save(newMedia);
+    return newMedia;
   }
 
   async findAllWithPagination(params: PaginationParams): Promise<PaginatedResponse<Media>> {
