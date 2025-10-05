@@ -8,9 +8,7 @@ import {
   Delete,
   Query,
   UseGuards,
-  HttpStatus,
   ParseIntPipe,
-  Req,
   Res,
 } from '@nestjs/common';
 import { RequirePermission } from 'src/decorators/require-permissions.decorator';
@@ -22,7 +20,7 @@ import { DataSourceService } from 'src/services/data-source.service';
 import { BaseController } from '../base/base.controller';
 import { Response } from 'express';
 
-@Controller('data-sources')
+@Controller('data-source')
 @UseGuards(JwtAuthGuard, PermissionGuard)
 export class DataSourceController extends BaseController {
   constructor(private readonly dataSourceService: DataSourceService) {
@@ -44,8 +42,13 @@ export class DataSourceController extends BaseController {
   @Get()
   @RequirePermission('READ', 'SOURCE')
   async findAll(@Query() queryDto: PaginationParams, @Res() res: Response) {
-    const result = await this.dataSourceService.findPagination(queryDto);
-    return this.success(res, result);
+    try {
+      const result = await this.dataSourceService.findPagination(queryDto);
+      return this.success(res, result);
+    } catch (error) {
+      this.error(res, error);
+    }
+    
   }
 
   @Get('types')

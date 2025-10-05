@@ -6,7 +6,6 @@ import { BaseController } from '../base/base.controller';
 import { RequirePermission } from 'src/decorators/require-permissions.decorator';
 import { PermissionGuard } from 'src/guards/permission.guard';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
-import { Article } from 'src/entities/article.entity';
 import { Response } from 'express';
 
 @Controller('article')

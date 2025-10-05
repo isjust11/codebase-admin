@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsEnum, IsBoolean, IsOptional } from 'class-validator';
+import { IsString, IsNumber, IsEnum, IsBoolean, IsOptional, IsArray } from 'class-validator';
 import { Optional } from '@nestjs/common';
 import { IconType } from 'src/enums/icon-type.enum';
 
@@ -17,27 +17,32 @@ export class FeatureDto {
   link: string;
 
   @IsString()
-  @Optional()
+  @IsOptional()
   parentId?: string;
 
   @IsBoolean()
   isActive: boolean;
 
-  @Optional()
+  @IsOptional()
   sortOrder?: any;
 
   @IsEnum(IconType)
-  @Optional()
+@IsOptional()
   iconType: IconType;
 
   @IsString()
-  @Optional()
+  @IsOptional()
   featureTypeId: string;
 
-  @Optional()
+  @IsOptional()
   @IsNumber()
   iconSize: any;
 
-  @Optional()
+  @IsString()
+  @IsOptional()
   className: string;
+
+  @IsOptional()
+  @IsArray()
+  roles: string[];
 }
