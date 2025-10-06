@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
+import { DataSource } from './data-source.entity';
 import { Transform } from 'class-transformer';
 import { Herbal } from './herbal.entity';
 import { FolkMedicine } from './folk-medicine.entity';
@@ -103,6 +104,14 @@ export class Author {
 
   @OneToMany(() => Herbal, herbal => herbal.authorId)
   herbals?: Herbal[];
+
+  // bổ sung nguồn dữ liệu
+  @Column({ type: 'integer', nullable: true })
+  sourceDataId?: number;
+
+  @ManyToOne(() => DataSource, dataSource => dataSource.id)
+  @JoinColumn({ name: 'sourceDataId' })
+  dataSource?: DataSource;
 
   @OneToMany(() => FolkMedicine, folkMedicine => folkMedicine.authorId)
   folkMedicines?: FolkMedicine[];

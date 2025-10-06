@@ -3,13 +3,12 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
   Delete,
   Query,
   UseGuards,
-  ParseIntPipe,
   Res,
+  Put,
 } from '@nestjs/common';
 import { RequirePermission } from 'src/decorators/require-permissions.decorator';
 import { DataSourceDto } from 'src/dtos/data-source.dto';
@@ -41,7 +40,7 @@ export class DataSourceController extends BaseController {
 
   @Get()
   @RequirePermission('READ', 'SOURCE')
-  async findAll(@Query() queryDto: PaginationParams, @Res() res: Response) {
+  async findPagination(@Query() queryDto: PaginationParams, @Res() res: Response) {
     try {
       const result = await this.dataSourceService.findPagination(queryDto);
       return this.success(res, result);
@@ -49,6 +48,13 @@ export class DataSourceController extends BaseController {
       this.error(res, error);
     }
     
+  }
+
+  @Get('all')
+  @RequirePermission('READ', 'SOURCE')
+  async findAll(@Res() res: Response) {
+    const result = await this.dataSourceService.findAll();
+    return this.success(res, result);
   }
 
   @Get('types')
@@ -61,20 +67,20 @@ export class DataSourceController extends BaseController {
 
   @Get(':id')
   @RequirePermission('READ', 'SOURCE')
-  async findOne(@Param('id', ParseIntPipe) id: number, @Res() res: Response) {
-    const dataSource = await this.dataSourceService.findOne(id);
+  async findOne(@Param('id') id: string, @Res() res: Response) {
+    const dataSource = await this.dataSourceService.findOne(this.decode(id));
     return this.success(res, dataSource);
   }
 
-  @Patch(':id')
+  @Put(':id')
   @RequirePermission('UPDATE', 'SOURCE')
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body() updateDataSourceDto: DataSourceDto,
     @Res() res: Response
   ) {
     try {
-      const dataSource = await this.dataSourceService.update(id, updateDataSourceDto);
+      const dataSource = await this.dataSourceService.update(this.decode(id), updateDataSourceDto);
       return this.success(res, dataSource);
     } catch (error) {
       this.error(res, error);
@@ -82,11 +88,26 @@ export class DataSourceController extends BaseController {
 
   }
 
+  @Put(':id/status')
+  @RequirePermission('UPDATE', 'SOURCE')
+  async updateStatus(
+    @Param('id') id: string,
+    @Body() body: { isActive: boolean },
+    @Res() res: Response,
+  ) {
+    try {
+      const dataSource = await this.dataSourceService.updateStatus(this.decode(id), body.isActive);
+      return this.success(res, dataSource);
+    } catch (error) {
+      this.error(res, error);
+    }
+  }
+
   @Delete(':id')
   @RequirePermission('DELETE', 'SOURCE')
-  async remove(@Param('id', ParseIntPipe) id: number, @Res() res: Response) {
+  async remove(@Param('id') id: string, @Res() res: Response) {
     try {
-      const dataSource = await this.dataSourceService.remove(id);
+      const dataSource = await this.dataSourceService.remove(this.decode(id));
       return this.success(res, dataSource);
     } catch (error) {
       this.error(res, error);

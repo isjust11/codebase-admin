@@ -1,6 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 import { Transform } from 'class-transformer';
 import { FolkMedicine } from './folk-medicine.entity';
+import * as util from 'util';
 
 export enum DataSourceType {
   WEBSITE = 'website',
@@ -43,7 +44,11 @@ export class DataSource {
   @Column({ length: 255, nullable: true })
   publisher?: string;
 
-  @Column({ type: 'date', nullable: true })
+  @Column({ type: 'date', nullable: true, default: null })
+  @Transform(({ value }) => {
+    if (value === null || value === undefined || value === '') return null;
+    return value instanceof Date ? value : new Date(value);
+  })
   publishDate?: Date;
 
   @Column({ length: 255, nullable: true })

@@ -2,6 +2,7 @@ import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 't
 import { User } from './user.entity';
 import { Transform } from 'class-transformer';
 import { Category } from './category.entity';
+import { DataSource } from './data-source.entity';
 
 @Entity()
 export class Article {
@@ -59,6 +60,14 @@ export class Article {
 
   @Column({ default: true })
   isActive: boolean;
+  
+  // bổ sung nguồn dữ liệu
+  @Column({ type: 'integer', nullable: true })
+  sourceDataId?: number;
+  
+  @ManyToOne(() => DataSource, dataSource => dataSource.id)
+  @JoinColumn({ name: 'sourceDataId' })
+  dataSource?: DataSource;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   @Transform(({ value }) => value ? new Date(value) : value)

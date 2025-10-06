@@ -20,6 +20,7 @@ export const RESOURCES = {
   AUTHOR: 'AUTHOR',
   FOLK_MEDICINE: 'FOLK_MEDICINE',
   HERBAL: 'HERBAL',
+  DATA_SOURCE: 'DATA_SOURCE',
 } as const;
 
 // Định nghĩa các Action chuẩn
@@ -214,6 +215,15 @@ export const PERMISSION_TEMPLATES = {
       { action: ACTIONS.CREATE, name: 'Tạo thuốc thảo dược', code: 'HERBAL_CREATE' },
       { action: ACTIONS.UPDATE, name: 'Cập nhật thuốc thảo dược', code: 'HERBAL_UPDATE' },
       { action: ACTIONS.DELETE, name: 'Xóa thuốc thảo dược', code: 'HERBAL_DELETE' },
+    ]
+  },
+  [RESOURCES.DATA_SOURCE]: {
+    name: 'Quản lý nguồn dữ liệu',
+    permissions: [
+      { action: ACTIONS.READ, name: 'Xem nguồn dữ liệu', code: 'DATA_SOURCE_READ' },
+      { action: ACTIONS.CREATE, name: 'Tạo nguồn dữ liệu', code: 'DATA_SOURCE_CREATE' },
+      { action: ACTIONS.UPDATE, name: 'Cập nhật nguồn dữ liệu', code: 'DATA_SOURCE_UPDATE' },
+      { action: ACTIONS.DELETE, name: 'Xóa nguồn dữ liệu', code: 'DATA_SOURCE_DELETE' },
     ]
   },
 } as const;

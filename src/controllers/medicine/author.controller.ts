@@ -48,11 +48,11 @@ export class AuthorController extends BaseController {
   @RequirePermission('READ', 'author')
   async findAll(@Query() query: PaginationParams, @Res() res: Response) {
     try {
-    if (query.page || query.size || query.search) {
-      const authors = await this.authorService.findPagination(query);
-      return this.success(res, authors);
-    }
-    const authors = await this.authorService.findAll();
+      if (query.page || query.size || query.search) {
+        const authors = await this.authorService.findPagination(query);
+        return this.success(res, authors);
+      }
+      const authors = await this.authorService.findAll();
       return this.success(res, authors);
     } catch (error) {
       return this.error(res, error);
@@ -63,7 +63,7 @@ export class AuthorController extends BaseController {
   @RequirePermission('READ', 'author')
   async findFamousAuthors(@Res() res: Response) {
     try {
-    const authors = await this.authorService.findFamousAuthors();
+      const authors = await this.authorService.findFamousAuthors();
       return this.success(res, authors);
     } catch (error) {
       return this.error(res, error);
@@ -74,7 +74,7 @@ export class AuthorController extends BaseController {
   @RequirePermission('READ', 'author')
   async searchAuthors(@Param('query') query: string, @Res() res: Response) {
     try {
-    const authors = await this.authorService.searchAuthors(query);
+      const authors = await this.authorService.searchAuthors(query);
       return this.success(res, authors);
     } catch (error) {
       return this.error(res, error);
@@ -85,7 +85,7 @@ export class AuthorController extends BaseController {
   @RequirePermission('READ', 'author')
   async findByEra(@Param('era') era: string, @Res() res: Response) {
     try {
-    const authors = await this.authorService.findByEra(era);
+      const authors = await this.authorService.findByEra(era);
       return this.success(res, authors);
     } catch (error) {
       return this.error(res, error);
@@ -94,9 +94,9 @@ export class AuthorController extends BaseController {
 
   @Get('dynasty/:dynasty')
   @RequirePermission('READ', 'author')
-    async findByDynasty(@Param('dynasty') dynasty: string, @Res() res: Response) {
+  async findByDynasty(@Param('dynasty') dynasty: string, @Res() res: Response) {
     try {
-    const authors = await this.authorService.findByDynasty(dynasty);
+      const authors = await this.authorService.findByDynasty(dynasty);
       return this.success(res, authors);
     } catch (error) {
       return this.error(res, error);
@@ -107,7 +107,7 @@ export class AuthorController extends BaseController {
   @RequirePermission('READ', 'author')
   async findBySpecialty(@Param('specialty') specialty: string, @Res() res: Response) {
     try {
-    const authors = await this.authorService.findBySpecialty(specialty);
+      const authors = await this.authorService.findBySpecialty(specialty);
       return this.success(res, authors);
     } catch (error) {
       return this.error(res, error);
@@ -118,7 +118,7 @@ export class AuthorController extends BaseController {
   @RequirePermission('READ', 'author')
   async findBySlug(@Param('slug') slug: string, @Res() res: Response) {
     try {
-    const author = await this.authorService.findBySlug(slug);
+      const author = await this.authorService.findBySlug(slug);
       return this.success(res, author);
     } catch (error) {
       return this.error(res, error);
@@ -129,7 +129,7 @@ export class AuthorController extends BaseController {
   @RequirePermission('READ', 'author')
   async findOne(@Param('id') id: string, @Res() res: Response) {
     try {
-    const author = await this.authorService.findOne(this.decode(id));
+      const author = await this.authorService.findOne(this.decode(id));
       return this.success(res, author);
     } catch (error) {
       return this.error(res, error);
@@ -144,13 +144,13 @@ export class AuthorController extends BaseController {
     @Res() res: Response,
   ) {
     try {
-    if (updateAuthorDto.birthDate) {
-      updateAuthorDto.birthDate = new Date(updateAuthorDto.birthDate);
-    }
-    if (updateAuthorDto.deathDate) {
-      updateAuthorDto.deathDate = new Date(updateAuthorDto.deathDate);
-    }
-    const author = await this.authorService.update(this.decode(id), updateAuthorDto);
+      if (updateAuthorDto.birthDate) {
+        updateAuthorDto.birthDate = new Date(updateAuthorDto.birthDate);
+      }
+      if (updateAuthorDto.deathDate) {
+        updateAuthorDto.deathDate = new Date(updateAuthorDto.deathDate);
+      }
+      const author = await this.authorService.update(this.decode(id), updateAuthorDto);
       return this.success(res, author);
     } catch (error) {
       return this.error(res, error);
@@ -162,7 +162,7 @@ export class AuthorController extends BaseController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id') id: string, @Res() res: Response) {
     try {
-    await this.authorService.remove(this.decode(id));
+      await this.authorService.remove(this.decode(id));
       return this.success(res, null);
     } catch (error) {
       return this.error(res, error);
@@ -174,7 +174,7 @@ export class AuthorController extends BaseController {
   @HttpCode(HttpStatus.OK)
   async incrementViewCount(@Param('id') id: string, @Res() res: Response) {
     try {
-    await this.authorService.incrementViewCount(this.decode(id));
+      await this.authorService.incrementViewCount(this.decode(id));
       return this.success(res, null);
     } catch (error) {
       return this.error(res, error);
@@ -186,7 +186,7 @@ export class AuthorController extends BaseController {
   @HttpCode(HttpStatus.OK)
   async incrementLikeCount(@Param('id') id: string, @Res() res: Response) {
     try {
-    await this.authorService.incrementLikeCount(this.decode(id));
+      await this.authorService.incrementLikeCount(this.decode(id));
       return this.success(res, null);
     } catch (error) {
       return this.error(res, error);

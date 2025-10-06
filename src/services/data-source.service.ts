@@ -44,6 +44,9 @@ export class DataSourceService {
   }
 
   async create(data: DataSourceDto): Promise<DataSource> {
+    if (data.publishDate === '' || data.publishDate === undefined) {
+      data.publishDate = null;
+    }
     const dataSource = this.dataSourceRepository.create(data as DeepPartial<DataSource>);
     return this.dataSourceRepository.save(dataSource);
   }
@@ -65,7 +68,14 @@ export class DataSourceService {
 
   async update(id: number, data: DataSourceDto): Promise<DataSource> {
     const dataSource = await this.findOne(id);
-    Object.assign(dataSource, data);
+    if (data.publishDate === '') {
+      data.publishDate = null;
+    }
+    Object.assign(dataSource, {
+      ...data,
+      publishDate: data.publishDate === '' ? null : data.publishDate,
+      id: dataSource.id,
+    });
     return this.dataSourceRepository.save(dataSource);
   }
 
@@ -79,6 +89,12 @@ export class DataSourceService {
       value: type,
       label: this.getTypeLabel(type),
     }));
+  }
+
+  async updateStatus(id: number, isActive: boolean): Promise<DataSource> {
+    const dataSource = await this.findOne(id);
+    dataSource.isActive = isActive;
+    return this.dataSourceRepository.save(dataSource);
   }
 
   private getTypeLabel(type: DataSourceType): string {

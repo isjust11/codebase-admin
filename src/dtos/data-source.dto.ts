@@ -35,8 +35,7 @@ export class DataSourceDto {
   publisher?: string;
 
   @IsOptional()
-  @IsDateString()
-  publishDate?: string;
+  publishDate?: string | null;
 
   @IsOptional()
   @IsString()

@@ -4,7 +4,6 @@ import { Category } from './category.entity';
 import { Transform } from 'class-transformer';
 import { Author } from './author.entity';
 import { DataSource } from './data-source.entity';
-
 @Entity()
 export class FolkMedicine {
   @PrimaryGeneratedColumn()

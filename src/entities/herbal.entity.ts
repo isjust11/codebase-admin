@@ -4,7 +4,7 @@ import { Category } from './category.entity';
 import { Transform } from 'class-transformer';
 import { HerbalImage } from './herbal-image.entity';
 import { Author } from './author.entity';
-
+import { DataSource } from './data-source.entity';
 @Entity()
 export class Herbal {
   @PrimaryGeneratedColumn()
@@ -77,6 +77,14 @@ export class Herbal {
 
   @Column({ nullable: true })
   categoryId?: number;
+
+  // bổ sung nguồn dữ liệu
+  @Column({ type: 'integer', nullable: true })
+  sourceDataId?: number;
+
+  @ManyToOne(() => DataSource, dataSource => dataSource.id)
+  @JoinColumn({ name: 'sourceDataId' })
+  dataSource?: DataSource;
 
   @Column({ default: true })
   isActive: boolean;
