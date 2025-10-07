@@ -67,6 +67,10 @@ export class CreateHerbalDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  @IsString()
+  dataSourceId?: string;
 }
 
 export class UpdateHerbalDto {
@@ -137,6 +141,10 @@ export class UpdateHerbalDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  @IsString()
+  dataSourceId?: string;
 }
 
 export class HerbalResponseDto {
@@ -216,6 +224,10 @@ export class HerbalResponseDto {
   @IsOptional()
   @IsString()
   categoryId?: number;
+
+  @IsOptional()
+  @IsString()
+  dataSourceId?: string;
 
   @IsBoolean()
   isActive: boolean;

@@ -112,6 +112,9 @@ export class AuthorDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  dataSourceId?: any;
 }
 export class AuthorResponseDto {
   @IsNumber()
@@ -248,4 +251,7 @@ export class AuthorResponseDto {
 
   @IsDateString()
   updatedAt: Date;
+
+  @IsOptional()
+  dataSourceId?: any;
 } 

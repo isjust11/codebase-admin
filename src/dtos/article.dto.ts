@@ -41,4 +41,7 @@ export class ArticleDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  dataSourceId?: any;
 } 
