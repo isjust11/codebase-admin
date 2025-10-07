@@ -127,28 +127,19 @@ export class MediaService {
     return this.mediaRepository.save(media);
   }
 
-  async deleteFile(id: number, userId: number): Promise<void> {
-    const media = await this.findById(id, userId);
+  async deleteFile(filename: string, userId: number): Promise<void> {
     try {
-      if (media.filename) {
+      if (filename) {
         try {
-          await axios.delete(`${this.storageServiceUrl}/storage/${encodeURIComponent(media.filename)}`, {
+          await axios.delete(`${this.storageServiceUrl}/storage/file/${filename}`, {
             headers: { [this.storageClientHeaderName]: this.storageClientKey },
           });
         } catch (_err) {
           // Ignore remote not found
         }
       }
-      await this.remove(id, userId);
     } catch (_error) {
       throw new Error(`Failed to delete file: ${_error.message}`);
-    }
-  }
-
-  async deleteMultiple(ids: number[], userId: number): Promise<void> {
-    const medias = await this.mediaRepository.find({ where: { id: In(ids) } });
-    for (const media of medias) {
-      await this.deleteFile(media.id, userId);
     }
   }
   
@@ -188,48 +179,35 @@ export class MediaService {
     newMedia.user = user;
     newMedia.userId = user.id;
 
-    await this.mediaRepository.save(newMedia);
+    // await this.mediaRepository.save(newMedia);
     return newMedia;
   }
 
   async findAllWithPagination(params: PaginationParams): Promise<PaginatedResponse<Media>> {
-    const { page = 1, size = 100, search = '', mimeType ='' } = params;
-    const skip = (page - 1) * size;
- 
-    const queryBuilder = this.mediaRepository.createQueryBuilder('media');
-
-    if (search || mimeType) {
-      if (search && mimeType && mimeType !== '*') {
-        // Có cả search và mimeType (không phải tất cả)
-        queryBuilder.where('media.originalName LIKE :search AND media.mimeType LIKE :mediaType', {
-          search: `%${search}%`,
-          mediaType: `%${mimeType}%`
-        });
-      } else if (search && (!mimeType || mimeType === '*')) {
-        // Chỉ có search, không có mimeType hoặc mimeType là tất cả
-        queryBuilder.where('media.originalName LIKE :search', {
-          search: `%${search}%`
-        });
-      } else if (mimeType && mimeType !== '*' && !search) {
-        // Chỉ có mimeType (không phải tất cả), không có search
-        queryBuilder.where('media.mimeType LIKE :mediaType', {
-          mediaType: `%${mimeType}%`
-        });
-      }
-    }
-
-    const [data, total] = await queryBuilder
-      .skip(skip)
-      .take(size)
-      .orderBy('media.createdAt', 'DESC')
-      .getManyAndCount();
-
+   const listRes = await axios.get(`${this.storageServiceUrl}/storage/list`,{
+      headers: { [this.storageClientHeaderName]: this.storageClientKey },
+      maxBodyLength: Infinity,
+      maxContentLength: Infinity,
+    });
+    const data = listRes.data.map((item: { filename: string; size: number; mimeType: string; url: string, publicUrl: string, uploadedAt: string }) => ({
+      ...item,
+      id: 0,
+      originalName: item.filename,
+      mimeType: item.mimeType,
+      size: item.size,
+      url: this.buildAbsoluteUrl(item.publicUrl),
+      path: item.publicUrl,
+      filename: item.filename,
+      isDeleted: false,
+      createdAt: new Date(item.uploadedAt),
+      updatedAt: new Date(),
+    }));
     return {
-      data,
-      total,
-      page,
-      size,
-      totalPages: Math.ceil(total / size),
+      data: data,
+      total: data.length,
+      page: 1,
+      size: data.length,
+      totalPages: 1,
     };
   }
 } 

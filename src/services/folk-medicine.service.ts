@@ -96,10 +96,13 @@ export class FolkMedicineService {
 
   async update(id: number, data: FolkMedicineDto): Promise<FolkMedicine> {
     const folkMedicine = await this.findOne(id);
-    Object.assign(folkMedicine, data);
+    Object.assign(folkMedicine, {
+      ...data,
+      id: folkMedicine.id,
+    });
 
     if (data.title) {
-      data.slug = slugify(data.title, { lower: true, strict: true });
+      folkMedicine.slug = slugify(data.title, { lower: true, strict: true });
     }
 
     if (data.authorId != null) {

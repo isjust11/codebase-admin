@@ -21,12 +21,12 @@ async function bootstrap() {
   });
 
   // Enable validation pipe globally
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true, // Loại bỏ các thuộc tính không có trong DTO
-    forbidNonWhitelisted: true, // Từ chối request nếu có thuộc tính không được phép
-    transform: true, // Tự động transform dữ liệu
-    validateCustomDecorators: true, // Validate custom decorators
-  }));
+  // app.useGlobalPipes(new ValidationPipe({
+  //   whitelist: true, // Loại bỏ các thuộc tính không có trong DTO
+  //   forbidNonWhitelisted: true, // Từ chối request nếu có thuộc tính không được phép
+  //   transform: true, // Tự động transform dữ liệu
+  //   validateCustomDecorators: true, // Validate custom decorators
+  // }));
 
   // Cấu hình phục vụ file tĩnh
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {

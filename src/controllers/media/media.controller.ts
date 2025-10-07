@@ -44,7 +44,7 @@ export class MediaController extends BaseController{
       new ParseFilePipe({
         validators: [
           new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 10 }), // 10MB
-          new FileTypeValidator({ fileType: /(jpg|jpeg|png|gif|mp3|wav|m4a|aac|ogg|flac|mp4|mov|wmv|avi|flv|mkv|webm|mpeg|mpg|3gp|m4v)$/i }),
+          new FileTypeValidator({ fileType: /(jpg|jpeg|png|gif|mp3|wav|m4a|aac|ogg|flac|mp4|mov|wmv|avi|flv|mkv|webm|webp|mpeg|mpg|3gp|m4v)$/i }),
         ],
       }),
     )
@@ -64,28 +64,28 @@ export class MediaController extends BaseController{
     return this.mediaService.update(this.decode(id), updateMediaDto, req.user.id);
   }
 
-  @Patch(':id/update-file')
-  @RequirePermission('UPDATE', 'media')
-  @UseInterceptors(FileInterceptor('file'))
-  async updateFile(
-    @Param('id') id: string,
-    @UploadedFile() file: Express.Multer.File,
-    @Request() req,
-  ) {
-    return this.mediaService.updateMediaFile(this.decode(id), file, req.user);
-  }
-
   @Delete(':id')
   @RequirePermission('DELETE', 'media')
-  @HttpCode(204)
-  async delete(@Param('id') id: string, @Request() req,): Promise<void> {
-    return this.mediaService.deleteFile(this.decode(id), req.user.id);
+  @HttpCode(204)  
+  async delete(@Param('filename') filename: string, @Request() req,): Promise<{ success: boolean, message?: string }> {
+    try {
+      await this.mediaService.deleteFile(filename, req.user.id);
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
   }
 
   @Delete()
   @RequirePermission('DELETE', 'media')
   @HttpCode(204)
-  async deleteMultiple(@Body() ids: string[], @Request() req): Promise<void> {
-    return this.mediaService.deleteMultiple(ids.map(id => this.decode(id)), req.user.id);
+  async deleteMultiple(@Body() filenames: string[], @Request() req): Promise<{ success: boolean, message?: string }> {
+    try {
+      filenames.forEach(filename => this.mediaService.deleteFile(filename, req.user.id));
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
+   
   }
 } 

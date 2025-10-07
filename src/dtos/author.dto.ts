@@ -207,6 +207,18 @@ export class AuthorResponseDto {
   coverImage?: string;
 
   @IsOptional()
+  avatarFile?: any;
+
+  @IsOptional()
+  coverImageFile?: any;
+
+  @IsOptional()
+  galleryImagesFile?: any[];
+
+  @IsOptional()
+  portraitFile?: any;
+
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
   galleryImages?: string[];
