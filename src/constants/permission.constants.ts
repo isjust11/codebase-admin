@@ -21,6 +21,7 @@ export const RESOURCES = {
   FOLK_MEDICINE: 'FOLK_MEDICINE',
   HERBAL: 'HERBAL',
   DATA_SOURCE: 'DATA_SOURCE',
+  STATIC_PAGE: 'STATIC_PAGE',
 } as const;
 
 // Định nghĩa các Action chuẩn
@@ -224,6 +225,16 @@ export const PERMISSION_TEMPLATES = {
       { action: ACTIONS.CREATE, name: 'Tạo nguồn dữ liệu', code: 'DATA_SOURCE_CREATE' },
       { action: ACTIONS.UPDATE, name: 'Cập nhật nguồn dữ liệu', code: 'DATA_SOURCE_UPDATE' },
       { action: ACTIONS.DELETE, name: 'Xóa nguồn dữ liệu', code: 'DATA_SOURCE_DELETE' },
+    ]
+  },
+  [RESOURCES.STATIC_PAGE]: {
+    name: 'Quản lý trang tĩnh',
+    permissions: [
+      { action: ACTIONS.READ, name: 'Xem trang tĩnh', code: 'STATIC_PAGE_READ' },
+      { action: ACTIONS.CREATE, name: 'Tạo trang tĩnh', code: 'STATIC_PAGE_CREATE' },
+      { action: ACTIONS.UPDATE, name: 'Cập nhật trang tĩnh', code: 'STATIC_PAGE_UPDATE' },
+      { action: ACTIONS.DELETE, name: 'Xóa trang tĩnh', code: 'STATIC_PAGE_DELETE' },
+      { action: ACTIONS.PUBLISH, name: 'Xuất bản trang tĩnh', code: 'STATIC_PAGE_PUBLISH' },
     ]
   },
 } as const;
