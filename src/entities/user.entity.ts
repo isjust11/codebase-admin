@@ -4,6 +4,7 @@ import { Role } from './role.entity';
 import { Exclude } from 'class-transformer';
 import { Reservation } from './reservation.entity';
 import { Order } from './order.entity';
+import { UserInteraction } from './user-interaction.entity';
 
 @Entity()
 export class User {
@@ -87,6 +88,9 @@ export class User {
 
   @OneToMany(() => Order, order => order.account)
   orders: Order[];
+
+  @OneToMany(() => UserInteraction, interaction => interaction.user)
+  interactions: UserInteraction[];
 
   @Column({ type: 'json', nullable: true })
   permissions: string[];

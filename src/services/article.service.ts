@@ -74,9 +74,23 @@ export class ArticleService {
     return article;
   }
 
+
+  async updateView(id: number, data: ArticleDto): Promise<Article> {
+    const article = await this.findOne(id);
+    Object.assign(article, {
+      ...data,
+      id: article.id,
+      view: article.view + 1,
+    });
+    return this.articleRepository.save(article);
+  }
+
   async update(id: number, data: ArticleDto): Promise<Article> {
     const article = await this.findOne(id);
-    Object.assign(article, data);
+    Object.assign(article, {
+      ...data,
+      id: article.id,
+    });
 
     if (article.title) {
       data.slug = slugify(article.title, { lower: true, strict: true });

@@ -17,6 +17,8 @@ import { Notification } from './entities/notification.entity';
 import { NotificationTemplate } from './entities/notification-template.entity';
 import { NotificationConfig } from './entities/notification-config.entity';
 import { FcmToken } from './entities/fcm-token.entity';
+import { UserInteraction } from './entities/user-interaction.entity';
+import { InteractionStats } from './entities/interaction-stats.entity';
 import { Category } from './entities/category.entity';
 import { CategoryType } from './entities/category-type.entity';
 import { Reservation } from './entities/reservation.entity';
@@ -46,6 +48,7 @@ import { MedicineModule } from './modules/medicine.module';
 import { ECommerceModule } from './modules/e-commerce.module';
 import { MediaModule } from './modules/media.module';
 import { DashboardModule } from './modules/dashboard.module';
+import { UserInteractionModule } from './modules/user-interaction.module';
 import { ConfigModule } from '@nestjs/config';
 import { FcmController } from './controllers/fcm/fcm.controller';
 @Module({
@@ -97,6 +100,8 @@ import { FcmController } from './controllers/fcm/fcm.controller';
         NotificationTemplate,
         NotificationConfig,
         FcmToken,
+        UserInteraction,
+        InteractionStats,
       ],
       synchronize: true,
       migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
@@ -127,7 +132,8 @@ import { FcmController } from './controllers/fcm/fcm.controller';
     ECommerceModule,
     MediaModule,
     AuthModule,
-    DashboardModule
+    DashboardModule,
+    UserInteractionModule
   ],
   controllers: [FcmController],
 })

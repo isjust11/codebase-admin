@@ -44,4 +44,12 @@ export class ArticleDto {
 
   @IsOptional()
   dataSourceId?: any;
+
+  @IsOptional()
+  @IsNumber()
+  view?: number;
+
+  @IsOptional()
+  @IsNumber()
+  like?: number;
 } 

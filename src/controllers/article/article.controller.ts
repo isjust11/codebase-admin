@@ -87,6 +87,20 @@ export class ArticleController extends BaseController{
     }
   }
 
+  // view and like
+  @Post('view/:id')
+  @RequirePermission('UPDATE', 'article')
+  async updateView(@Param('id') id: string, @Body() dto: ArticleDto, @Request() req, @Res() res: Response) {
+    try {
+      const data = await this.articleService.updateView(this.decode(id), {
+        ...dto,
+      });
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
   @Delete(':id')
   @RequirePermission('DELETE', 'article')
   async remove(@Param('id') id: string, @Res() res: Response) {
