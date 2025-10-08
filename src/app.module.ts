@@ -40,12 +40,14 @@ import { ProductReview } from './entities/product-review.entity';
 import { ProductComplaint } from './entities/product-complaint.entity';
 import { AdvertisingSlider } from './entities/advertising-slider.entity';
 import { DataSource } from './entities/data-source.entity';
+import { Page } from './entities/page.entity';
 import { CategoryModule } from './modules/category.module';
 import { AuthModule } from './modules/auth.module';
 import { MedicineModule } from './modules/medicine.module';
 import { ECommerceModule } from './modules/e-commerce.module';
 import { MediaModule } from './modules/media.module';
 import { DashboardModule } from './modules/dashboard.module';
+import { PageModule } from './modules/page.module';
 import { ConfigModule } from '@nestjs/config';
 import { FcmController } from './controllers/fcm/fcm.controller';
 @Module({
@@ -97,6 +99,7 @@ import { FcmController } from './controllers/fcm/fcm.controller';
         NotificationTemplate,
         NotificationConfig,
         FcmToken,
+        Page,
       ],
       synchronize: true,
       migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
@@ -127,7 +130,8 @@ import { FcmController } from './controllers/fcm/fcm.controller';
     ECommerceModule,
     MediaModule,
     AuthModule,
-    DashboardModule
+    DashboardModule,
+    PageModule
   ],
   controllers: [FcmController],
 })
