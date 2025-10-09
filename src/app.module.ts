@@ -51,6 +51,8 @@ import { MediaModule } from './modules/media.module';
 import { DashboardModule } from './modules/dashboard.module';
 import { UserInteractionModule } from './modules/user-interaction.module';
 import { PageModule } from './modules/page.module';
+import { FeedbackModule } from './modules/feedback.module';
+import { Feedback } from './entities/feedback.entity';
 import { ConfigModule } from '@nestjs/config';
 import { FcmController } from './controllers/fcm/fcm.controller';
 @Module({
@@ -105,6 +107,7 @@ import { FcmController } from './controllers/fcm/fcm.controller';
         UserInteraction,
         InteractionStats,
         Page,
+        Feedback,
       ],
       synchronize: true,
       migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
@@ -137,7 +140,8 @@ import { FcmController } from './controllers/fcm/fcm.controller';
     AuthModule,
     DashboardModule,
     UserInteractionModule,
-    PageModule
+    PageModule,
+    FeedbackModule
   ],
   controllers: [FcmController],
 })
