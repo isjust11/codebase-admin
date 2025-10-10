@@ -10,6 +10,8 @@ import * as crypto from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RefreshToken } from '../entities/refresh-token.entity';
+import { UpdateProfileDto } from 'src/dtos/update-profile-dto';
+import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
 
 @Injectable()
 export class AuthService {
@@ -82,6 +84,20 @@ export class AuthService {
     };
   }
 
+  // udpate profile 
+  async updateProfile(updateProfileDto: UpdateProfileDto, userId: string) {
+    const { name, picture, email, phone, address, city } = updateProfileDto;
+    const user = await this.userService.findById(parseInt(userId));
+    if (!user) {
+      throw new UnauthorizedException('User không tồn tại');
+    }
+    user.fullName = name;
+    user.picture = picture;
+    user.email = email;
+    user.updatedAt = new Date();
+    await this.userService.update(user.id, user);
+    return user;
+  }
 
   async validateSocialUser(socialUser: any): Promise<any> {
     try {

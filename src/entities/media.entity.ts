@@ -27,6 +27,9 @@ export class Media {
   @Column()
   path: string;
 
+  @Column()
+  publicRelativePath: string;
+
   @Column({ nullable: true })
   url: string;
 

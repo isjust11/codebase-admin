@@ -6,6 +6,7 @@ import { JwtAuthGuard, Public } from '../../guards/jwt-auth.guard';
 import { AuthGuard } from '@nestjs/passport';
 import { Response } from 'express';
 import { BaseController } from '../base/base.controller';
+import { UpdateProfileDto } from '../../dtos/update-profile-dto';
 
 @Controller('auth')
 export class AuthController extends BaseController{
@@ -62,6 +63,17 @@ export class AuthController extends BaseController{
   async getProfile(@Request() req, @Res() res: Response) {
     try {
         const result = await this.authService.getProfile(req.userß);
+      return this.success(res, result);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('update-profile')
+  async updateProfile(@Body() updateProfileDto: UpdateProfileDto, @Request() req, @Res() res: Response) {
+    try {
+      const result = await this.authService.updateProfile(updateProfileDto, req.user.id);
       return this.success(res, result);
     } catch (error) {
       return this.error(res, error);
