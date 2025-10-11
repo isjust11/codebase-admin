@@ -86,14 +86,20 @@ export class AuthService {
 
   // udpate profile 
   async updateProfile(updateProfileDto: UpdateProfileDto, userId: string) {
-    const { name, picture, email, phone, address, city } = updateProfileDto;
     const user = await this.userService.findById(parseInt(userId));
     if (!user) {
       throw new UnauthorizedException('User không tồn tại');
     }
-    user.fullName = name;
-    user.picture = picture;
-    user.email = email;
+    user.fullName = updateProfileDto.fullName;
+    user.picture = updateProfileDto.picture;
+    user.email = updateProfileDto.email;
+    user.phoneNumber = updateProfileDto.phone;
+    user.address = updateProfileDto.address;
+    user.birthDate = new Date(updateProfileDto.birthDate);
+    user.facebookLink = updateProfileDto.facebookLink;
+    user.instagramLink = updateProfileDto.instagramLink;
+    user.twitterLink = updateProfileDto.twitterLink;
+    user.linkedinLink = updateProfileDto.linkedinLink;
     user.updatedAt = new Date();
     await this.userService.update(user.id, user);
     return user;

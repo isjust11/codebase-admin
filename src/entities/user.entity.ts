@@ -63,6 +63,27 @@ export class User {
   @Column({ nullable: true })
   lastLogin: Date;
 
+  @Column({ nullable: true })
+  phoneNumber: string;
+
+  @Column({ nullable: true })
+  address: string;
+
+  @Column({ nullable: true })
+  birthDate: Date;
+
+  @Column({ nullable: true })
+  facebookLink: string;
+
+  @Column({ nullable: true })
+  instagramLink: string;
+
+  @Column({ nullable: true })
+  twitterLink: string;
+
+  @Column({ nullable: true })
+  linkedinLink: string;
+
   @ManyToMany(() => Role)
   @JoinTable({
     name: 'user_roles',

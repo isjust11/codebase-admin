@@ -8,7 +8,7 @@ export class UpdateProfileDto {
   @IsString()
   @IsString()
   @IsNotEmpty()
-  name: string;
+  fullName: string;
 
   @IsString()
   @IsNotEmpty()
@@ -28,5 +28,21 @@ export class UpdateProfileDto {
 
   @IsString()
   @IsNotEmpty()
-  city: string;
+  birthDate: string;
+
+  @IsString()
+  @IsNotEmpty()
+  facebookLink: string;
+
+  @IsString()
+  @IsNotEmpty()
+  instagramLink: string;
+
+  @IsString()
+  @IsNotEmpty()
+  twitterLink: string;
+
+  @IsString()
+  @IsNotEmpty()
+  linkedinLink: string;
 }
