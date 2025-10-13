@@ -70,7 +70,7 @@ export class User {
   address: string;
 
   @Column({ nullable: true })
-  birthDate: Date;
+  birthDate?: Date;
 
   @Column({ nullable: true })
   facebookLink: string;

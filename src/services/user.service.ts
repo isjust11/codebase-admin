@@ -115,65 +115,66 @@ export class UserService {
     if (!user) {
       throw new NotFoundException(`Không tìm thấy tài khoản với ID ${id}`);
     }
+    Object.assign(user, updateUserDto);
 
-    if (updateUserDto.fullName !== undefined) {
-      user.fullName = updateUserDto.fullName;
-    }
+    // if (updateUserDto.fullName !== undefined) {
+    //   user.fullName = updateUserDto.fullName;
+    // }
 
-    if (updateUserDto.email !== undefined) {
-      user.email = updateUserDto.email;
-    }
+    // if (updateUserDto.email !== undefined) {
+    //   user.email = updateUserDto.email;
+    // }
 
-    if (updateUserDto.isAdmin !== undefined) {
-      user.isAdmin = updateUserDto.isAdmin;
-    }
+    // if (updateUserDto.isAdmin !== undefined) {
+    //   user.isAdmin = updateUserDto.isAdmin;
+    // }
 
-    if (updateUserDto.platformId !== undefined) {
+    // if (updateUserDto.platformId !== undefined) {
 
-      user.platformId = updateUserDto.platformId;
-    }
+    //   user.platformId = updateUserDto.platformId;
+    // }
 
-    if (updateUserDto.picture !== undefined) {
-      user.picture = updateUserDto.picture;
-    }
+    // if (updateUserDto.picture !== undefined) {
+    //   user.picture = updateUserDto.picture;
+    // }
 
-    if (updateUserDto.isGoogleUser !== undefined) {
-      user.isGoogleUser = updateUserDto.isGoogleUser;
-    }
+    // if (updateUserDto.isGoogleUser !== undefined) {
+    //   user.isGoogleUser = updateUserDto.isGoogleUser;
+    // }
 
-    if (updateUserDto.isFacebookUser !== undefined) {
-      user.isFacebookUser = updateUserDto.isFacebookUser;
-    }
+    // if (updateUserDto.isFacebookUser !== undefined) {
+    //   user.isFacebookUser = updateUserDto.isFacebookUser;
+    // }
 
-    if (updateUserDto.verificationToken !== undefined) {
-      user.verificationToken = updateUserDto.verificationToken;
-    }
+    // if (updateUserDto.verificationToken !== undefined) {
+    //   user.verificationToken = updateUserDto.verificationToken;
+    // }
 
-    if (updateUserDto.isEmailVerified !== undefined) {
-      user.isEmailVerified = updateUserDto.isEmailVerified;
-    }
+    // if (updateUserDto.isEmailVerified !== undefined) {
+    //   user.isEmailVerified = updateUserDto.isEmailVerified;
+    // }
 
-    if (updateUserDto.password !== undefined) {
-      user.password = updateUserDto.password;
-    }
+    // if (updateUserDto.password !== undefined) {
+    //   user.password = updateUserDto.password;
+    // }
 
-    if (updateUserDto.lastLogin !== undefined) {
-      user.lastLogin = updateUserDto.lastLogin;
-    }
+    // if (updateUserDto.lastLogin !== undefined) {
+    //   user.lastLogin = updateUserDto.lastLogin;
+    // }
 
-    // update pinCode và pinExpiresAt
-    if (updateUserDto.pinCode !== undefined) {
-      user.pinCode = updateUserDto.pinCode;
-    }
-    user.pinExpiresAt = updateUserDto.pinExpiresAt;
+    // // update pinCode và pinExpiresAt
+    // if (updateUserDto.pinCode !== undefined) {
+    //   user.pinCode = updateUserDto.pinCode;
+    // }
+    // user.pinExpiresAt = updateUserDto.pinExpiresAt;
 
-    if (updateUserDto.isEmailVerified !== undefined) {
-      user.isEmailVerified = updateUserDto.isEmailVerified;
-    }
+    // if (updateUserDto.isEmailVerified !== undefined) {
+    //   user.isEmailVerified = updateUserDto.isEmailVerified;
+    // }
 
-    if (updateUserDto.verificationToken !== undefined) {
-      user.verificationToken = updateUserDto.verificationToken;
-    }
+    // if (updateUserDto.verificationToken !== undefined) {
+    //   user.verificationToken = updateUserDto.verificationToken;
+    // }
 
     user.updatedAt = new Date();
 

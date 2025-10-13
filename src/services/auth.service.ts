@@ -93,16 +93,16 @@ export class AuthService {
     user.fullName = updateProfileDto.fullName;
     user.picture = updateProfileDto.picture;
     user.email = updateProfileDto.email;
-    user.phoneNumber = updateProfileDto.phone;
+    user.phoneNumber = updateProfileDto.phoneNumber;
     user.address = updateProfileDto.address;
-    user.birthDate = new Date(updateProfileDto.birthDate);
+    user.birthDate = updateProfileDto.birthDate ? this.parseDateFromDDMMYYYY(updateProfileDto.birthDate) : undefined;
     user.facebookLink = updateProfileDto.facebookLink;
     user.instagramLink = updateProfileDto.instagramLink;
     user.twitterLink = updateProfileDto.twitterLink;
     user.linkedinLink = updateProfileDto.linkedinLink;
     user.updatedAt = new Date();
-    await this.userService.update(user.id, user);
-    return user;
+    const result = await this.userService.update(user.id, user);
+    return result;
   }
 
   async validateSocialUser(socialUser: any): Promise<any> {
@@ -545,5 +545,44 @@ export class AuthService {
       message: 'Mã PIN mới đã được gửi đến email của bạn',
       pin: pin // Trả về PIN để test (trong production nên bỏ dòng này)
     };
+  }
+
+  /**
+   * Parse date từ format 'dd/MM/yyyy' sang Date object
+   * @param dateString - Date string theo format 'dd/MM/yyyy'
+   * @returns Date object hoặc undefined nếu không parse được
+   */
+  private parseDateFromDDMMYYYY(dateString: string): Date | undefined {
+    try {
+      // Kiểm tra format dd/MM/yyyy
+      const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+      const match = dateString.match(dateRegex);
+      
+      if (!match) {
+        throw new Error('Invalid date format. Expected dd/MM/yyyy');
+      }
+
+      const day = parseInt(match[1], 10);
+      const month = parseInt(match[2], 10);
+      const year = parseInt(match[3], 10);
+
+      // Validate date values
+      if (day < 1 || day > 31 || month < 1 || month > 12 || year < 1900) {
+        throw new Error('Invalid date values');
+      }
+
+      // Tạo Date object (month - 1 vì Date constructor sử dụng 0-based month)
+      const date = new Date(year, month - 1, day);
+      
+      // Kiểm tra xem date có hợp lệ không
+      if (date.getDate() !== day || date.getMonth() !== month - 1 || date.getFullYear() !== year) {
+        throw new Error('Invalid date');
+      }
+
+      return date;
+    } catch (error) {
+      console.error('Error parsing date:', error);
+      return undefined;
+    }
   }
 } 

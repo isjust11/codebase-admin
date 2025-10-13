@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from "class-validator";
+import { IsNotEmpty, IsString, Matches } from "class-validator";
 
 export class UpdateProfileDto {
   @IsString()
@@ -20,7 +20,7 @@ export class UpdateProfileDto {
 
   @IsString()
   @IsNotEmpty()
-  phone: string;
+  phoneNumber: string;
 
   @IsString()
   @IsNotEmpty()
@@ -28,6 +28,9 @@ export class UpdateProfileDto {
 
   @IsString()
   @IsNotEmpty()
+  @Matches(/^\d{2}\/\d{2}\/\d{4}$/, {
+    message: 'birthDate must be in format dd/MM/yyyy'
+  })
   birthDate: string;
 
   @IsString()
