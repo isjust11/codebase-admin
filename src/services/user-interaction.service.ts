@@ -30,7 +30,7 @@ export class UserInteractionService {
     @InjectRepository(Category)
     private categoryRepository: Repository<Category>,
     private dataSource: DataSource,
-  ) {}
+  ) { }
 
   async createInteraction(userId: number, createDto: CreateUserInteractionDto): Promise<UserInteraction> {
     // Validate target exists
@@ -46,11 +46,23 @@ export class UserInteractionService {
       },
     });
 
+    if(createDto.interactionType === InteractionType.VIEW){
+      // Update statistics
+      await this.validateTarget(createDto.targetType, createDto.targetId);
+      await this.updateInteractionStats(createDto.targetType, createDto.targetId, createDto.interactionType, 1);
+      return this.userInteractionRepository.save({
+        userId,
+        ...createDto,
+        interactionType: InteractionType.VIEW,
+        targetType: createDto.targetType,
+        targetId: createDto.targetId,
+      });
+    }
     if (existingInteraction) {
       throw new ConflictException('Interaction already exists');
     }
-
     // Create new interaction
+    
     const interaction = this.userInteractionRepository.create({
       userId,
       ...createDto,
