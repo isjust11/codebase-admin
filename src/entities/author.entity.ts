@@ -107,10 +107,10 @@ export class Author {
 
   // bổ sung nguồn dữ liệu
   @Column({ type: 'integer', nullable: true })
-  sourceDataId?: number;
+  dataSourceId?: number;
 
   @ManyToOne(() => DataSource, dataSource => dataSource.id)
-  @JoinColumn({ name: 'sourceDataId' })
+  @JoinColumn({ name: 'dataSourceId' })
   dataSource?: DataSource;
 
   @OneToMany(() => FolkMedicine, folkMedicine => folkMedicine.authorId)

@@ -50,7 +50,7 @@ export class ProductService {
 
     if (data.categoryId != null) {
       const categoryId = Base64EncryptionUtil.decrypt(data.categoryId.toString());
-      data.categoryId = parseInt(categoryId, 10);
+      data.categoryId = categoryId;
 
       const category = await this.categoryService.findOne(data.categoryId);
       data.category = category ?? undefined;

@@ -26,7 +26,7 @@ export class ArticleDto {
 
   @IsOptional()
   @IsString()
-  categoryId?: string;
+  categoryId?: any;
 
 
   @IsOptional()

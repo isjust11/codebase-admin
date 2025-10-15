@@ -63,10 +63,10 @@ export class Article {
   
   // bổ sung nguồn dữ liệu
   @Column({ type: 'integer', nullable: true })
-  sourceDataId?: number;
+  dataSourceId?: number;
   
   @ManyToOne(() => DataSource, dataSource => dataSource.id)
-  @JoinColumn({ name: 'sourceDataId' })
+  @JoinColumn({ name: 'dataSourceId' })
   dataSource?: DataSource;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })

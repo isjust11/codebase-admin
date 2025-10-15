@@ -59,6 +59,11 @@ export class ArticleService {
       data.statusId = statusId;
     }
 
+    if (data.dataSourceId != null) {
+      const dataSourceId = Base64EncryptionUtil.decrypt(data.dataSourceId.toString());
+      data.dataSourceId = dataSourceId;
+    }
+
     const article = this.articleRepository.create(data as DeepPartial<Article>);
     return this.articleRepository.save(article);
   }
@@ -98,15 +103,20 @@ export class ArticleService {
 
     if (data.statusId != null) {
       const statusId = Base64EncryptionUtil.decrypt(data.statusId.toString());
-      article.statusId = parseInt(statusId, 10);
+      article.statusId = statusId;
     }
 
     if (data.categoryId != null) {
       const categoryId = Base64EncryptionUtil.decrypt(data.categoryId.toString());
-      article.categoryId = parseInt(categoryId, 10);
+      article.categoryId = categoryId;
 
-      const category = await this.categoryService.findOne(parseInt(categoryId, 10));
+      const category = await this.categoryService.findOne(categoryId);
       article.category = category ?? undefined;
+    }
+
+    if (data.dataSourceId != null) {
+      const dataSourceId = Base64EncryptionUtil.decrypt(data.dataSourceId.toString());
+      article.dataSourceId = dataSourceId;
     }
 
     return this.articleRepository.save(article);

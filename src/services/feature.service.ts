@@ -18,7 +18,7 @@ export class FeatureService {
     ) { }
 
     async create(createFeatureDto: FeatureDto): Promise<Feature> {
-        const decodedId = parseInt(Base64EncryptionUtil.decrypt(createFeatureDto?.parentId ?? ''));
+        const decodedId = Base64EncryptionUtil.decrypt(createFeatureDto?.parentId ?? '');
         const feature = this.featureRepository.create({
             icon: createFeatureDto.icon ?? '',
             label: createFeatureDto.label,
@@ -99,7 +99,7 @@ export class FeatureService {
             feature.parent = undefined;
             feature.parentId = undefined;
         } else {
-            const parentId = parseInt(Base64EncryptionUtil.decrypt(updateFeatureDto.parentId ?? ''));
+            const parentId = Base64EncryptionUtil.decrypt(updateFeatureDto.parentId ?? '');
             feature.parent = await this.featureRepository.findOne({ where: { id: parentId } }) ?? undefined;
             feature.featureTypeId = Base64EncryptionUtil.decrypt(updateFeatureDto.featureTypeId ?? '');
         }

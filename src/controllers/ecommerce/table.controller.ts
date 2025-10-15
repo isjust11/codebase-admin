@@ -40,20 +40,20 @@ export class TableController {
   @RequirePermission('UPDATE', 'table')
   async updateTable(@Param('id') id: string, @Body() table: Table): Promise<Table | null> {
     const decodedId = Base64EncryptionUtil.decrypt(id);
-    return this.tableService.update(parseInt(decodedId), table);
+    return this.tableService.update(decodedId, table);
   }
 
   @Delete(':id')
   @RequirePermission('DELETE', 'table')
   async deleteTable(@Param('id') id: string): Promise<void> {
     const decodedId = Base64EncryptionUtil.decrypt(id);
-    return this.tableService.remove(parseInt(decodedId));
+    return this.tableService.remove(decodedId);
   }
 
   @Get(':id')
   @RequirePermission('READ', 'table')
   getTable(@Param('id') id: string) {
     const decodedId = Base64EncryptionUtil.decrypt(id);
-    return this.tableService.findOne(parseInt(decodedId));
+    return this.tableService.findOne(decodedId);
   }
 }

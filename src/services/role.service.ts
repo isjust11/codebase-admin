@@ -275,7 +275,7 @@ export class RoleService {
 
     // Lọc ra các permissions không bị xóa
     role.permissions = role.permissions.filter(permission => 
-      !permissionDecodes.includes(permission.id.toString())
+      !permissionDecodes.includes(permission.id)
     );
 
     return this.roleRepository.save(role);

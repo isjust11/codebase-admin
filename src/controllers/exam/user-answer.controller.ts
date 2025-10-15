@@ -38,6 +38,6 @@ export class UserAnswerController extends BaseController{
   }
   decode(id: string) {
     const idDecode = Base64EncryptionUtil.decrypt(id);
-    return parseInt(idDecode);
+    return idDecode;
   }
 } 

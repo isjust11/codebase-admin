@@ -65,7 +65,7 @@ export class HerbalService {
     // Xử lý categoryId nếu có
     if (data.categoryId != null) {
       const categoryId = Base64EncryptionUtil.decrypt(data.categoryId.toString());
-      data.categoryId = parseInt(categoryId, 10);
+      data.categoryId = categoryId;
 
       const category = await this.categoryService.findOne(data.categoryId);
       data.category = category ?? null;
@@ -118,7 +118,7 @@ export class HerbalService {
       const images = data.images.map((image) => {
         return {
           ...image,
-          id: image.id ? parseInt(Base64EncryptionUtil.decrypt(image.id.toString()), 10) : 0,
+          id: image.id ? Base64EncryptionUtil.decrypt(image.id.toString()) : 0,
           herbalId: id,
         };
       });
@@ -127,7 +127,7 @@ export class HerbalService {
 
     if (data.categoryId != null) {
       const categoryId = Base64EncryptionUtil.decrypt(data.categoryId.toString());
-      herbal.categoryId = parseInt(categoryId, 10);
+      herbal.categoryId = categoryId;
 
       const category = await this.categoryService.findOne(herbal.categoryId);
       herbal.category = category ?? null;

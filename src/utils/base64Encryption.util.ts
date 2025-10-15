@@ -8,7 +8,12 @@ export class Base64EncryptionUtil {
         }
     }
 
-    static decrypt(encryptedText: string): string {
-        return Buffer.from(encryptedText, 'base64').toString('ascii');
+    static decrypt(encryptedText: string): number {
+        try {
+            return parseInt(Buffer.from(encryptedText, 'base64').toString('ascii'), 10);
+        } catch (error) {
+            console.log(error);
+            return 0;
+        }
     }
 }

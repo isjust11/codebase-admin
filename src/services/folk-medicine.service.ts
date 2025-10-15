@@ -9,6 +9,7 @@ import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
 import { CategoryService } from './category.service';
 import { AuthorService } from './author.service';
 import { FolkMedicineDto } from 'src/dtos/folk-medicine.dto';
+import { DataSourceService } from './data-source.service';
 
 @Injectable()
 export class FolkMedicineService {
@@ -17,6 +18,7 @@ export class FolkMedicineService {
     private readonly folkMedicineRepository: Repository<FolkMedicine>,
     private readonly categoryService: CategoryService,
     private readonly authorService: AuthorService,
+    private readonly dataSourceService: DataSourceService,
   ) { }
 
   async findPagination(params: PaginationParams): Promise<PaginatedResponse<FolkMedicine>> {
@@ -64,16 +66,20 @@ export class FolkMedicineService {
     if (data.categoryId != null) {
       const categoryId = Base64EncryptionUtil.decrypt(data.categoryId.toString());
       data.categoryId = categoryId;
-
-      const category = await this.categoryService.findOne(parseInt(categoryId, 10));
-      data.categoryId = category?.id.toString() ?? '';
     }
     if (data.authorId != null) { 
       const authorId = Base64EncryptionUtil.decrypt(data.authorId.toString());
       data.authorId = authorId;
     }
 
+    if (data.dataSourceId != null) {
+      const dataSourceId = Base64EncryptionUtil.decrypt(data.dataSourceId.toString());
+      data.dataSourceId = dataSourceId;
+    }
+    data.id = undefined;
     const folkMedicine = this.folkMedicineRepository.create(data as DeepPartial<FolkMedicine>);
+    folkMedicine.createdAt = new Date();
+    folkMedicine.updatedAt = new Date();
     return this.folkMedicineRepository.save(folkMedicine);
   }
 
@@ -107,7 +113,7 @@ export class FolkMedicineService {
 
     if (data.authorId != null) {
       const authorId = Base64EncryptionUtil.decrypt(data.authorId.toString());
-      folkMedicine.authorId = parseInt(authorId, 10);
+      folkMedicine.authorId = authorId;
       try {
         const author = await this.authorService.findOne(folkMedicine.authorId);
         folkMedicine.author = author ?? null;
@@ -118,14 +124,27 @@ export class FolkMedicineService {
 
     if (data.categoryId != null) {
       const categoryId = Base64EncryptionUtil.decrypt(data.categoryId.toString());
-      folkMedicine.categoryId = parseInt(categoryId, 10);
+      folkMedicine.categoryId = categoryId;
       try {
-        const category = await this.categoryService.findOne(parseInt(categoryId, 10));
+        const category = await this.categoryService.findOne(categoryId);
         folkMedicine.category = category ?? null;
       } catch (error) {
         folkMedicine.category = null;
       }
     }
+
+    if(data.dataSourceId != null) {
+      const dataSourceId = Base64EncryptionUtil.decrypt(data.dataSourceId.toString());
+      folkMedicine.dataSourceId = dataSourceId;
+      try {
+        const dataSource = await this.dataSourceService.findOne(dataSourceId);
+        folkMedicine.dataSource = dataSource ?? null;
+      } catch (error) {
+        folkMedicine.dataSource = null;
+      }
+    }
+
+    folkMedicine.updatedAt = new Date();
 
     return this.folkMedicineRepository.save(folkMedicine);
   }

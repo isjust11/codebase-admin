@@ -11,6 +11,7 @@ import {
   Request,
   HttpCode,
   HttpStatus,
+  Res,
 } from '@nestjs/common';
 import { UserInteractionService } from '../../services/user-interaction.service';
 import {
@@ -20,22 +21,32 @@ import {
 } from '../../dtos/user-interaction.dto';
 import { InteractionType } from '../../enums/interaction-type.enum';
 import { InteractionTarget } from '../../enums/interaction-target.enum';
-
+import { Response } from 'express';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
+import { BaseController } from '../base/base.controller';
 
 @Controller('user-interactions')
 @UseGuards(JwtAuthGuard)
-export class UserInteractionController {
-  constructor(private readonly userInteractionService: UserInteractionService) {}
+export class UserInteractionController extends BaseController {
+  constructor(private readonly userInteractionService: UserInteractionService) {
+    super();
+  }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async createInteraction(
     @Request() req: any,
     @Body() createDto: CreateUserInteractionDto,
+    @Res() res: Response,
   ) {
-    const userId = req.user.id;
-    return await this.userInteractionService.createInteraction(userId, createDto);
+    try {
+      const userId = req.user.id;
+      const data = await this.userInteractionService.createInteraction(userId, createDto);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+
   }
 
   @Put(':targetType/:targetId/:interactionType')
@@ -45,15 +56,24 @@ export class UserInteractionController {
     @Param('targetId') targetId: number,
     @Param('interactionType') interactionType: InteractionType,
     @Body() updateDto: UpdateUserInteractionDto,
+    @Res() res: Response,
   ) {
-    const userId = req.user.id;
-    return await this.userInteractionService.updateInteraction(
-      userId,
-      targetType,
-      targetId,
-      interactionType,
-      updateDto,
-    );
+    try {
+
+      const userId = req.user.id;
+      const data = await this.userInteractionService.updateInteraction(
+        userId,
+        targetType,
+        targetId,
+        interactionType,
+        updateDto,
+      );
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+
+    }
+
   }
 
   @Delete(':targetType/:targetId/:interactionType')
@@ -63,31 +83,50 @@ export class UserInteractionController {
     @Param('targetType') targetType: InteractionTarget,
     @Param('targetId') targetId: number,
     @Param('interactionType') interactionType: InteractionType,
+    @Res() res: Response,
   ) {
-    const userId = req.user.id;
-    await this.userInteractionService.removeInteraction(
-      userId,
-      targetType,
-      targetId,
-      interactionType,
-    );
+    try {
+      const userId = req.user.id;
+      await this.userInteractionService.removeInteraction(
+        userId,
+        targetType,
+        targetId,
+        interactionType,
+      );
+      return this.success(res, null);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 
   @Get('my-interactions')
   async getMyInteractions(
     @Request() req: any,
     @Query() query: UserInteractionQueryDto,
+    @Res() res: Response,
   ) {
-    const userId = req.user.id;
-    return await this.userInteractionService.getUserInteractions(userId, query);
+    try {
+      const userId = req.user.id;
+      const data = await this.userInteractionService.getUserInteractions(userId, query);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+
   }
 
   @Get('stats/:targetType/:targetId')
   async getInteractionStats(
     @Param('targetType') targetType: InteractionTarget,
     @Param('targetId') targetId: number,
+    @Res() res: Response,
   ) {
-    return await this.userInteractionService.getInteractionStats(targetType, targetId);
+    try {
+      const data = await this.userInteractionService.getInteractionStats(targetType, targetId);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 
   @Get('status/:targetType/:targetId')
@@ -95,13 +134,20 @@ export class UserInteractionController {
     @Request() req: any,
     @Param('targetType') targetType: InteractionTarget,
     @Param('targetId') targetId: number,
+    @Res() res: Response,
   ) {
-    const userId = req.user.id;
-    return await this.userInteractionService.getUserInteractionStatus(
-      userId,
-      targetType,
-      targetId,
-    );
+    try {
+      const userId = req.user.id;
+      const data = await this.userInteractionService.getUserInteractionStatus(
+        userId,
+        targetType,
+        targetId,
+      );
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+
   }
 
   // Convenience endpoints for common interactions
@@ -111,13 +157,20 @@ export class UserInteractionController {
     @Request() req: any,
     @Param('targetType') targetType: InteractionTarget,
     @Param('targetId') targetId: number,
+    @Res() res: Response,
   ) {
-    const userId = req.user.id;
-    return await this.userInteractionService.createInteraction(userId, {
-      interactionType: InteractionType.LIKE,
-      targetType,
-      targetId,
-    });
+    try {
+      const userId = req.user.id;
+      const data = await this.userInteractionService.createInteraction(userId, {
+        interactionType: InteractionType.LIKE,
+        targetType,
+        targetId,
+      });
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+
   }
 
   @Post('bookmark/:targetType/:targetId')
@@ -125,14 +178,21 @@ export class UserInteractionController {
   async bookmark(
     @Request() req: any,
     @Param('targetType') targetType: InteractionTarget,
-    @Param('targetId') targetId: number,
+    @Param('targetId') targetId: string,
+    @Res() res: Response,
   ) {
-    const userId = req.user.id;
-    return await this.userInteractionService.createInteraction(userId, {
-      interactionType: InteractionType.BOOKMARK,
-      targetType,
-      targetId,
-    });
+    try {
+      const userId = req.user.id;
+      const targetIdNumber = this.decode(targetId);
+      const data = await this.userInteractionService.createInteraction(userId, {
+        interactionType: InteractionType.BOOKMARK,
+        targetType,
+        targetId: targetIdNumber,
+      });
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 
   @Post('share/:targetType/:targetId')
@@ -140,16 +200,24 @@ export class UserInteractionController {
   async share(
     @Request() req: any,
     @Param('targetType') targetType: InteractionTarget,
-    @Param('targetId') targetId: number,
+    @Param('targetId') targetId: string,
     @Body() body: { sharePlatform?: string },
+    @Res() res: Response,
   ) {
-    const userId = req.user.id;
-    return await this.userInteractionService.createInteraction(userId, {
-      interactionType: InteractionType.SHARE,
-      targetType,
-      targetId,
-      sharePlatform: body.sharePlatform,
-    });
+    try {
+      const userId = req.user.id;
+      const targetIdNumber = this.decode(targetId);
+      const data = await this.userInteractionService.createInteraction(userId, {
+        interactionType: InteractionType.SHARE,
+        targetType,
+        targetId: targetIdNumber,
+        sharePlatform: body.sharePlatform,
+      });
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+
   }
 
   @Post('rate/:targetType/:targetId')
@@ -157,16 +225,23 @@ export class UserInteractionController {
   async rate(
     @Request() req: any,
     @Param('targetType') targetType: InteractionTarget,
-    @Param('targetId') targetId: number,
+    @Param('targetId') targetId: string,
     @Body() body: { rating: number },
+    @Res() res: Response,
   ) {
-    const userId = req.user.id;
-    return await this.userInteractionService.createInteraction(userId, {
-      interactionType: InteractionType.RATE,
-      targetType,
-      targetId,
-      rating: body.rating,
-    });
+    try {
+      const userId = req.user.id;
+      const targetIdNumber = this.decode(targetId);
+      const data = await this.userInteractionService.createInteraction(userId, {
+        interactionType: InteractionType.RATE,
+        targetType,
+        targetId: targetIdNumber,
+        rating: body.rating,
+      });
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 
   @Post('follow/:targetType/:targetId')
@@ -174,14 +249,22 @@ export class UserInteractionController {
   async follow(
     @Request() req: any,
     @Param('targetType') targetType: InteractionTarget,
-    @Param('targetId') targetId: number,
+    @Param('targetId') targetId: string,
+    @Res() res: Response,
   ) {
-    const userId = req.user.id;
-    return await this.userInteractionService.createInteraction(userId, {
-      interactionType: InteractionType.FOLLOW,
-      targetType,
-      targetId,
-    });
+    try {
+      const userId = req.user.id;
+      const targetIdNumber = this.decode(targetId);
+      const data = await this.userInteractionService.createInteraction(userId, {
+        interactionType: InteractionType.FOLLOW,
+        targetType,
+        targetId: targetIdNumber,
+      });
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+
   }
 
   @Delete('unlike/:targetType/:targetId')
@@ -189,15 +272,22 @@ export class UserInteractionController {
   async unlike(
     @Request() req: any,
     @Param('targetType') targetType: InteractionTarget,
-    @Param('targetId') targetId: number,
+    @Param('targetId') targetId: string,
+    @Res() res: Response,
   ) {
-    const userId = req.user.id;
-    await this.userInteractionService.removeInteraction(
-      userId,
-      targetType,
-      targetId,
-      InteractionType.LIKE,
-    );
+    try {
+      const userId = req.user.id;
+      const targetIdNumber = this.decode(targetId);
+        const data = await this.userInteractionService.removeInteraction(
+        userId,
+        targetType,
+        targetIdNumber,
+        InteractionType.LIKE,
+      );
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 
   @Delete('unbookmark/:targetType/:targetId')
@@ -205,15 +295,23 @@ export class UserInteractionController {
   async unbookmark(
     @Request() req: any,
     @Param('targetType') targetType: InteractionTarget,
-    @Param('targetId') targetId: number,
+    @Param('targetId') targetId: string,
+    @Res() res: Response,
   ) {
-    const userId = req.user.id;
-    await this.userInteractionService.removeInteraction(
-      userId,
-      targetType,
-      targetId,
-      InteractionType.BOOKMARK,
-    );
+    try {
+      const userId = req.user.id;
+      const targetIdNumber = this.decode(targetId);
+      const data = await this.userInteractionService.removeInteraction(
+        userId,
+        targetType,
+        targetIdNumber,
+        InteractionType.BOOKMARK,
+      );
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+
   }
 
   @Delete('unfollow/:targetType/:targetId')
@@ -221,14 +319,21 @@ export class UserInteractionController {
   async unfollow(
     @Request() req: any,
     @Param('targetType') targetType: InteractionTarget,
-    @Param('targetId') targetId: number,
+    @Param('targetId') targetId: string,
+    @Res() res: Response,
   ) {
-    const userId = req.user.id;
-    await this.userInteractionService.removeInteraction(
-      userId,
-      targetType,
-      targetId,
-      InteractionType.FOLLOW,
-    );
+    try {
+      const userId = req.user.id;
+      const targetIdNumber = this.decode(targetId);
+      const data = await this.userInteractionService.removeInteraction(
+        userId,
+        targetType,
+        targetIdNumber,
+        InteractionType.FOLLOW,
+      );
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 }

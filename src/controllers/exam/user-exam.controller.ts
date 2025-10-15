@@ -55,6 +55,6 @@ export class UserExamController {
   }
   private decode(id: string) {
     const idDecode = Base64EncryptionUtil.decrypt(id);
-    return parseInt(idDecode);
+    return idDecode;
   }
 } 

@@ -56,7 +56,7 @@ export class Feature {
   featureType: Category;
 
   @Column({ nullable: true })
-  featureTypeId: string;
+  featureTypeId: number;
 
   @OneToMany(() => Permission, permission => permission.feature)
   permissions?: Permission[];

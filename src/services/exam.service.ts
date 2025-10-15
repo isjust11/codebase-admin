@@ -84,7 +84,7 @@ export class ExamService {
 
     for (let i = 0; i < questions.length; i++) {
       const questionInput = questions[i];
-      const idDecode = parseInt(Base64EncryptionUtil.decrypt(questionInput?.id??""));
+      const idDecode = Base64EncryptionUtil.decrypt(questionInput?.id??"");
       const id = isNaN(idDecode) ? -1 : idDecode;
       var questionData = await this.questionRepository.findOne({ where: { id: id } });
 

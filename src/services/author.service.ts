@@ -4,7 +4,7 @@ import { Like, Repository } from 'typeorm';
 import { Author } from '../entities/author.entity';
 import slugify from 'slugify';
 import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
-import { plainToClass } from 'class-transformer';
+import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
 
 @Injectable()
 export class AuthorService {
@@ -41,7 +41,7 @@ export class AuthorService {
     });
 
     return {
-      data: plainToClass(Author, data),
+      data: data,
       total,
       page,
       size,
@@ -53,6 +53,11 @@ export class AuthorService {
     if (data.name) {
       data.slug = slugify(data.name, { lower: true, strict: true });
     }
+    
+    if (data.dataSourceId != null) {
+      const dataSourceId = Base64EncryptionUtil.decrypt(data.dataSourceId.toString());
+      data.dataSourceId = dataSourceId;
+    }
 
     const author = this.authorRepository.create(data);
     return this.authorRepository.save(author);
@@ -62,7 +67,7 @@ export class AuthorService {
     const authors = await this.authorRepository.find({
       order: { id: 'DESC' },
     });
-    return plainToClass(Author, authors);
+    return authors;
   }
 
   async findOne(id: number): Promise<Author> {
@@ -70,7 +75,7 @@ export class AuthorService {
       where: { id },
     });
     if (!author) throw new NotFoundException('Author not found');
-    return plainToClass(Author, author);
+    return author;
   }
 
   async findBySlug(slug: string): Promise<Author> {
@@ -79,7 +84,7 @@ export class AuthorService {
       relations: ['herbals', 'folkMedicines'],
     });
     if (!author) throw new NotFoundException('Author not found');
-    return plainToClass(Author, author);
+    return author;
   }
 
   async update(id: number, data: Partial<Author>): Promise<Author> {
@@ -88,6 +93,10 @@ export class AuthorService {
 
     if (data.name) {
       data.slug = slugify(data.name, { lower: true, strict: true });
+    }
+    if(data.dataSourceId != null) {
+      const dataSourceId = Base64EncryptionUtil.decrypt(data.dataSourceId.toString());
+      author.dataSourceId = dataSourceId;
     }
 
     return this.authorRepository.save(author);
@@ -112,7 +121,7 @@ export class AuthorService {
       relations: ['herbals', 'folkMedicines'],
       order: { id: 'DESC' },
     });
-    return plainToClass(Author, authors);
+    return authors;
   }
 
   async findByDynasty(dynasty: string): Promise<Author[]> {
@@ -121,7 +130,7 @@ export class AuthorService {
       relations: ['herbals', 'folkMedicines'],
       order: { id: 'DESC' },
     });
-    return plainToClass(Author, authors);
+    return authors;
   }
 
   async findBySpecialty(specialty: string): Promise<Author[]> {
@@ -130,7 +139,7 @@ export class AuthorService {
       relations: ['herbals', 'folkMedicines'],
       order: { id: 'DESC' },
     });
-    return plainToClass(Author, authors);
+    return authors;
   }
 
   async findFamousAuthors(): Promise<Author[]> {
@@ -140,7 +149,7 @@ export class AuthorService {
       order: { viewCount: 'DESC', likeCount: 'DESC' },
       take: 10,
     });
-    return plainToClass(Author, authors);
+    return authors;
   }
 
   async searchAuthors(query: string): Promise<Author[]> {
@@ -156,6 +165,6 @@ export class AuthorService {
       relations: ['herbals', 'folkMedicines'],
       order: { viewCount: 'DESC' },
     });
-    return plainToClass(Author, authors);
+    return authors;
   }
 } 

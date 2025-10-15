@@ -57,7 +57,7 @@ export abstract class BaseController {
   }
 
   protected decode(id: string) {
-    return parseInt(Base64EncryptionUtil.decrypt(id));
+    return Base64EncryptionUtil.decrypt(id);
   }
 
   protected decodeStr(id: string) {
