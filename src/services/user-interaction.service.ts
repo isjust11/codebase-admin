@@ -46,23 +46,14 @@ export class UserInteractionService {
       },
     });
 
-    if(createDto.interactionType === InteractionType.VIEW){
-      // Update statistics
-      await this.validateTarget(createDto.targetType, createDto.targetId);
-      await this.updateInteractionStats(createDto.targetType, createDto.targetId, createDto.interactionType, 1);
-      return this.userInteractionRepository.save({
-        userId,
-        ...createDto,
-        interactionType: InteractionType.VIEW,
-        targetType: createDto.targetType,
-        targetId: createDto.targetId,
-      });
-    }
     if (existingInteraction) {
+      if(createDto.interactionType === InteractionType.VIEW){
+        await this.updateInteractionStats(createDto.targetType, createDto.targetId, createDto.interactionType, 1);
+        return existingInteraction;
+      }
       throw new ConflictException('Interaction already exists');
     }
     // Create new interaction
-    
     const interaction = this.userInteractionRepository.create({
       userId,
       ...createDto,
