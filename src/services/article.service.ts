@@ -8,6 +8,8 @@ import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
 import { AuthorService } from './author.service';
 import { CategoryService } from './category.service';
 import { ArticleDto } from 'src/dtos/article.dto';
+import { UserInteractionService } from './user-interaction.service';
+import { InteractionTarget } from '../enums/interaction-target.enum';
 
 
 @Injectable()
@@ -16,10 +18,11 @@ export class ArticleService {
     @InjectRepository(Article)
     private readonly articleRepository: Repository<Article>,
     private readonly authorService: AuthorService,
-    private readonly categoryService: CategoryService
+    private readonly categoryService: CategoryService,
+    private readonly userInteractionService: UserInteractionService
   ) { }
 
-  async findPagination(params: PaginationParams): Promise<PaginatedResponse<Article>> {
+  async findPagination(params: PaginationParams, userId?: number): Promise<PaginatedResponse<any>> {
     const { page = 1, size = 10, search = '' } = params;
     const skip = (page - 1) * size;
 
@@ -28,16 +31,51 @@ export class ArticleService {
       { slug: Like(`%${search}%`) },
     ] : {};
 
-    const [data, total] = await this.articleRepository.findAndCount({
+    const [articles, total] = await this.articleRepository.findAndCount({
       where: whereConditions,
       skip,
       take: size,
-      relations: ['createdBy', 'updatedBy', 'status', 'category'],
+      relations: ['createdBy', 'updatedBy', 'status', 'category', 'author'],
       order: { id: 'DESC' },
     });
 
+    // Enrich articles with interaction data
+    const enrichedArticles = await Promise.all(
+      articles.map(async (article) => {
+        const interactionStats = await this.userInteractionService.getInteractionStats(
+          InteractionTarget.ARTICLE,
+          article.id
+        );
+
+        let userInteractionStatus = {};
+        if (userId) {
+          userInteractionStatus = await this.userInteractionService.getUserInteractionStatus(
+            userId,
+            InteractionTarget.ARTICLE,
+            article.id
+          );
+        }
+
+        return {
+          ...article,
+          interactionStats: {
+            likeCount: interactionStats.likeCount,
+            dislikeCount: interactionStats.dislikeCount,
+            bookmarkCount: interactionStats.bookmarkCount,
+            shareCount: interactionStats.shareCount,
+            viewCount: interactionStats.viewCount,
+            commentCount: interactionStats.commentCount,
+            rateCount: interactionStats.rateCount,
+            followCount: interactionStats.followCount,
+            averageRating: interactionStats.averageRating,
+          },
+          userInteractionStatus,
+        };
+      })
+    );
+
     return {
-      data: data,
+      data: enrichedArticles,
       total,
       page,
       size,
@@ -64,6 +102,11 @@ export class ArticleService {
       data.dataSourceId = dataSourceId;
     }
 
+    if (data.authorId != null) {
+      const authorId = Base64EncryptionUtil.decrypt(data.authorId.toString());
+      data.authorId = authorId;
+    }
+
     const article = this.articleRepository.create(data as DeepPartial<Article>);
     return this.articleRepository.save(article);
   }
@@ -73,15 +116,50 @@ export class ArticleService {
     return articles;
   }
 
-  async findOne(id: number): Promise<Article> {
-    const article = await this.articleRepository.findOne({ where: { id } });
+  async findOne(id: number, userId?: number): Promise<any> {
+    const article = await this.articleRepository.findOne({ 
+      where: { id },
+      relations: ['createdBy', 'updatedBy', 'status', 'category', 'author']
+    });
     if (!article) throw new NotFoundException('Article not found');
-    return article;
+
+    // Get interaction stats
+    const interactionStats = await this.userInteractionService.getInteractionStats(
+      InteractionTarget.ARTICLE,
+      article.id
+    );
+
+    let userInteractionStatus = {};
+    if (userId) {
+      userInteractionStatus = await this.userInteractionService.getUserInteractionStatus(
+        userId,
+        InteractionTarget.ARTICLE,
+        article.id
+      );
+    }
+
+    return {
+      ...article,
+      interactionStats: {
+        likeCount: interactionStats.likeCount,
+        dislikeCount: interactionStats.dislikeCount,
+        bookmarkCount: interactionStats.bookmarkCount,
+        shareCount: interactionStats.shareCount,
+        viewCount: interactionStats.viewCount,
+        commentCount: interactionStats.commentCount,
+        rateCount: interactionStats.rateCount,
+        followCount: interactionStats.followCount,
+        averageRating: interactionStats.averageRating,
+      },
+      userInteractionStatus,
+    };
   }
 
 
   async updateView(id: number, data: ArticleDto): Promise<Article> {
-    const article = await this.findOne(id);
+    const article = await this.articleRepository.findOne({ where: { id } });
+    if (!article) throw new NotFoundException('Article not found');
+    
     Object.assign(article, {
       ...data,
       id: article.id,
@@ -91,7 +169,9 @@ export class ArticleService {
   }
 
   async update(id: number, data: ArticleDto): Promise<Article> {
-    const article = await this.findOne(id);
+    const article = await this.articleRepository.findOne({ where: { id } });
+    if (!article) throw new NotFoundException('Article not found');
+    
     Object.assign(article, {
       ...data,
       id: article.id,
@@ -117,6 +197,11 @@ export class ArticleService {
     if (data.dataSourceId != null) {
       const dataSourceId = Base64EncryptionUtil.decrypt(data.dataSourceId.toString());
       article.dataSourceId = dataSourceId;
+    }
+
+    if (data.authorId != null) {
+      const authorId = Base64EncryptionUtil.decrypt(data.authorId.toString());
+      article.authorId = authorId;
     }
 
     return this.articleRepository.save(article);

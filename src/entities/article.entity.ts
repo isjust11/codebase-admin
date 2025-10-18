@@ -3,6 +3,7 @@ import { User } from './user.entity';
 import { Transform } from 'class-transformer';
 import { Category } from './category.entity';
 import { DataSource } from './data-source.entity';
+import { Author } from './author.entity';
 
 @Entity()
 export class Article {
@@ -68,6 +69,13 @@ export class Article {
   @ManyToOne(() => DataSource, dataSource => dataSource.id)
   @JoinColumn({ name: 'dataSourceId' })
   dataSource?: DataSource;
+
+  @Column({ nullable: true })
+  authorId?: number;
+
+  @ManyToOne(() => Author, author => author.id)
+  @JoinColumn({ name: 'authorId' })
+  author?: Author;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   @Transform(({ value }) => value ? new Date(value) : value)

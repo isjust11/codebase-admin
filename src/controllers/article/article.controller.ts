@@ -35,6 +35,7 @@ export class ArticleController extends BaseController{
     @Query('page') page: number,
     @Query('size') size: number,
     @Query('search') search: string,
+    @Request() req,
     @Res() res: Response,
   ) {
     const filter: PaginationParams = {
@@ -43,7 +44,7 @@ export class ArticleController extends BaseController{
       search: search || '',
     };
     try {
-      const data = await this.articleService.findPagination(filter);
+      const data = await this.articleService.findPagination(filter, req.user?.id);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -64,9 +65,9 @@ export class ArticleController extends BaseController{
 
   @Get(':id')
   @RequirePermission('READ', 'article')
-  async findOne(@Param('id') id: string, @Res() res: Response) {
+  async findOne(@Param('id') id: string, @Request() req, @Res() res: Response) {
     try {
-      const data = await this.articleService.findOne(this.decode(id));
+      const data = await this.articleService.findOne(this.decode(id), req.user?.id);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);

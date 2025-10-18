@@ -52,4 +52,8 @@ export class ArticleDto {
   @IsOptional()
   @IsNumber()
   like?: number;
+
+  @IsOptional()
+  @IsNumber()
+  authorId?: number;
 } 

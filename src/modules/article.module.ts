@@ -7,11 +7,16 @@ import { AuthModule } from './auth.module';
 import { CategoryModule } from './category.module';
 import { AuthorService } from 'src/services/author.service';
 import { Author } from 'src/entities/author.entity';
+import { UserInteractionModule } from './user-interaction.module';
 
 @Module({
-  imports: [AuthModule, TypeOrmModule.forFeature([Article, Author]),CategoryModule, ],
+  imports: [AuthModule,
+            TypeOrmModule.forFeature([Article, Author]), 
+            CategoryModule, 
+            UserInteractionModule,
+          ],
   providers: [ArticleService, AuthorService],
   controllers: [ArticleController],
   exports: [ArticleService],
 })
-export class ArticleModule {} 
+export class ArticleModule { } 

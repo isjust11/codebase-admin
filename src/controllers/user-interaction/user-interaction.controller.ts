@@ -316,8 +316,7 @@ export class UserInteractionController extends BaseController {
     }
   }
 
-  @Delete('unbookmark/:targetType/:targetId')
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @Post('unbookmark/:targetType/:targetId')
   async unbookmark(
     @Request() req: any,
     @Param('targetType') targetType: InteractionTarget,
@@ -337,7 +336,6 @@ export class UserInteractionController extends BaseController {
     } catch (error) {
       return this.error(res, error);
     }
-
   }
 
   @Delete('unfollow/:targetType/:targetId')
