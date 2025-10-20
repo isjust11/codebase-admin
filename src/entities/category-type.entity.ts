@@ -35,6 +35,9 @@ export class CategoryType {
   @Column({default: true})
   isActive: boolean; // Assuming this is a string, adjust as necessary
 
+  @Column({ default: false, name: 'is_article' })
+  isArticleType: boolean;
+
   @CreateDateColumn()
   createDate: Date;
 

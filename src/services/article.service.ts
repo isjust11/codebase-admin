@@ -107,6 +107,11 @@ export class ArticleService {
       data.authorId = authorId;
     }
 
+    if(data.articleTypeId != null){
+      const articleTypeId = Base64EncryptionUtil.decrypt(data.articleTypeId.toString());
+      data.articleTypeId = articleTypeId;
+    }
+
     const article = this.articleRepository.create(data as DeepPartial<Article>);
     return this.articleRepository.save(article);
   }
@@ -192,6 +197,11 @@ export class ArticleService {
 
       const category = await this.categoryService.findOne(categoryId);
       article.category = category ?? undefined;
+    }
+
+    if(data.articleTypeId != null){
+      const articleTypeId = Base64EncryptionUtil.decrypt(data.articleTypeId.toString());
+      article.articleTypeId = articleTypeId;
     }
 
     if (data.dataSourceId != null) {

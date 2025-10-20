@@ -4,6 +4,7 @@ import { Transform } from 'class-transformer';
 import { Category } from './category.entity';
 import { DataSource } from './data-source.entity';
 import { Author } from './author.entity';
+import { CategoryType } from './category-type.entity';
 
 @Entity()
 export class Article {
@@ -61,7 +62,15 @@ export class Article {
 
   @Column({ default: true })
   isActive: boolean;
-  
+
+  // bổ sung thể loại bài viết khám phá | mẹo vặt | bạn có biết 
+  @Column({ nullable:true})
+  articleTypeId: number;
+
+  @ManyToOne(()=>CategoryType, categoryType => categoryType.id)
+  @JoinColumn({ name: 'articleTypeId' })
+  articleType?: CategoryType;
+
   // bổ sung nguồn dữ liệu
   @Column({ type: 'integer', nullable: true })
   dataSourceId?: number;

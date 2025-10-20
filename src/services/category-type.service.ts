@@ -30,6 +30,14 @@ export class CategoryTypeService {
     });
   }
 
+  async findArticleType(): Promise<CategoryType[]> {
+    return this.categoryTypeRepository.find({
+      where: {
+        isArticleType: true
+      }
+    });
+  }
+
   async create(categoryType: CategoryType): Promise<CategoryType> {
     return this.categoryTypeRepository.save(categoryType);
   }

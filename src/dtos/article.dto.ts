@@ -1,5 +1,4 @@
 import { IsString, IsNumber, IsOptional, IsBoolean } from 'class-validator';
-import { Article } from 'src/entities/article.entity';
 
 export class ArticleDto {
   @IsOptional()
@@ -28,6 +27,9 @@ export class ArticleDto {
   @IsString()
   categoryId?: any;
 
+  @IsOptional()
+  @IsNumber()
+  articleTypeId?: number;
 
   @IsOptional()
   createdBy?: any;

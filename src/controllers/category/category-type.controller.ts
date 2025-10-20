@@ -54,6 +54,17 @@ export class CategoryTypeController extends BaseController{
     }
   }
 
+  @Get('article-type')
+  @RequirePermission('READ', 'category-type')
+  async articleType(@Res() res: Response) {
+    try{
+      const data = await this.categoryTypeService.findArticleType();
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
   @Get('code/:code')
   @RequirePermission('READ', 'category-type')
   async findByCode(@Param('code') code: string, @Res() res: Response) {

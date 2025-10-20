@@ -11,7 +11,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RefreshToken } from '../entities/refresh-token.entity';
 import { UpdateProfileDto } from 'src/dtos/update-profile-dto';
-import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
 
 @Injectable()
 export class AuthService {
