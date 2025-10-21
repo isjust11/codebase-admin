@@ -30,6 +30,13 @@ export class CategoryTypeService {
     });
   }
 
+  async findByParent(id: number): Promise<CategoryType | null> {
+    return this.categoryTypeRepository.findOne({ 
+      where: { id },
+      relations: ['categories'] // Assuming you want to load related categories as well
+    });
+  }
+
   async findArticleType(): Promise<CategoryType[]> {
     return this.categoryTypeRepository.find({
       where: {

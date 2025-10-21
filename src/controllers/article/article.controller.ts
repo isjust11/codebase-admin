@@ -10,7 +10,7 @@ import { Response } from 'express';
 
 @Controller('article')
 @UseGuards(JwtAuthGuard, PermissionGuard)
-export class ArticleController extends BaseController{
+export class ArticleController extends BaseController {
   constructor(private readonly articleService: ArticleService) {
     super();
   }
@@ -20,7 +20,7 @@ export class ArticleController extends BaseController{
   async create(@Body() dto: ArticleDto, @Request() req, @Res() res: Response) {
     try {
       const data = await this.articleService.create({
-      ...dto,
+        ...dto,
         createdBy: req.user.id,
       });
       return this.success(res, data);
@@ -37,6 +37,8 @@ export class ArticleController extends BaseController{
     @Query('search') search: string,
     @Request() req,
     @Res() res: Response,
+    @Query('articleCode') articleCode?: string,
+    @Query('categoryId') categoryId?: string,
   ) {
     const filter: PaginationParams = {
       page: page || 1,
@@ -44,7 +46,9 @@ export class ArticleController extends BaseController{
       search: search || '',
     };
     try {
-      const data = await this.articleService.findPagination(filter, req.user?.id);
+      const categoryIdDecoded = categoryId ? this.decode(categoryId) : undefined;
+      const data = await this.articleService.
+      findPagination(filter, req.user?.id, articleCode, categoryIdDecoded);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -57,7 +61,29 @@ export class ArticleController extends BaseController{
   async findAll(@Res() res: Response) {
     try {
       const data = await this.articleService.findAll();
-      return this.success(res, data); 
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Get('discovery/:categoryId')
+  @RequirePermission('READ', 'article')
+  async findDiscovery(
+    @Param('categoryId') categoryId: string,
+    @Query('page') page: number,
+    @Query('size') size: number,
+    @Query('search') search: string,
+    @Request() req,
+    @Res() res: Response) {
+    try {
+      const filter: PaginationParams = {
+        page: page || 1,
+        size: size || 10,
+        search: search || '',
+      };
+      const data = await this.articleService.findByDiscovery(filter, this.decode(categoryId));
+      return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
     }
@@ -79,11 +105,11 @@ export class ArticleController extends BaseController{
   async update(@Param('id') id: string, @Body() dto: ArticleDto, @Request() req, @Res() res: Response) {
     try {
       const data = await this.articleService.update(this.decode(id), {
-      ...dto, 
+        ...dto,
         updatedBy: req.user.id,
       });
       return this.success(res, data);
-    } catch (error) { 
+    } catch (error) {
       return this.error(res, error);
     }
   }

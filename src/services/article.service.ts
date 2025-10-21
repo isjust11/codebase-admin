@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeepPartial, Like, Repository } from 'typeorm';
+import { DeepPartial, In, Like, Repository } from 'typeorm';
 import { Article } from '../entities/article.entity';
 import slugify from 'slugify';
 import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
@@ -10,6 +10,7 @@ import { CategoryService } from './category.service';
 import { ArticleDto } from 'src/dtos/article.dto';
 import { UserInteractionService } from './user-interaction.service';
 import { InteractionTarget } from '../enums/interaction-target.enum';
+import { CategoryTypeService } from './category-type.service';
 
 
 @Injectable()
@@ -19,10 +20,11 @@ export class ArticleService {
     private readonly articleRepository: Repository<Article>,
     private readonly authorService: AuthorService,
     private readonly categoryService: CategoryService,
+    private readonly categoryTypeService: CategoryTypeService,
     private readonly userInteractionService: UserInteractionService
   ) { }
 
-  async findPagination(params: PaginationParams, userId?: number): Promise<PaginatedResponse<any>> {
+  async findPagination(params: PaginationParams, userId?: number, articleCode?: string, categoryId?: number): Promise<PaginatedResponse<any>> {
     const { page = 1, size = 10, search = '' } = params;
     const skip = (page - 1) * size;
 
@@ -30,6 +32,22 @@ export class ArticleService {
       { title: Like(`%${search}%`) },
       { slug: Like(`%${search}%`) },
     ] : {};
+
+    if (articleCode) {
+      const articleType = await this.categoryTypeService.findByCode(articleCode);
+      if (articleType) {
+        if (categoryId) {
+          const category = await this.categoryService.findOne(categoryId);
+          if (category?.code.toLowerCase() === "all") {
+            Object.assign(whereConditions, { categoryId: In(articleType.categories.map(cat => cat.id)) });
+          } else {
+            Object.assign(whereConditions, { categoryId });
+          }
+        } else {
+          Object.assign(whereConditions, { categoryId: In(articleType.categories.map(cat => cat.id)) });
+        }
+      }
+    }
 
     const [articles, total] = await this.articleRepository.findAndCount({
       where: whereConditions,
@@ -83,6 +101,11 @@ export class ArticleService {
     };
   }
 
+  async findAll(): Promise<Article[]> {
+    const articles = await this.articleRepository.find();
+    return articles;
+  }
+
   async create(data: ArticleDto): Promise<Article> {
     if (data.title) {
       data.slug = slugify(data.title, { lower: true, strict: true });
@@ -107,7 +130,7 @@ export class ArticleService {
       data.authorId = authorId;
     }
 
-    if(data.articleTypeId != null){
+    if (data.articleTypeId != null) {
       const articleTypeId = Base64EncryptionUtil.decrypt(data.articleTypeId.toString());
       data.articleTypeId = articleTypeId;
     }
@@ -116,13 +139,27 @@ export class ArticleService {
     return this.articleRepository.save(article);
   }
 
-  async findAll(): Promise<Article[]> {
-    const articles = await this.articleRepository.find();
+  async findByDiscovery(params: PaginationParams, categoryId: number): Promise<Article[]> {
+    const category = await this.categoryService.findOne(categoryId);
+    if (!category) throw new NotFoundException('Category not found');
+    if (category.code.toLowerCase() == "all") {
+      const allCategory = await this.categoryTypeService.findArticleType();
+      const categoryIds = allCategory.map(cat => cat.id);
+      const articles = await this.articleRepository.find({
+        where: {
+          categoryId: In(categoryIds)
+        }
+      });
+      return articles;
+    }
+    const articles = await this.articleRepository.find(
+      { where: { categoryId } }
+    );
     return articles;
   }
 
   async findOne(id: number, userId?: number): Promise<any> {
-    const article = await this.articleRepository.findOne({ 
+    const article = await this.articleRepository.findOne({
       where: { id },
       relations: ['createdBy', 'updatedBy', 'status', 'category', 'author']
     });
@@ -164,7 +201,7 @@ export class ArticleService {
   async updateView(id: number, data: ArticleDto): Promise<Article> {
     const article = await this.articleRepository.findOne({ where: { id } });
     if (!article) throw new NotFoundException('Article not found');
-    
+
     Object.assign(article, {
       ...data,
       id: article.id,
@@ -176,7 +213,7 @@ export class ArticleService {
   async update(id: number, data: ArticleDto): Promise<Article> {
     const article = await this.articleRepository.findOne({ where: { id } });
     if (!article) throw new NotFoundException('Article not found');
-    
+
     Object.assign(article, {
       ...data,
       id: article.id,
@@ -199,7 +236,7 @@ export class ArticleService {
       article.category = category ?? undefined;
     }
 
-    if(data.articleTypeId != null){
+    if (data.articleTypeId != null) {
       const articleTypeId = Base64EncryptionUtil.decrypt(data.articleTypeId.toString());
       article.articleTypeId = articleTypeId;
     }
