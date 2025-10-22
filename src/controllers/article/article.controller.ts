@@ -55,6 +55,41 @@ export class ArticleController extends BaseController {
     }
   }
 
+  // get featured news list
+  @Get('featured')
+  @RequirePermission('READ', 'article')
+  async getFeaturedList(@Res() res: Response) {
+    try {
+      const data = await this.articleService.getFeaturedList();
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  // get trending news list
+  @Get('trending')
+  @RequirePermission('READ', 'article')
+  async getTrendingList(@Res() res: Response) {
+    try {
+      const data = await this.articleService.getTrendingList();
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  // get recomment news list
+  @Get('recommend')
+  @RequirePermission('READ', 'article')
+  async getRecommendList(@Res() res: Response) {
+    try {
+      const data = await this.articleService.getFeaturedList();
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
 
   @Get('all')
   @RequirePermission('READ', 'article')

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeepPartial, In, Like, Repository } from 'typeorm';
+import { DeepPartial, In, Like, MoreThan, Repository } from 'typeorm';
 import { Article } from '../entities/article.entity';
 import slugify from 'slugify';
 import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
@@ -10,6 +10,7 @@ import { CategoryService } from './category.service';
 import { ArticleDto } from 'src/dtos/article.dto';
 import { UserInteractionService } from './user-interaction.service';
 import { InteractionTarget } from '../enums/interaction-target.enum';
+import { InteractionStats } from '../entities/interaction-stats.entity';
 import { CategoryTypeService } from './category-type.service';
 
 
@@ -257,5 +258,51 @@ export class ArticleService {
   async remove(id: number): Promise<void> {
     const result = await this.articleRepository.delete(id);
     if (result.affected === 0) throw new NotFoundException('Article not found');
+  }
+
+  // get featured news list
+  async getFeaturedList(): Promise<any[]> {
+    // lấy 3 tin tức có lượt view cao nhất theo InteractionStats.viewCount
+    const qb = this.articleRepository.createQueryBuilder('article');
+    qb
+      .leftJoin(InteractionStats, 'stats', 'stats.articleId = article.id')
+      .where('stats.targetType = :type', { type: InteractionTarget.ARTICLE })
+      .andWhere('stats.viewCount > 0')
+      .orderBy('stats.viewCount', 'DESC')
+      .take(3)
+      .select(['article.*'])
+      .addSelect('stats.viewCount', 'viewCount');
+
+    const { entities, raw } = await qb.getRawAndEntities();
+
+    // Gộp viewCount từ raw vào kết quả trả về
+    return entities.map((article, index) => ({
+      ...article,
+      interactionStats: {
+        viewCount: Number(raw[index]?.viewCount ?? 0),
+      },
+    }));
+  }
+
+  // get trending news list
+  async getTrendingList(): Promise<Article[]> {
+    // lấy 3 tin tức có lượt like cao nhất
+    const qb = this.articleRepository.createQueryBuilder('article');
+    qb
+      .leftJoin(InteractionStats, 'stats', 'stats.articleId = article.id')
+      .where('stats.targetType = :type', { type: InteractionTarget.ARTICLE })
+      .andWhere('stats.likeCount > 0')
+      .orderBy('stats.likeCount', 'DESC')
+      .take(3)
+      .select(['article.id', 'article.title', 'article.slug', 'article.summary', 'article.thumbnail', 'article.view', 'article.like', 'article.categoryId', 'article.authorId'])
+      .addSelect('stats.likeCount', 'likeCount');
+
+    const { entities, raw  } = await qb.getRawAndEntities();
+    return entities.map((article, index) => ({
+      ...article,
+      interactionStats: {
+        likeCount: Number(raw[index]?.likeCount ?? 0),
+      },
+    }));
   }
 } 
