@@ -82,9 +82,9 @@ export class ArticleController extends BaseController {
   // get recomment news list
   @Get('recommend')
   @RequirePermission('READ', 'article')
-  async getRecommendList(@Res() res: Response) {
+  async getRecommendList(@Query('searchData') searchData: string, @Res() res: Response) {
     try {
-      const data = await this.articleService.getFeaturedList();
+      const data = await this.articleService.getRecommendList(searchData);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);

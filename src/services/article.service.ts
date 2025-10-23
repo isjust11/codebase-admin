@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeepPartial, In, Like, MoreThan, Repository } from 'typeorm';
+import { DeepPartial, In, Like, MoreThan, Repository, Brackets } from 'typeorm';
 import { Article } from '../entities/article.entity';
 import slugify from 'slugify';
 import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
@@ -265,44 +265,171 @@ export class ArticleService {
     // lấy 3 tin tức có lượt view cao nhất theo InteractionStats.viewCount
     const qb = this.articleRepository.createQueryBuilder('article');
     qb
-      .leftJoin(InteractionStats, 'stats', 'stats.articleId = article.id')
-      .where('stats.targetType = :type', { type: InteractionTarget.ARTICLE })
+      .leftJoin(InteractionStats, 'stats', 'stats.targetId = article.id')
+      .andWhere('stats.targetType = :type', { type: InteractionTarget.ARTICLE })
       .andWhere('stats.viewCount > 0')
       .orderBy('stats.viewCount', 'DESC')
       .take(3)
-      .select(['article.*'])
-      .addSelect('stats.viewCount', 'viewCount');
+      .select([
+        'article.id',
+        'article.title', 
+        'article.slug',
+        'article.summary',
+        'article.thumbnail',
+        'article.view',
+        'article.like',
+        'article.categoryId',
+        'article.authorId',
+        'article.createdAt',
+        'article.updatedAt'
+      ])
+      .addSelect('stats.viewCount', 'viewCount')
+      .addSelect('stats.likeCount', 'likeCount');
 
-    const { entities, raw } = await qb.getRawAndEntities();
+    const results = await qb.getRawMany();
 
-    // Gộp viewCount từ raw vào kết quả trả về
-    return entities.map((article, index) => ({
-      ...article,
+    // Map kết quả raw thành format mong muốn
+    return results.map((row) => ({
+      id: row.article_id,
+      title: row.article_title,
+      slug: row.article_slug,
+      summary: row.article_summary,
+      thumbnail: row.article_thumbnail,
+      view: row.article_view,
+      like: row.article_like,
+      categoryId: row.article_categoryId,
+      authorId: row.article_authorId,
+      createdAt: row.article_createdAt,
+      updatedAt: row.article_updatedAt,
       interactionStats: {
-        viewCount: Number(raw[index]?.viewCount ?? 0),
+        viewCount: Number(row.viewCount ?? 0),
+        likeCount: Number(row.likeCount ?? 0),
       },
     }));
   }
 
   // get trending news list
-  async getTrendingList(): Promise<Article[]> {
+  async getTrendingList(): Promise<any[]> {
     // lấy 3 tin tức có lượt like cao nhất
     const qb = this.articleRepository.createQueryBuilder('article');
-    qb
-      .leftJoin(InteractionStats, 'stats', 'stats.articleId = article.id')
+    
+    const results = await qb
+      .leftJoin(InteractionStats, 'stats', 'stats.targetId = article.id')
       .where('stats.targetType = :type', { type: InteractionTarget.ARTICLE })
       .andWhere('stats.likeCount > 0')
       .orderBy('stats.likeCount', 'DESC')
       .take(3)
-      .select(['article.id', 'article.title', 'article.slug', 'article.summary', 'article.thumbnail', 'article.view', 'article.like', 'article.categoryId', 'article.authorId'])
-      .addSelect('stats.likeCount', 'likeCount');
+      .select([
+        'article.id',
+        'article.title', 
+        'article.slug',
+        'article.summary',
+        'article.thumbnail',
+        'article.view',
+        'article.like',
+        'article.categoryId',
+        'article.authorId',
+        'article.createdAt',
+        'article.updatedAt',
+        'stats.likeCount',
+        'stats.viewCount'
+      ])
+      .getRawMany();
 
-    const { entities, raw  } = await qb.getRawAndEntities();
-    return entities.map((article, index) => ({
-      ...article,
+    return results.map((row) => ({
+      id: row.article_id,
+      title: row.article_title,
+      slug: row.article_slug,
+      summary: row.article_summary,
+      thumbnail: row.article_thumbnail,
+      view: row.article_view,
+      like: row.article_like,
+      categoryId: row.article_categoryId,
+      authorId: row.article_authorId,
+      createdAt: row.article_createdAt,
+      updatedAt: row.article_updatedAt,
       interactionStats: {
-        likeCount: Number(raw[index]?.likeCount ?? 0),
+        likeCount: Number(row.stats_likeCount ?? 0),
+        viewCount: Number(row.stats_viewCount ?? 0),
       },
+    }));
+  }
+
+  // get recommended news list
+  async getRecommendList(searchData: string): Promise<any[]> {
+    // Parse comma-separated keywords
+    const keywords = (searchData || '')
+      .split(',')
+      .map((k) => k.trim())
+      .filter((k) => k.length > 0);
+
+    if (keywords.length === 0) {
+      return [];
+    }
+
+    const qb = this.articleRepository.createQueryBuilder('article');
+
+    // Join interaction stats for engagement-based ordering
+    qb.leftJoin(InteractionStats, 'stats', 'stats.targetId = article.id')
+      .andWhere('stats.targetType = :type', { type: InteractionTarget.ARTICLE });
+
+    // Build OR conditions across keywords (title, summary, slug)
+    qb.andWhere(
+      new Brackets((qbWhere) => {
+        keywords.forEach((kw, index) => {
+          const param = `kw${index}`;
+          const likeValue = `%${kw}%`;
+          qbWhere.orWhere(
+            new Brackets((q) => {
+              q.where(`article.title LIKE :${param}`, { [param]: likeValue })
+                .orWhere(`article.summary LIKE :${param}`, { [param]: likeValue })
+                .orWhere(`article.slug LIKE :${param}`, { [param]: likeValue });
+            })
+          );
+        });
+      })
+    );
+
+    // Compute a simple match score based on number of keyword matches in title and summary
+    const matchScoreExpr = keywords
+      .map((kw, index) => {
+        const p = `ms${index}`;
+        const likeVal = `%${kw}%`;
+        // CASE WHEN title LIKE :msX THEN 2 ELSE 0 END + CASE WHEN summary LIKE :msX THEN 1 ELSE 0 END
+        qb.setParameter(p, likeVal);
+        return `CASE WHEN article.title LIKE :${p} THEN 2 ELSE 0 END + CASE WHEN article.summary LIKE :${p} THEN 1 ELSE 0 END`;
+      })
+      .join(' + ');
+
+    if (matchScoreExpr.length > 0) {
+      qb.addSelect(`(${matchScoreExpr})`, 'matchScore');
+    }
+
+    qb
+      .select([
+        'article.id',
+        'article.title',
+        'article.slug',
+      ])
+      .addSelect('COALESCE(stats.viewCount, 0)', 'viewCount')
+      .addSelect('COALESCE(stats.likeCount, 0)', 'likeCount')
+      .orderBy('matchScore', 'DESC')
+      .addOrderBy('stats.likeCount', 'DESC')
+      .addOrderBy('stats.viewCount', 'DESC')
+      .addOrderBy('article.updatedAt', 'DESC')
+      .take(10);
+
+    const results = await qb.getRawMany();
+
+    return results.map((row) => ({
+      id: row.article_id,
+      title: row.article_title,
+      slug: row.article_slug,
+      interactionStats: {
+        viewCount: Number(row.viewCount ?? 0),
+        likeCount: Number(row.likeCount ?? 0),
+      },
+      matchScore: Number(row.matchScore ?? 0),
     }));
   }
 } 
