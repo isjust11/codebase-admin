@@ -67,18 +67,6 @@ export class ArticleController extends BaseController {
     }
   }
 
-  // get trending news list
-  @Get('trending')
-  @RequirePermission('READ', 'article')
-  async getTrendingList(@Res() res: Response) {
-    try {
-      const data = await this.articleService.getTrendingList();
-      return this.success(res, data);
-    } catch (error) {
-      return this.error(res, error);
-    }
-  }
-
   // get recomment news list
   @Get('recommend')
   @RequirePermission('READ', 'article')
@@ -163,6 +151,46 @@ export class ArticleController extends BaseController {
     }
   }
 
+  @Get('trending')
+  async getTrendingList(@Query() params: PaginationParams, @Res() res: Response) {
+    try {
+      const data = await this.articleService.getTrendingList(params);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Get('favorites')
+  async getFavoritesList(@Query() params: PaginationParams, @Res() res: Response) {
+    try {
+      const data = await this.articleService.getFavoritesList(params);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Get('recent')
+  async getRecentList(@Query() params: PaginationParams, @Res() res: Response) {
+    try {
+      const data = await this.articleService.getRecentList(params);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Get('bookmarks')
+  async getBookmarkedList(@Query() params: PaginationParams, @Res() res: Response) {
+    try {
+      const data = await this.articleService.getBookmarkedList(params);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
   @Delete(':id')
   @RequirePermission('DELETE', 'article')
   async remove(@Param('id') id: string, @Res() res: Response) {
@@ -173,4 +201,4 @@ export class ArticleController extends BaseController {
       return this.error(res, error);
     }
   }
-} 
+}

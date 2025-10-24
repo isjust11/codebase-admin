@@ -309,16 +309,27 @@ export class ArticleService {
   }
 
   // get trending news list
-  async getTrendingList(): Promise<any[]> {
-    // lấy 3 tin tức có lượt like cao nhất
+  async getTrendingList(params: PaginationParams): Promise<any[]> {
+    const { page = 1, size = 10, search = '' } = params;
+    
     const qb = this.articleRepository.createQueryBuilder('article');
     
+    // Join với InteractionStats để lấy thống kê
+    qb.leftJoin(InteractionStats, 'stats', 'stats.targetId = article.id')
+      .andWhere('stats.targetType = :type', { type: InteractionTarget.ARTICLE })
+      .andWhere('stats.likeCount > 0');
+    
+    // Thêm search condition nếu có
+    if (search) {
+      qb.andWhere('article.title LIKE :search', { search: `%${search}%` });
+    }
+    
     const results = await qb
-      .leftJoin(InteractionStats, 'stats', 'stats.targetId = article.id')
-      .where('stats.targetType = :type', { type: InteractionTarget.ARTICLE })
-      .andWhere('stats.likeCount > 0')
       .orderBy('stats.likeCount', 'DESC')
-      .take(3)
+      .addOrderBy('stats.viewCount', 'DESC')
+      .addOrderBy('article.createdAt', 'DESC')
+      .skip((page - 1) * size)
+      .take(size)
       .select([
         'article.id',
         'article.title', 
@@ -355,7 +366,183 @@ export class ArticleService {
     }));
   }
 
-  // get recommended news list
+  // get favorites news list
+  async getFavoritesList(params: PaginationParams): Promise<any[]> {
+    const { page = 1, size = 10, search = '' } = params;
+    
+    const qb = this.articleRepository.createQueryBuilder('article');
+    
+    // Join với InteractionStats để lấy thống kê
+    qb.leftJoin(InteractionStats, 'stats', 'stats.targetId = article.id')
+      .andWhere('stats.targetType = :type', { type: InteractionTarget.ARTICLE })
+      .andWhere('stats.likeCount > 0'); // Chỉ lấy những bài có lượt thích
+    
+    // Thêm search condition nếu có
+    if (search) {
+      qb.andWhere('article.title LIKE :search', { search: `%${search}%` });
+    }
+    
+    const results = await qb
+      .orderBy('stats.likeCount', 'DESC')
+      .addOrderBy('stats.viewCount', 'DESC')
+      .addOrderBy('article.createdAt', 'DESC')
+      .skip((page - 1) * size)
+      .take(size)
+      .select([
+        'article.id',
+        'article.title', 
+        'article.slug',
+        'article.summary',
+        'article.thumbnail',
+        'article.view',
+        'article.like',
+        'article.categoryId',
+        'article.authorId',
+        'article.createdAt',
+        'article.updatedAt',
+        'stats.likeCount',
+        'stats.viewCount'
+      ])
+      .getRawMany();
+
+    return results.map((row) => ({
+      id: row.article_id,
+      title: row.article_title,
+      slug: row.article_slug,
+      summary: row.article_summary,
+      thumbnail: row.article_thumbnail,
+      view: row.article_view,
+      like: row.article_like,
+      categoryId: row.article_categoryId,
+      authorId: row.article_authorId,
+      createdAt: row.article_createdAt,
+      updatedAt: row.article_updatedAt,
+      interactionStats: {
+        likeCount: Number(row.stats_likeCount ?? 0),
+        viewCount: Number(row.stats_viewCount ?? 0),
+      },
+    }));
+  }
+
+  // get recent news list
+  async getRecentList(params: PaginationParams): Promise<any[]> {
+    const { page = 1, size = 10, search = '' } = params;
+    
+    const qb = this.articleRepository.createQueryBuilder('article');
+    
+    // Join với InteractionStats để lấy thống kê
+    qb.leftJoin(InteractionStats, 'stats', 'stats.targetId = article.id')
+      .andWhere('stats.targetType = :type', { type: InteractionTarget.ARTICLE })
+      .andWhere('stats.viewCount > 0'); // Chỉ lấy những bài đã được xem
+    
+    // Thêm search condition nếu có
+    if (search) {
+      qb.andWhere('article.title LIKE :search', { search: `%${search}%` });
+    }
+    
+    const results = await qb
+      .orderBy('article.updatedAt', 'DESC') // Sắp xếp theo thời gian cập nhật
+      .addOrderBy('stats.viewCount', 'DESC')
+      .addOrderBy('stats.likeCount', 'DESC')
+      .skip((page - 1) * size)
+      .take(size)
+      .select([
+        'article.id',
+        'article.title', 
+        'article.slug',
+        'article.summary',
+        'article.thumbnail',
+        'article.view',
+        'article.like',
+        'article.categoryId',
+        'article.authorId',
+        'article.createdAt',
+        'article.updatedAt',
+        'stats.likeCount',
+        'stats.viewCount'
+      ])
+      .getRawMany();
+
+    return results.map((row) => ({
+      id: row.article_id,
+      title: row.article_title,
+      slug: row.article_slug,
+      summary: row.article_summary,
+      thumbnail: row.article_thumbnail,
+      view: row.article_view,
+      like: row.article_like,
+      categoryId: row.article_categoryId,
+      authorId: row.article_authorId,
+      createdAt: row.article_createdAt,
+      updatedAt: row.article_updatedAt,
+      interactionStats: {
+        likeCount: Number(row.stats_likeCount ?? 0),
+        viewCount: Number(row.stats_viewCount ?? 0),
+      },
+    }));
+  }
+
+  // get bookmarked news list
+  async getBookmarkedList(params: PaginationParams): Promise<any[]> {
+    const { page = 1, size = 10, search = '' } = params;
+    
+    const qb = this.articleRepository.createQueryBuilder('article');
+    
+    // Join với InteractionStats để lấy thống kê
+    qb.leftJoin(InteractionStats, 'stats', 'stats.targetId = article.id')
+      .andWhere('stats.targetType = :type', { type: InteractionTarget.ARTICLE })
+      .andWhere('stats.bookmarkCount > 0'); // Chỉ lấy những bài đã được bookmark
+    
+    // Thêm search condition nếu có
+    if (search) {
+      qb.andWhere('article.title LIKE :search', { search: `%${search}%` });
+    }
+    
+    const results = await qb
+      .orderBy('stats.bookmarkCount', 'DESC')
+      .addOrderBy('stats.likeCount', 'DESC')
+      .addOrderBy('stats.viewCount', 'DESC')
+      .addOrderBy('article.createdAt', 'DESC')
+      .skip((page - 1) * size)
+      .take(size)
+      .select([
+        'article.id',
+        'article.title', 
+        'article.slug',
+        'article.summary',
+        'article.thumbnail',
+        'article.view',
+        'article.like',
+        'article.categoryId',
+        'article.authorId',
+        'article.createdAt',
+        'article.updatedAt',
+        'stats.likeCount',
+        'stats.viewCount',
+        'stats.bookmarkCount'
+      ])
+      .getRawMany();
+
+    return results.map((row) => ({
+      id: row.article_id,
+      title: row.article_title,
+      slug: row.article_slug,
+      summary: row.article_summary,
+      thumbnail: row.article_thumbnail,
+      view: row.article_view,
+      like: row.article_like,
+      categoryId: row.article_categoryId,
+      authorId: row.article_authorId,
+      createdAt: row.article_createdAt,
+      updatedAt: row.article_updatedAt,
+      interactionStats: {
+        likeCount: Number(row.stats_likeCount ?? 0),
+        viewCount: Number(row.stats_viewCount ?? 0),
+        bookmarkCount: Number(row.stats_bookmarkCount ?? 0),
+      },
+    }));
+  }
+
   async getRecommendList(searchData: string): Promise<any[]> {
     // Parse comma-separated keywords
     const keywords = (searchData || '')
