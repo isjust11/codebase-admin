@@ -94,9 +94,9 @@ export class ArticleController extends BaseController {
   @RequirePermission('READ', 'article')
   async findDiscovery(
     @Param('categoryId') categoryId: string,
-    @Query('page') page: number,
-    @Query('size') size: number,
-    @Query('search') search: string,
+      @Query('page') page: number,
+      @Query('size') size: number,
+      @Query('search') search: string,
     @Request() req,
     @Res() res: Response) {
     try {
@@ -106,6 +106,28 @@ export class ArticleController extends BaseController {
         search: search || '',
       };
       const data = await this.articleService.findByDiscovery(filter, this.decode(categoryId));
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  // get tip list
+  @Get('tips')
+  @RequirePermission('READ', 'article')
+  async getTipList(@Query('page') page: number,
+  @Query('size') size: number,
+  @Query('search') search: string,
+  @Query('categoryId') categoryId: string,
+  @Res() res: Response) {
+    try {
+      const filter: PaginationParams = {
+        page: page || 1,
+        size: size || 10,
+        search: search || '',
+        categoryId: categoryId || '',
+      };
+      const data = await this.articleService.getTipList(filter, this.decode(categoryId));
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);

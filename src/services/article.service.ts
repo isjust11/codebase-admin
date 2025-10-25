@@ -12,6 +12,7 @@ import { UserInteractionService } from './user-interaction.service';
 import { InteractionTarget } from '../enums/interaction-target.enum';
 import { InteractionStats } from '../entities/interaction-stats.entity';
 import { CategoryTypeService } from './category-type.service';
+import { CategoryTypeEnum } from 'src/enums/category-type.enum';
 
 
 @Injectable()
@@ -141,6 +142,7 @@ export class ArticleService {
   }
 
   async findByDiscovery(params: PaginationParams, categoryId: number): Promise<Article[]> {
+    const { page = 1, size = 10, search = '' } = params;
     const category = await this.categoryService.findOne(categoryId);
     if (!category) throw new NotFoundException('Category not found');
     if (category.code.toLowerCase() == "all") {
@@ -156,6 +158,34 @@ export class ArticleService {
     const articles = await this.articleRepository.find(
       { where: { categoryId } }
     );
+    return articles;
+  }
+
+  //get list tips
+  async getTipList(params: PaginationParams, categoryId: number): Promise<Article[]> {
+    const { page = 1, size = 10, search = '' } = params;
+    const tipType = await this.categoryTypeService.findByCode(CategoryTypeEnum.TIPS);
+    if (!tipType) throw new NotFoundException('Tip type not found');
+    if (!categoryId || categoryId == 0) {
+      const allCategory = await this.categoryTypeService.findArticleType();
+      const categoryIds = allCategory.map(cat => cat.id);
+      const articles = await this.articleRepository.find({
+        where: { categoryId: In(categoryIds), title: Like(`%${search}%`) },
+        skip: (page - 1) * size,
+        take: size,
+        relations: ['createdBy', 'updatedBy', 'status', 'category', 'author'],
+        order: { id: 'DESC' },
+      });
+      return articles;
+    }
+    const categoryIds = tipType.categories.map(cat => cat.id);
+    const articles = await this.articleRepository.find({
+      where: { categoryId: In(categoryIds), title: Like(`%${search}%`) },
+      skip: (page - 1) * size,
+      take: size,
+      relations: ['createdBy', 'updatedBy', 'status', 'category', 'author'],
+      order: { id: 'DESC' },
+    });
     return articles;
   }
 
