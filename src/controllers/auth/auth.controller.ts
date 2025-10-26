@@ -143,7 +143,14 @@ export class AuthController extends BaseController{
       const result = await this.authService.refreshAccessToken(refreshToken);
       return this.success(res, result);
     } catch (error) {
-      return this.error(res, error);
+      const _error = error.response;
+      return this.error(res, {
+        status: _error.status,
+        message: _error.message,
+        code: _error.code,
+        statusCode: _error.statusCode,
+        data: _error.data,
+      });
     }
   }
 

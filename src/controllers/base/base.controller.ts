@@ -12,11 +12,12 @@ export abstract class BaseController {
   // Hàm trả về response lỗi
   protected error(res: Response, error: any) {
     try {
-      const { status, message, data } = error;
+      const { status, message, data, code, statusCode } = error;
       return res.status(status).json({
-        status: false,
+        status,
         message,
-        code: status,
+        code,
+        statusCode,
         data,
       });
     } catch (error) {

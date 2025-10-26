@@ -189,6 +189,13 @@ export class ArticleService {
     return articles;
   }
 
+  // get tip detail 
+  async getTipDetails(id: number): Promise<Article> {
+    const article = await this.articleRepository.findOne({ where: { id } });
+    if (!article) throw new NotFoundException('Article not found');
+    return article;
+  }
+
   async findOne(id: number, userId?: number): Promise<any> {
     const article = await this.articleRepository.findOne({
       where: { id },

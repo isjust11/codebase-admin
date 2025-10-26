@@ -133,6 +133,17 @@ export class ArticleController extends BaseController {
       return this.error(res, error);
     }
   }
+  // get tip details
+  @Get('tips/:id')
+  @RequirePermission('READ', 'article')
+  async getTipDetails(@Param('id') id: string, @Res() res: Response) {
+    try {
+      const data = await this.articleService.getTipDetails(this.decode(id));
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
 
   @Get(':id')
   @RequirePermission('READ', 'article')

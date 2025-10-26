@@ -351,11 +351,25 @@ export class AuthService {
     });
 
     if (!foundToken) {
-      throw new UnauthorizedException('Refresh token không hợp lệ');
+      throw new UnauthorizedException({
+        status: 401,
+        message: 'Refresh token không hợp lệ',
+        code: 'refresh_token_invalid',
+        statusCode: 401,
+        data: null
+      });
     }
 
     if (new Date() > foundToken.expiresAt) {
-      throw new UnauthorizedException('Refresh token đã hết hạn');
+      await this.revokeRefreshToken(refreshTokenString);
+      throw new UnauthorizedException({
+        status: 401,
+        message: 'Refresh token đã hết hạn',
+        code: 'refresh_token_expired',
+        statusCode: 401,
+        data: null
+      });
+
     }
     const permissions = foundToken.user.roles.flatMap(role => role.permissions).filter(permission => permission.isActive);
     const payload: JwtPayload = {
