@@ -167,26 +167,25 @@ export class ArticleService {
     const tipType = await this.categoryTypeService.findByCode(CategoryTypeEnum.TIPS);
     if (!tipType) throw new NotFoundException('Tip type not found');
     if (!categoryId || categoryId == 0) {
-      const allCategory = await this.categoryTypeService.findArticleType();
-      const categoryIds = allCategory.map(cat => cat.id);
+      const tipType = await this.categoryTypeService.findTipType();
+      if (!tipType) throw new NotFoundException('Tip type not found');
+      const categoryIds = tipType.categories.map(cat => cat.id);
       const articles = await this.articleRepository.find({
         where: { categoryId: In(categoryIds), title: Like(`%${search}%`) },
-        skip: (page - 1) * size,
-        take: size,
-        relations: ['createdBy', 'updatedBy', 'status', 'category', 'author'],
+      skip: (page - 1) * size,
+      take: size,
+      relations: ['createdBy', 'updatedBy', 'status', 'category', 'author'],
         order: { id: 'DESC' },
       });
       return articles;
     }
-    const categoryIds = tipType.categories.map(cat => cat.id);
-    const articles = await this.articleRepository.find({
-      where: { categoryId: In(categoryIds), title: Like(`%${search}%`) },
+    return await this.articleRepository.find({
+      where: { categoryId, title: Like(`%${search}%`) },
       skip: (page - 1) * size,
       take: size,
       relations: ['createdBy', 'updatedBy', 'status', 'category', 'author'],
       order: { id: 'DESC' },
     });
-    return articles;
   }
 
   // get tip detail 

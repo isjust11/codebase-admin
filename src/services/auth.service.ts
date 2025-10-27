@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from './user.service';
 import { LoginDto, RegisterDto, JwtPayload, ResendEmailDto, RegisterResultDto, RegisterCode, VerifyPinDto, ResendPinDto } from '../dtos/auth.dto';
@@ -467,7 +467,13 @@ export class AuthService {
       const decoded = this.jwtService.verify(token);
       return decoded;
     } catch (error) {
-      throw new UnauthorizedException('Token không hợp lệ hoặc đã hết hạn');
+      throw new UnauthorizedException({
+        status: 401,
+        message: 'Token không hợp lệ hoặc đã hết hạn',
+        code: 'token_invalid',
+        statusCode: 401,
+        data: null
+      });
     }
   }
 

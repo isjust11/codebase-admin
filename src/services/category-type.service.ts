@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like } from 'typeorm';
 import { CategoryType } from '../entities/category-type.entity';
 import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
+import { CategoryTypeEnum } from 'src/enums/category-type.enum';
 
 @Injectable()
 export class CategoryTypeService {
@@ -42,6 +43,14 @@ export class CategoryTypeService {
       where: {
         isArticleType: true
       }
+    });
+  }
+
+  async findTipType(): Promise<CategoryType | null> {
+    return this.categoryTypeRepository.findOne({
+      where: {
+        code: CategoryTypeEnum.TIPS
+      }, relations: ['categories']
     });
   }
 
