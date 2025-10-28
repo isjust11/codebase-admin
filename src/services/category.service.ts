@@ -140,7 +140,7 @@ export class CategoryService {
     const [data, total] = await queryBuilder
       .skip(skip)
       .take(size)
-      .orderBy('category.createdAt', 'DESC')
+      .orderBy('type.code', 'ASC')
       .getManyAndCount();
 
     return {
