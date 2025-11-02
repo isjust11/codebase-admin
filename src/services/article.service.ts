@@ -55,7 +55,7 @@ export class ArticleService {
       where: whereConditions,
       skip,
       take: size,
-      relations: ['createdBy', 'updatedBy', 'status', 'category', 'author'],
+      relations: ['createdBy', 'updatedBy', 'status', 'category', 'author', 'dataSource'],
       order: { id: 'DESC' },
     });
 
