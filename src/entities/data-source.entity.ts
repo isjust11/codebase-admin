@@ -1,7 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 import { Transform } from 'class-transformer';
 import { FolkMedicine } from './folk-medicine.entity';
-import * as util from 'util';
 
 export enum DataSourceType {
   WEBSITE = 'website',
