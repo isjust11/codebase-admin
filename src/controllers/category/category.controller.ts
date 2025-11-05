@@ -33,9 +33,14 @@ export class CategoryController extends BaseController {
 
   @Get('get-by-category-type/:categoryTypeCode')
   @RequirePermission('READ', 'category')
-  async getByCategoryType(@Param('categoryTypeCode') categoryTypeCode: string, @Res() res: Response) {
+  async getByCategoryType(
+    @Param('categoryTypeCode') categoryTypeCode: string,
+    @Query('sortBy') sortBy: string,
+    @Query('sortType') sortType: 'ASC' | 'DESC',
+    @Res() res: Response,
+  ) {
     try {
-      const categories = await this.categoryService.findByCategoryTypeCode(categoryTypeCode);
+      const categories = await this.categoryService.findByCategoryTypeCode(categoryTypeCode, sortBy, sortType);
       return this.success(res as any, categories);
     } catch (error) {
       return this.error(res as any, error);

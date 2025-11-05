@@ -23,7 +23,11 @@ export class CategoryService {
     });
   }
 
-  async findByCategoryTypeCode(categoryTypeCode: string): Promise<Category[]> {
+  async findByCategoryTypeCode(
+    categoryTypeCode: string,
+    sortBy?: string,
+    sortType?: 'ASC' | 'DESC',
+  ): Promise<Category[]> {
     const categoryType = await this.categoryTypeRepository.findOne({
       where: { code: categoryTypeCode }
     });
@@ -32,10 +36,37 @@ export class CategoryService {
       throw new NotFoundException('Category type not found');
     }
 
-    return this.categoryRepository.find({
-      where: { categoryTypeId: categoryType.id },
-      relations: ['type']
-    });
+    const queryBuilder = this.categoryRepository
+      .createQueryBuilder('category')
+      .leftJoinAndSelect('category.type', 'type')
+      .where('category.categoryTypeId = :categoryTypeId', { categoryTypeId: categoryType.id });
+
+    const sortDirection: 'ASC' | 'DESC' = (sortType?.toUpperCase() === 'DESC') ? 'DESC' : 'ASC';
+
+    // Allow list to prevent SQL injection on dynamic column names
+    const allowedCategoryColumns = new Set([
+      'id',
+      'code',
+      'name',
+      'description',
+      'isActive',
+      'createdAt',
+      'updatedAt',
+      'order',
+    ]);
+
+    let orderColumn = 'category.createdAt';
+    if (sortBy) {
+      if (sortBy === 'typeCode' || sortBy === 'type.code') {
+        orderColumn = 'type.code';
+      } else if (allowedCategoryColumns.has(sortBy)) {
+        orderColumn = `category.${sortBy}`;
+      }
+    }
+
+    queryBuilder.orderBy(orderColumn, sortDirection);
+
+    return queryBuilder.getMany();
   }
 
   async findOne(id: number): Promise<Category | null> {
