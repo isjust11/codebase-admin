@@ -67,6 +67,6 @@ import { FcmTokenController } from '../controllers/notification/fcm-token.contro
     NotificationConfigController,
     FcmTokenController,
   ],
-  exports: [NotificationService, FcmService],
+  exports: [NotificationService, FcmService, FcmTokenService],
 })
 export class NotificationModule {} 

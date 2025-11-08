@@ -1,24 +1,42 @@
-import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request } from '@nestjs/common';
 import { FcmService } from '../../services/fcm.service';
+import { FcmTokenService } from '../../services/fcm-token.service';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { RequirePermission } from '../../decorators/require-permissions.decorator';
 
 @Controller('fcm')
 @UseGuards(JwtAuthGuard)
 export class FcmController {
-  constructor(private readonly fcmService: FcmService) {}
+  constructor(
+    private readonly fcmService: FcmService,
+    private readonly fcmTokenService: FcmTokenService,
+  ) {}
 
   @Post('register-token')
   @RequirePermission('CREATE', 'fcm')
-  async registerToken(@Body() body: { 
-    token: string; 
-    platform: string; 
-    app_version: string; 
-  }) {
-    // TODO: Store token in database with user association
-    // This is a placeholder implementation
+  async registerToken(
+    @Body() body: { 
+      token: string; 
+      platform: string; 
+      app_version: string;
+      deviceId?: string;
+    },
+    @Request() req,
+  ) {
+    const userId = req.user?.id;
+    
+    // Lưu FCM token vào database với userId
+    await this.fcmTokenService.registerOrUpdate({
+      token: body.token,
+      userId: userId,
+      platform: body.platform,
+      deviceId: body.deviceId,
+      isActive: true,
+    });
+    
     console.log('FCM Token registered:', {
       token: body.token,
+      userId: userId,
       platform: body.platform,
       app_version: body.app_version,
       timestamp: new Date().toISOString(),
