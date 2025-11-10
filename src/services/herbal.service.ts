@@ -46,6 +46,11 @@ export class HerbalService {
     };
   }
 
+  async getAll(){
+    const data = this.herbalRepository.find();
+    return data;
+  }
+
   async create(data: Partial<Herbal>): Promise<Herbal> {
     if (data.title) {
       data.slug = slugify(data.title, { lower: true, strict: true });

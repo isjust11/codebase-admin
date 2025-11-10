@@ -1,9 +1,10 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { User } from './user.entity';
 import { Category } from './category.entity';
 import { Transform } from 'class-transformer';
 import { Author } from './author.entity';
 import { DataSource } from './data-source.entity';
+import { FolkMedicineIngredient } from './folk-medicine-ingredient.entity';
 @Entity()
 export class FolkMedicine {
   @PrimaryGeneratedColumn()
@@ -36,12 +37,6 @@ export class FolkMedicine {
   @Column({ length: 255, nullable: true })
   thumbnail?: string;
 
-  @Column({ default: 0 })
-  viewCount: number;
-
-  @Column({ default: 0 })
-  likeCount: number;
-
   @Column({ nullable: true })
   authorId?: number;
 
@@ -65,6 +60,9 @@ export class FolkMedicine {
 
   @Column({ default: true })
   isActive: boolean;
+
+  @OneToMany(() => FolkMedicineIngredient, ing => ing.folkMedicine, { cascade: true })
+  ingredientsDetail?: FolkMedicineIngredient[];
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   @Transform(({ value }) => value ? new Date(value) : value)

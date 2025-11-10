@@ -17,6 +17,7 @@ import { AuthorController } from 'src/controllers/medicine/author.controller';
 import { DataSourceController } from 'src/controllers/media/data-source.controller';
 import { DataSourceService } from 'src/services/data-source.service';
 import { DataSource } from 'src/entities/data-source.entity';
+import { FolkMedicineIngredient } from '../entities/folk-medicine-ingredient.entity';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { DataSource } from 'src/entities/data-source.entity';
       Herbal, 
       HerbalImage, 
       FolkMedicine, 
+      FolkMedicineIngredient,
       Author,
       DataSource,
     ])

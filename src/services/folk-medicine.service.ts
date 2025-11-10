@@ -10,12 +10,15 @@ import { CategoryService } from './category.service';
 import { AuthorService } from './author.service';
 import { FolkMedicineDto } from 'src/dtos/folk-medicine.dto';
 import { DataSourceService } from './data-source.service';
+import { FolkMedicineIngredient } from '../entities/folk-medicine-ingredient.entity';
 
 @Injectable()
 export class FolkMedicineService {
   constructor(
     @InjectRepository(FolkMedicine)
     private readonly folkMedicineRepository: Repository<FolkMedicine>,
+    @InjectRepository(FolkMedicineIngredient)
+    private readonly ingredientRepository: Repository<FolkMedicineIngredient>,
     private readonly categoryService: CategoryService,
     private readonly authorService: AuthorService,
     private readonly dataSourceService: DataSourceService,
@@ -44,7 +47,7 @@ export class FolkMedicineService {
       where: whereConditions,
       skip,
       take: size,
-      relations: ['category'],
+      relations: ['category', 'ingredientsDetail', 'ingredientsDetail.herbal', 'ingredientsDetail.unitCategory'],
       order: { id: 'DESC' },
     });
 
@@ -80,7 +83,28 @@ export class FolkMedicineService {
     const folkMedicine = this.folkMedicineRepository.create(data as DeepPartial<FolkMedicine>);
     folkMedicine.createdAt = new Date();
     folkMedicine.updatedAt = new Date();
-    return this.folkMedicineRepository.save(folkMedicine);
+
+    const saved = await this.folkMedicineRepository.save(folkMedicine);
+
+    // handle components
+    if (data.components && Array.isArray(data.components)) {
+      const ingredients: DeepPartial<FolkMedicineIngredient>[] = data.components.map((c, index) => {
+        const herbalId = Base64EncryptionUtil.decrypt(c.herbalId.toString());
+        const unitCategoryId = c.unitCategoryId != null ? Base64EncryptionUtil.decrypt(c.unitCategoryId.toString()) : undefined;
+        return {
+          folkMedicineId: saved.id,
+          herbalId,
+          unitCategoryId: unitCategoryId,
+          quantity: Number(c.quantity),
+          note: c.note,
+          sortOrder: c.sortOrder ?? index,
+        };
+      });
+      await this.ingredientRepository.delete({ folkMedicineId: saved.id });
+      await this.ingredientRepository.save(ingredients as any);
+    }
+
+    return this.findOne(saved.id);
   }
 
   async findAll(): Promise<FolkMedicine[]> {
@@ -94,7 +118,7 @@ export class FolkMedicineService {
   async findOne(id: number): Promise<FolkMedicine> {
     const folkMedicine = await this.folkMedicineRepository.findOne({
       where: { id },
-      relations: ['category'],
+      relations: ['category', 'ingredientsDetail', 'ingredientsDetail.herbal', 'ingredientsDetail.unitCategory'],
     });
     if (!folkMedicine) throw new NotFoundException('Folk medicine not found');
     return plainToClass(FolkMedicine, folkMedicine);
@@ -144,9 +168,28 @@ export class FolkMedicineService {
       }
     }
 
+    // update components if provided
+    if (data.components) {
+      const ingredients: DeepPartial<FolkMedicineIngredient>[] = data.components.map((c, index) => {
+        const herbalId = Base64EncryptionUtil.decrypt(c.herbalId.toString());
+        const unitCategoryId = c.unitCategoryId != null ? Base64EncryptionUtil.decrypt(c.unitCategoryId.toString()) : undefined;
+        return {
+          folkMedicineId: folkMedicine.id,
+          herbalId,
+          unitCategoryId: unitCategoryId,
+          quantity: Number(c.quantity),
+          note: c.note,
+          sortOrder: c.sortOrder ?? index,
+        };
+      });
+      await this.ingredientRepository.delete({ folkMedicineId: folkMedicine.id });
+      await this.ingredientRepository.save(ingredients as any);
+    }
+
     folkMedicine.updatedAt = new Date();
 
-    return this.folkMedicineRepository.save(folkMedicine);
+    await this.folkMedicineRepository.save(folkMedicine);
+    return this.findOne(folkMedicine.id);
   }
 
   async remove(id: number): Promise<void> {
@@ -165,7 +208,7 @@ export class FolkMedicineService {
   async findByCategory(categoryId: number): Promise<FolkMedicine[]> {
     const folkMedicines = await this.folkMedicineRepository.find({
       where: { categoryId, isActive: true },
-      relations: ['author', 'category'],
+      relations: ['author', 'category', 'ingredientsDetail', 'ingredientsDetail.herbal', 'ingredientsDetail.unitCategory'],
       order: { id: 'DESC' },
     });
     return plainToClass(FolkMedicine, folkMedicines);

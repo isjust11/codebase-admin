@@ -1,4 +1,5 @@
-import { IsString, IsNumber, IsOptional, IsBoolean, IsNotEmpty, IsDefined } from 'class-validator';
+import { IsString, IsNumber, IsOptional, IsBoolean, IsNotEmpty, IsArray, ValidateNested, IsObject } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class FolkMedicineDto {
   @IsOptional()
@@ -56,4 +57,32 @@ export class FolkMedicineDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => FolkMedicineComponentDto)
+  components?: FolkMedicineComponentDto[];
+} 
+
+export class FolkMedicineComponentDto {
+  @IsNotEmpty()
+  @IsString()
+  herbalId: string; // base64-encoded id
+
+  @IsNotEmpty()
+  @IsNumber()
+  quantity: number;
+
+  @IsOptional()
+  @IsString()
+  unitCategoryId?: string; // base64-encoded category id
+
+  @IsOptional()
+  @IsString()
+  note?: string;
+
+  @IsOptional()
+  @IsNumber()
+  sortOrder?: number;
 } 

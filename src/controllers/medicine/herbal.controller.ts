@@ -43,6 +43,18 @@ export class HerbalController extends BaseController {
     }
   }
 
+  // get all 
+  @Get('all')
+  @RequirePermission('READ','herbal')
+  async findAll(@Res() res: Response) {
+    try {
+      const data = await this.herbalService.getAll();
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
   @Post()
   @RequirePermission('CREATE', 'herbal')
   async create(@Body() createHerbalDto: CreateHerbalDto, @Res() res: Response) {
