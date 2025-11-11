@@ -34,6 +34,7 @@ import { UserExam } from './entities/user-exam.entity';
 import { ArticleModule } from './modules/article.module';
 import { Payment } from './entities/payment.entity';
 import { FolkMedicine } from './entities/folk-medicine.entity';
+import { FolkMedicineIngredient } from './entities/folk-medicine-ingredient.entity';
 import { Herbal } from './entities/herbal.entity';
 import { HerbalImage } from './entities/herbal-image.entity';
 import { Author } from './entities/author.entity';
@@ -92,6 +93,7 @@ import { FcmController } from './controllers/fcm/fcm.controller';
         UserExam,
         Payment,
         FolkMedicine,
+        FolkMedicineIngredient,
         Herbal,
         HerbalImage,
         Author,

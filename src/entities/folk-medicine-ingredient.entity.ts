@@ -8,7 +8,7 @@ export class FolkMedicineIngredient {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => FolkMedicine, folk => folk.ingredients, { onDelete: 'CASCADE' })
+  @ManyToOne(() => FolkMedicine, folk => folk.ingredientsDetail, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'folkMedicineId' })
   folkMedicine: FolkMedicine;
 

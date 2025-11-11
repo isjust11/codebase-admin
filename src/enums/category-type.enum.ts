@@ -13,5 +13,6 @@ export enum CategoryTypeEnum {
     ARTICLE_TYPE = 'ArticleType',// lOẠI BÀI VIẾT
     HERBAL = 'Herbal',
     DISCOVERY = 'Discovery',
-    TIPS = 'Tips'
+    TIPS = 'Tips',
+    UnitOfMeasure = 'UnitOfMeasure',// đơn vị tính
 }
