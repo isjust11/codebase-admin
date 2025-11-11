@@ -173,7 +173,7 @@ export class FolkMedicineService {
       const ingredients: DeepPartial<FolkMedicineIngredient>[] = data.components.map((c, index) => {
         const herbalId = Base64EncryptionUtil.decrypt(c.herbalId.toString());
         const unitCategoryId = c.unitCategoryId != null ? Base64EncryptionUtil.decrypt(c.unitCategoryId.toString()) : undefined;
-        return {
+        return <FolkMedicineIngredient>{
           folkMedicineId: folkMedicine.id,
           herbalId,
           unitCategoryId: unitCategoryId,
@@ -183,7 +183,8 @@ export class FolkMedicineService {
         };
       });
       await this.ingredientRepository.delete({ folkMedicineId: folkMedicine.id });
-      await this.ingredientRepository.save(ingredients as any);
+      const savedIngredients = await this.ingredientRepository.save(ingredients as DeepPartial<FolkMedicineIngredient>[]);
+      folkMedicine.ingredientsDetail = savedIngredients as FolkMedicineIngredient[];
     }
 
     folkMedicine.updatedAt = new Date();
