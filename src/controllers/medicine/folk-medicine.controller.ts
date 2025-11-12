@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, Query, UseGuards, Res } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, Query, UseGuards, Res, HttpCode, HttpStatus } from '@nestjs/common';
 import { FolkMedicineService } from '../../services/folk-medicine.service';
 import { FolkMedicineDto } from '../../dtos/folk-medicine.dto';
 import { PaginationParams } from 'src/dtos/filter.dto';
@@ -9,6 +9,8 @@ import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { Response } from 'express';
 import { DeepPartial } from 'typeorm';
 import { FolkMedicine } from 'src/entities/folk-medicine.entity';
+import { AddDiseasesToFolkMedicineDto, RemoveDiseasesFromFolkMedicineDto } from '../../dtos/disease.dto';
+import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
 @Controller('folk-medicine')
 @UseGuards(JwtAuthGuard, PermissionGuard)
 export class FolkMedicineController extends BaseController {
@@ -123,6 +125,70 @@ export class FolkMedicineController extends BaseController {
     try {
       const data = await this.folkMedicineService.incrementLikeCount(this.decode(id));
       return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Post(':id/diseases')
+  @RequirePermission('UPDATE', 'folk-medicine')
+  @HttpCode(HttpStatus.OK)
+  async addDiseases(
+    @Param('id') id: string,
+    @Body() dto: AddDiseasesToFolkMedicineDto,
+    @Res() res: Response,
+  ) {
+    try {
+      const folkMedicineId = this.decode(id);
+      const diseaseIds = dto.diseaseIds.map(diseaseId => Base64EncryptionUtil.decrypt(diseaseId));
+      const data = await this.folkMedicineService.addDiseases(folkMedicineId, diseaseIds);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Delete(':id/diseases')
+  @RequirePermission('UPDATE', 'folk-medicine')
+  @HttpCode(HttpStatus.OK)
+  async removeDiseases(
+    @Param('id') id: string,
+    @Body() dto: RemoveDiseasesFromFolkMedicineDto,
+    @Res() res: Response,
+  ) {
+    try {
+      const folkMedicineId = this.decode(id);
+      const diseaseIds = dto.diseaseIds.map(diseaseId => Base64EncryptionUtil.decrypt(diseaseId));
+      const data = await this.folkMedicineService.removeDiseases(folkMedicineId, diseaseIds);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Put(':id/diseases')
+  @RequirePermission('UPDATE', 'folk-medicine')
+  async setDiseases(
+    @Param('id') id: string,
+    @Body() dto: AddDiseasesToFolkMedicineDto,
+    @Res() res: Response,
+  ) {
+    try {
+      const folkMedicineId = this.decode(id);
+      const diseaseIds = dto.diseaseIds.map(diseaseId => Base64EncryptionUtil.decrypt(diseaseId));
+      const data = await this.folkMedicineService.setDiseases(folkMedicineId, diseaseIds);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Get(':id/diseases')
+  @RequirePermission('READ', 'folk-medicine')
+  async getDiseases(@Param('id') id: string, @Res() res: Response) {
+    try {
+      const folkMedicine = await this.folkMedicineService.findOne(this.decode(id));
+      return this.success(res, folkMedicine.diseases || []);
     } catch (error) {
       return this.error(res, error);
     }

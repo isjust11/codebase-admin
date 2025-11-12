@@ -1,0 +1,112 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Like, Repository, In } from 'typeorm';
+import { Disease } from '../entities/disease.entity';
+import slugify from 'slugify';
+import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
+import { plainToClass } from 'class-transformer';
+import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
+
+@Injectable()
+export class DiseaseService {
+  constructor(
+    @InjectRepository(Disease)
+    private readonly diseaseRepository: Repository<Disease>,
+  ) {}
+
+  async findPagination(params: PaginationParams): Promise<PaginatedResponse<Disease>> {
+    const { page = 1, size = 10, search = '' } = params;
+    const skip = (page - 1) * size;
+
+    const whereConditions = search ? [
+      { name: Like(`%${search}%`) },
+      { slug: Like(`%${search}%`) },
+      { description: Like(`%${search}%`) },
+      { symptoms: Like(`%${search}%`) },
+    ] : {};
+
+    const [data, total] = await this.diseaseRepository.findAndCount({
+      where: whereConditions,
+      skip,
+      take: size,
+      relations: ['folkMedicines'],
+      order: { id: 'DESC' },
+    });
+
+    return {
+      data: plainToClass(Disease, data),
+      total,
+      page,
+      size,
+      totalPages: Math.ceil(total / size),
+    };
+  }
+
+  async getAll(): Promise<Disease[]> {
+    const data = await this.diseaseRepository.find({
+      relations: ['folkMedicines'],
+      order: { id: 'DESC' },
+    });
+    return plainToClass(Disease, data);
+  }
+
+  async create(data: Partial<Disease>): Promise<Disease> {
+    if (data.name && !data.slug) {
+      data.slug = slugify(data.name, { lower: true, strict: true });
+    }
+    if (data.slug) {
+      data.slug = slugify(data.slug, { lower: true, strict: true });
+    }
+    data.id = undefined;
+
+    const disease = this.diseaseRepository.create(data);
+    return this.diseaseRepository.save(disease);
+  }
+
+  async findAll(): Promise<Disease[]> {
+    const diseases = await this.diseaseRepository.find({
+      relations: ['folkMedicines'],
+      order: { id: 'DESC' },
+    });
+    return plainToClass(Disease, diseases);
+  }
+
+  async findOne(id: number): Promise<Disease> {
+    const disease = await this.diseaseRepository.findOne({
+      where: { id },
+      relations: ['folkMedicines'],
+    });
+    if (!disease) throw new NotFoundException('Disease not found');
+    return plainToClass(Disease, disease);
+  }
+
+  async update(id: number, data: Partial<Disease>): Promise<Disease> {
+    const disease = await this.findOne(id);
+    Object.assign(disease, {
+      ...data,
+      id: id,
+    });
+
+    if (data.name && !data.slug) {
+      disease.slug = slugify(data.name, { lower: true, strict: true });
+    } else if (data.slug) {
+      disease.slug = slugify(data.slug, { lower: true, strict: true });
+    }
+
+    disease.updatedAt = new Date();
+    return this.diseaseRepository.save(disease);
+  }
+
+  async remove(id: number): Promise<void> {
+    const result = await this.diseaseRepository.delete(id);
+    if (result.affected === 0) throw new NotFoundException('Disease not found');
+  }
+
+  async findByIds(ids: number[]): Promise<Disease[]> {
+    if (!ids || ids.length === 0) return [];
+    return this.diseaseRepository.find({
+      where: { id: In(ids) },
+    });
+  }
+}
+

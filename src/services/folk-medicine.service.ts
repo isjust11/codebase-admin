@@ -11,6 +11,7 @@ import { AuthorService } from './author.service';
 import { FolkMedicineDto } from 'src/dtos/folk-medicine.dto';
 import { DataSourceService } from './data-source.service';
 import { FolkMedicineIngredient } from '../entities/folk-medicine-ingredient.entity';
+import { DiseaseService } from './disease.service';
 
 @Injectable()
 export class FolkMedicineService {
@@ -22,6 +23,7 @@ export class FolkMedicineService {
     private readonly categoryService: CategoryService,
     private readonly authorService: AuthorService,
     private readonly dataSourceService: DataSourceService,
+    private readonly diseaseService: DiseaseService,
   ) { }
 
   async findPagination(params: PaginationParams): Promise<PaginatedResponse<FolkMedicine>> {
@@ -47,7 +49,7 @@ export class FolkMedicineService {
       where: whereConditions,
       skip,
       take: size,
-      relations: ['category', 'ingredientsDetail', 'ingredientsDetail.herbal', 'ingredientsDetail.unitCategory'],
+      relations: ['category', 'ingredientsDetail', 'ingredientsDetail.herbal', 'ingredientsDetail.unitCategory', 'diseases'],
       order: { id: 'DESC' },
     });
 
@@ -118,7 +120,7 @@ export class FolkMedicineService {
   async findOne(id: number): Promise<FolkMedicine> {
     const folkMedicine = await this.folkMedicineRepository.findOne({
       where: { id },
-      relations: ['category', 'ingredientsDetail', 'ingredientsDetail.herbal', 'ingredientsDetail.unitCategory'],
+      relations: ['category', 'ingredientsDetail', 'ingredientsDetail.herbal', 'ingredientsDetail.unitCategory', 'diseases'],
     });
     if (!folkMedicine) throw new NotFoundException('Folk medicine not found');
     return plainToClass(FolkMedicine, folkMedicine);
@@ -209,9 +211,47 @@ export class FolkMedicineService {
   async findByCategory(categoryId: number): Promise<FolkMedicine[]> {
     const folkMedicines = await this.folkMedicineRepository.find({
       where: { categoryId, isActive: true },
-      relations: ['author', 'category', 'ingredientsDetail', 'ingredientsDetail.herbal', 'ingredientsDetail.unitCategory'],
+      relations: ['author', 'category', 'ingredientsDetail', 'ingredientsDetail.herbal', 'ingredientsDetail.unitCategory', 'diseases'],
       order: { id: 'DESC' },
     });
     return plainToClass(FolkMedicine, folkMedicines);
+  }
+
+  async addDiseases(folkMedicineId: number, diseaseIds: number[]): Promise<FolkMedicine> {
+    const folkMedicine = await this.findOne(folkMedicineId);
+    const diseases = await this.diseaseService.findByIds(diseaseIds);
+    
+    if (!folkMedicine.diseases) {
+      folkMedicine.diseases = [];
+    }
+    
+    // Merge diseases, avoiding duplicates
+    const existingDiseaseIds = folkMedicine.diseases.map(d => d.id);
+    const newDiseases = diseases.filter(d => !existingDiseaseIds.includes(d.id));
+    folkMedicine.diseases = [...folkMedicine.diseases, ...newDiseases];
+    
+    await this.folkMedicineRepository.save(folkMedicine);
+    return this.findOne(folkMedicineId);
+  }
+
+  async removeDiseases(folkMedicineId: number, diseaseIds: number[]): Promise<FolkMedicine> {
+    const folkMedicine = await this.findOne(folkMedicineId);
+    
+    if (folkMedicine.diseases) {
+      folkMedicine.diseases = folkMedicine.diseases.filter(d => !diseaseIds.includes(d.id));
+      await this.folkMedicineRepository.save(folkMedicine);
+    }
+    
+    return this.findOne(folkMedicineId);
+  }
+
+  async setDiseases(folkMedicineId: number, diseaseIds: number[]): Promise<FolkMedicine> {
+    const folkMedicine = await this.findOne(folkMedicineId);
+    const diseases = await this.diseaseService.findByIds(diseaseIds);
+    
+    folkMedicine.diseases = diseases;
+    await this.folkMedicineRepository.save(folkMedicine);
+    
+    return this.findOne(folkMedicineId);
   }
 } 
