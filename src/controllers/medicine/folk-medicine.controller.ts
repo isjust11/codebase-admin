@@ -7,8 +7,6 @@ import { RequirePermission } from 'src/decorators/require-permissions.decorator'
 import { PermissionGuard } from 'src/guards/permission.guard';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { Response } from 'express';
-import { DeepPartial } from 'typeorm';
-import { FolkMedicine } from 'src/entities/folk-medicine.entity';
 import { AddDiseasesToFolkMedicineDto, RemoveDiseasesFromFolkMedicineDto } from '../../dtos/disease.dto';
 import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
 @Controller('folk-medicine')

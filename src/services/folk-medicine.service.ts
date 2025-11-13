@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeepPartial, Like, Repository } from 'typeorm';
+import { DeepPartial, In, Like, Repository } from 'typeorm';
 import { FolkMedicine } from '../entities/folk-medicine.entity';
 import slugify from 'slugify';
 import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
@@ -12,6 +12,7 @@ import { FolkMedicineDto } from 'src/dtos/folk-medicine.dto';
 import { DataSourceService } from './data-source.service';
 import { FolkMedicineIngredient } from '../entities/folk-medicine-ingredient.entity';
 import { DiseaseService } from './disease.service';
+import { Disease } from 'src/entities/disease.entity';
 
 @Injectable()
 export class FolkMedicineService {
@@ -24,6 +25,8 @@ export class FolkMedicineService {
     private readonly authorService: AuthorService,
     private readonly dataSourceService: DataSourceService,
     private readonly diseaseService: DiseaseService,
+    @InjectRepository(Disease)
+    private readonly diseaseRepository: Repository<Disease>,
   ) { }
 
   async findPagination(params: PaginationParams): Promise<PaginatedResponse<FolkMedicine>> {
@@ -184,6 +187,8 @@ export class FolkMedicineService {
           sortOrder: c.sortOrder ?? index,
         };
       });
+      // update diseases if provided
+     
       await this.ingredientRepository.delete({ folkMedicineId: folkMedicine.id });
       const savedIngredients = await this.ingredientRepository.save(ingredients as DeepPartial<FolkMedicineIngredient>[]);
       folkMedicine.ingredientsDetail = savedIngredients as FolkMedicineIngredient[];

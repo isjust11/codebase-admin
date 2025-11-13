@@ -1,5 +1,6 @@
 import { IsString, IsNumber, IsOptional, IsBoolean, IsNotEmpty, IsArray, ValidateNested, IsObject } from 'class-validator';
 import { Type } from 'class-transformer';
+import { FolkMedicineDiseaseDto } from './folk-medicine-disease.dto';
 
 export class FolkMedicineDto {
   @IsOptional()
@@ -63,6 +64,12 @@ export class FolkMedicineDto {
   @ValidateNested({ each: true })
   @Type(() => FolkMedicineComponentDto)
   components?: FolkMedicineComponentDto[];
+  
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => FolkMedicineDiseaseDto)
+  diseases?: FolkMedicineDiseaseDto[];
 } 
 
 export class FolkMedicineComponentDto {

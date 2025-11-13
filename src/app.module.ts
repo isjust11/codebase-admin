@@ -56,6 +56,7 @@ import { FeedbackModule } from './modules/feedback.module';
 import { Feedback } from './entities/feedback.entity';
 import { ConfigModule } from '@nestjs/config';
 import { FcmController } from './controllers/fcm/fcm.controller';
+import { Disease } from './entities/disease.entity';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -110,6 +111,7 @@ import { FcmController } from './controllers/fcm/fcm.controller';
         InteractionStats,
         Page,
         Feedback,
+        Disease,
       ],
       synchronize: true,
       migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
