@@ -1,7 +1,7 @@
 import { IsString, IsOptional, IsNumber, IsBoolean, IsDateString, IsEnum } from 'class-validator';
-import { HerbalImageType } from '../entities/herbal-image.entity';
+import { HerbalImageType, ImageEntityType } from '../entities/multi-image.entity';
 
-export class HerbalImageDto {
+export class MultiImageDto {
   @IsString()
   url: string;
 
@@ -17,6 +17,12 @@ export class HerbalImageDto {
   @IsEnum(HerbalImageType)
   type?: HerbalImageType;
 
+  @IsEnum(ImageEntityType)
+  entityType: ImageEntityType;
+
+  @IsString()
+  entityId: number;
+
   @IsOptional()
   @IsNumber()
   sortOrder?: number;
@@ -25,10 +31,12 @@ export class HerbalImageDto {
   @IsBoolean()
   isActive?: boolean;
 
+  // Deprecated: Giữ lại để tương thích ngược, sẽ map sang entityId và entityType
+  @IsOptional()
   @IsString()
-  herbalId: string;
+  herbalId?: number;
 }
-export class HerbalImageResponseDto {
+export class MultiImageResponseDto {
   @IsNumber()
   id: number;
 
@@ -46,14 +54,17 @@ export class HerbalImageResponseDto {
   @IsEnum(HerbalImageType)
   type: HerbalImageType;
 
+  @IsEnum(ImageEntityType)
+  entityType: ImageEntityType;
+
+  @IsNumber()
+  entityId: number;
+
   @IsNumber()
   sortOrder: number;
 
   @IsBoolean()
   isActive: boolean;
-
-  @IsNumber()
-  herbalId: number;
 
   @IsDateString()
   createdAt: Date;

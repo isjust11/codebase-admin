@@ -36,7 +36,7 @@ import { Payment } from './entities/payment.entity';
 import { FolkMedicine } from './entities/folk-medicine.entity';
 import { FolkMedicineIngredient } from './entities/folk-medicine-ingredient.entity';
 import { Herbal } from './entities/herbal.entity';
-import { HerbalImage } from './entities/herbal-image.entity';
+import { MultiImage } from './entities/multi-image.entity';
 import { Author } from './entities/author.entity';
 import { Product } from './entities/product.entity';
 import { ProductReview } from './entities/product-review.entity';
@@ -96,7 +96,7 @@ import { Disease } from './entities/disease.entity';
         FolkMedicine,
         FolkMedicineIngredient,
         Herbal,
-        HerbalImage,
+        MultiImage,
         Author,
         Product,
         ProductReview,

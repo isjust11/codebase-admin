@@ -5,7 +5,7 @@ import { HerbalService } from '../services/herbal.service';
 import { HerbalImageController } from '../controllers/medicine/herbal-image.controller';
 import { HerbalImageService } from '../services/herbal-image.service';
 import { Herbal } from '../entities/herbal.entity';
-import { HerbalImage } from '../entities/herbal-image.entity';
+import { HerbalImage } from '../entities/multi-image.entity';
 import { AuthModule } from './auth.module';
 import { CategoryModule } from './category.module';
 import { FolkMedicine } from '../entities/folk-medicine.entity';

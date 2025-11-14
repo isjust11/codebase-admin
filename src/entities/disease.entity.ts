@@ -1,6 +1,7 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToMany, JoinTable } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToMany, JoinTable, OneToMany } from 'typeorm';
 import { FolkMedicine } from './folk-medicine.entity';
 import { Transform } from 'class-transformer';
+import { ImageEntityType, MultiImage } from './multi-image.entity';
 
 @Entity()
 export class Disease {
@@ -41,6 +42,9 @@ export class Disease {
     },
   })
   folkMedicines?: FolkMedicine[];
+
+  // Lưu ý: Quan hệ với HerbalImage được quản lý thông qua entityType và entityId
+  // Sử dụng HerbalImageService.findByEntity(ImageEntityType.DISEASE, this.id) để lấy hình ảnh
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   @Transform(({ value }) => value ? new Date(value) : value)

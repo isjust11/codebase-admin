@@ -1,8 +1,7 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { User } from './user.entity';
 import { Category } from './category.entity';
 import { Transform } from 'class-transformer';
-import { HerbalImage } from './herbal-image.entity';
 import { Author } from './author.entity';
 import { DataSource } from './data-source.entity';
 @Entity()
@@ -55,9 +54,26 @@ export class Herbal {
   @Column({ length: 255, nullable: true })
   thumbnail?: string;
 
-  @OneToMany(() => HerbalImage, herbalImage => herbalImage.herbal, { cascade: true })
-  images?: HerbalImage[];
-
+  // TẠI SAO KHÔNG DÙNG @OneToMany TRỰC TIẾP?
+  // 
+  // 1. MultiImage là entity generic (polymorphic) - dùng entityType + entityId
+  //    để liên kết với nhiều entity khác nhau (Herbal, FolkMedicine, Disease)
+  //
+  // 2. TypeORM KHÔNG hỗ trợ polymorphic relations native - không thể dùng
+  //    @OneToMany với điều kiện entityType = 'herbal' AND entityId = this.id
+  //
+  // 3. TypeORM cần foreign key thực sự để tạo relation, nhưng MultiImage.entityId
+  //    không phải là foreign key đến Herbal (nó có thể trỏ đến entity khác)
+  //
+  // GIẢI PHÁP:
+  // - Dùng Service (KHUYẾN NGHỊ): 
+  //   await herbalImageService.findByEntity(ImageEntityType.HERBAL, this.id)
+  //
+  // - Hoặc query thủ công:
+  //   const images = await multiImageRepo.find({
+  //     where: { entityType: ImageEntityType.HERBAL, entityId: this.id }
+  //   });
+  
   @Column({ default: 0 })
   viewCount: number;
 

@@ -1,5 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
-import { Herbal } from './herbal.entity';
+import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 import { Transform } from 'class-transformer';
 
 export enum HerbalImageType {
@@ -12,8 +11,14 @@ export enum HerbalImageType {
   OTHER = 'other'          // Hình ảnh khác
 }
 
+export enum ImageEntityType {
+  HERBAL = 'herbal',           // Cây thuốc
+  FOLK_MEDICINE = 'folk_medicine', // Bài thuốc
+  DISEASE = 'disease'          // Bệnh
+}
+
 @Entity()
-export class HerbalImage {
+export class MultiImage {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -33,18 +38,21 @@ export class HerbalImage {
   })
   type: HerbalImageType;
 
+  @Column({
+    type: 'enum',
+    enum: ImageEntityType,
+    default: ImageEntityType.HERBAL
+  })
+  entityType: ImageEntityType;
+
+  @Column()
+  entityId: number;
+
   @Column({ default: 0 })
   sortOrder: number;
 
   @Column({ default: true })
   isActive: boolean;
-
-  @ManyToOne(() => Herbal, herbal => herbal.id, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'herbalId' })
-  herbal?: Herbal;
-
-  @Column()
-  herbalId: number;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   @Transform(({ value }) => value ? new Date(value) : value)

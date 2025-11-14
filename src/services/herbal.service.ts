@@ -92,7 +92,7 @@ export class HerbalService {
   async findOne(id: number): Promise<Herbal> {
     const herbal = await this.herbalRepository.findOne({
       where: { id },
-      relations: ['category', 'images'],
+      relations: ['category'],
     });
     if (!herbal) throw new NotFoundException('Herbal not found');
     return plainToClass(Herbal, herbal);
@@ -117,17 +117,6 @@ export class HerbalService {
       //   where: { id: herbal.authorId },
       // });
       // herbal.author = author ?? null;
-    }
-
-    if (data.images) {
-      const images = data.images.map((image) => {
-        return {
-          ...image,
-          id: image.id ? Base64EncryptionUtil.decrypt(image.id.toString()) : 0,
-          herbalId: id,
-        };
-      });
-      herbal.images = images;
     }
 
     if (data.categoryId != null) {

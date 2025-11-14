@@ -68,6 +68,9 @@ export class FolkMedicine {
   @ManyToMany(() => Disease, disease => disease.folkMedicines)
   diseases?: Disease[];
 
+  // Lưu ý: Quan hệ với HerbalImage được quản lý thông qua entityType và entityId
+  // Sử dụng HerbalImageService.findByEntity(ImageEntityType.FOLK_MEDICINE, this.id) để lấy hình ảnh
+
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   @Transform(({ value }) => value ? new Date(value) : value)
   createdAt: Date;
