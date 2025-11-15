@@ -15,4 +15,5 @@ export enum CategoryTypeEnum {
     DISCOVERY = 'Discovery',
     TIPS = 'Tips',
     UnitOfMeasure = 'UnitOfMeasure',// đơn vị tính
+    DISEASE = 'Disease',// bệnh
 }

@@ -2,10 +2,10 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { HerbalController } from '../controllers/medicine/herbal.controller';
 import { HerbalService } from '../services/herbal.service';
-import { HerbalImageController } from '../controllers/medicine/herbal-image.controller';
-import { HerbalImageService } from '../services/herbal-image.service';
+import { MultiImageController } from '../controllers/medicine/multi-image.controller';
+import { MultiImageService } from '../services/multi-image.service';
 import { Herbal } from '../entities/herbal.entity';
-import { HerbalImage } from '../entities/multi-image.entity';
+import { MultiImage } from '../entities/multi-image.entity';
 import { AuthModule } from './auth.module';
 import { CategoryModule } from './category.module';
 import { FolkMedicine } from '../entities/folk-medicine.entity';
@@ -28,7 +28,7 @@ import { DiseaseController } from '../controllers/medicine/disease.controller';
     CategoryModule, 
     TypeOrmModule.forFeature([
       Herbal, 
-      HerbalImage, 
+      MultiImage, 
       FolkMedicine, 
       FolkMedicineIngredient,
       Author,
@@ -38,7 +38,7 @@ import { DiseaseController } from '../controllers/medicine/disease.controller';
   ],
   controllers: [
     HerbalController, 
-    HerbalImageController, 
+    MultiImageController, 
     FolkMedicineController, 
     AuthorController,
     DataSourceController,
@@ -46,7 +46,7 @@ import { DiseaseController } from '../controllers/medicine/disease.controller';
   ],
   providers: [
     HerbalService, 
-    HerbalImageService, 
+    MultiImageService, 
     FolkMedicineService, 
     AuthorService,
     DataSourceService,
@@ -54,7 +54,7 @@ import { DiseaseController } from '../controllers/medicine/disease.controller';
   ],
   exports: [
     HerbalService, 
-    HerbalImageService, 
+    MultiImageService, 
     FolkMedicineService, 
     AuthorService,
     DataSourceService,

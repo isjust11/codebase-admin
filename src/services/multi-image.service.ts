@@ -7,7 +7,7 @@ import { MultiImageDto } from 'src/dtos/multi-image.dto';
 import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
 
 @Injectable()
-export class HerbalImageService {
+export class MultiImageService {
   constructor(
     @InjectRepository(MultiImage)
     private readonly multiImageRepository: Repository<MultiImage>,
