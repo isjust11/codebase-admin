@@ -6,12 +6,16 @@ import slugify from 'slugify';
 import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
 import { plainToClass } from 'class-transformer';
 import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
+import { DiseaseDto } from 'src/dtos/disease.dto';
+import { ImageEntityType, MultiImage } from 'src/entities/multi-image.entity';
 
 @Injectable()
 export class DiseaseService {
   constructor(
     @InjectRepository(Disease)
     private readonly diseaseRepository: Repository<Disease>,
+    @InjectRepository(MultiImage)
+    private readonly multiImageRepository: Repository<MultiImage>,
   ) {}
 
   async findPagination(params: PaginationParams): Promise<PaginatedResponse<Disease>> {
@@ -50,17 +54,31 @@ export class DiseaseService {
     return plainToClass(Disease, data);
   }
 
-  async create(data: Partial<Disease>): Promise<Disease> {
+  async create(data: DiseaseDto): Promise<Disease> {
     if (data.name && !data.slug) {
       data.slug = slugify(data.name, { lower: true, strict: true });
     }
     if (data.slug) {
       data.slug = slugify(data.slug, { lower: true, strict: true });
     }
-    data.id = undefined;
-
-    const disease = this.diseaseRepository.create(data);
-    return this.diseaseRepository.save(disease);
+    const disease = this.diseaseRepository.create({
+      ...data,
+      authorId: data.authorId ? Base64EncryptionUtil.decrypt(data.authorId) : undefined,
+      categoryId: data.categoryId ? Base64EncryptionUtil.decrypt(data.categoryId) : undefined,
+      dataSourceId: data.dataSourceId ? Base64EncryptionUtil.decrypt(data.dataSourceId) : undefined,
+    });
+    const saved = await this.diseaseRepository.save(disease);
+    if(data.imagePaths && data.imagePaths.length > 0) {
+      data.imagePaths.map(async (path) => {
+        const multiImage = this.multiImageRepository.create({
+          entityType: ImageEntityType.DISEASE,
+          entityId: saved.id,
+          url: path,
+        });
+        await this.multiImageRepository.save(multiImage); 
+      });
+    }
+    return saved;
   }
 
   async findAll(): Promise<Disease[]> {
@@ -80,7 +98,7 @@ export class DiseaseService {
     return plainToClass(Disease, disease);
   }
 
-  async update(id: number, data: Partial<Disease>): Promise<Disease> {
+  async update(id: number, data: DiseaseDto): Promise<Disease> {
     const disease = await this.findOne(id);
     Object.assign(disease, {
       ...data,
@@ -93,6 +111,16 @@ export class DiseaseService {
       disease.slug = slugify(data.slug, { lower: true, strict: true });
     }
 
+    if(data.imagePaths && data.imagePaths.length > 0) {
+      data.imagePaths.map(async (path) => {
+        const multiImage = this.multiImageRepository.create({
+          entityType: ImageEntityType.DISEASE,
+          entityId: disease.id,
+          url: path,
+        });
+        await this.multiImageRepository.save(multiImage);
+      });
+    }
     disease.updatedAt = new Date();
     return this.diseaseRepository.save(disease);
   }

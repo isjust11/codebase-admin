@@ -15,7 +15,7 @@ import {
 import { DiseaseService } from '../../services/disease.service';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { PaginationParams } from '../../dtos/filter.dto';
-import { CreateDiseaseDto, UpdateDiseaseDto } from '../../dtos/disease.dto';
+import { DiseaseDto } from '../../dtos/disease.dto';
 import { PermissionGuard } from 'src/guards/permission.guard';
 import { BaseController } from '../base/base.controller';
 import { RequirePermission } from 'src/decorators/require-permissions.decorator';
@@ -62,7 +62,7 @@ export class DiseaseController extends BaseController {
 
   @Post()
   @RequirePermission('CREATE', 'disease')
-  async create(@Body() createDiseaseDto: CreateDiseaseDto, @Res() res: Response) {
+  async create(@Body() createDiseaseDto: DiseaseDto, @Res() res: Response) {
     try {
       const data = await this.diseaseService.create(createDiseaseDto);
       return this.success(res, data);
@@ -86,7 +86,7 @@ export class DiseaseController extends BaseController {
   @RequirePermission('UPDATE', 'disease')
   async update(
     @Param('id') id: string,
-    @Body() updateDiseaseDto: UpdateDiseaseDto,
+    @Body() updateDiseaseDto: DiseaseDto,
     @Res() res: Response,
   ) {
     try {

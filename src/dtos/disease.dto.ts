@@ -1,6 +1,6 @@
 import { IsString, IsOptional, IsBoolean, IsNotEmpty, IsArray } from 'class-validator';
 
-export class CreateDiseaseDto {
+export class DiseaseDto {
   @IsNotEmpty()
   @IsString()
   name: string;
@@ -28,49 +28,29 @@ export class CreateDiseaseDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
-}
-
-export class UpdateDiseaseDto {
-  @IsOptional()
-  @IsString()
-  name?: string;
 
   @IsOptional()
-  @IsString()
-  slug?: string;
-
-  @IsOptional()
-  @IsString()
-  description?: string;
-
-  @IsOptional()
-  @IsString()
-  symptoms?: string;
-
-  @IsOptional()
-  @IsString()
-  causes?: string;
-
-  @IsOptional()
-  @IsString()
-  prevention?: string;
-
-  @IsOptional()
-  @IsBoolean()
-  isActive?: boolean;
-}
-
-export class AddDiseasesToFolkMedicineDto {
-  @IsNotEmpty()
   @IsArray()
   @IsString({ each: true })
-  diseaseIds: string[];
-}
+  imagePaths?: string[];
 
-export class RemoveDiseasesFromFolkMedicineDto {
-  @IsNotEmpty()
-  @IsArray()
-  @IsString({ each: true })
-  diseaseIds: string[];
-}
+  @IsOptional()
+  @IsString()
+  authorId?: string;
 
+  @IsOptional()
+  @IsString()
+  categoryId?: string;
+
+  @IsOptional()
+  @IsString()
+  dataSourceId?: string;
+
+  @IsOptional()
+  @IsString()
+  videoUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  summary?: string;
+}

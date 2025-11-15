@@ -7,7 +7,7 @@ import { RequirePermission } from 'src/decorators/require-permissions.decorator'
 import { PermissionGuard } from 'src/guards/permission.guard';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { Response } from 'express';
-import { AddDiseasesToFolkMedicineDto, RemoveDiseasesFromFolkMedicineDto } from '../../dtos/disease.dto';
+import { DiseaseDto } from '../../dtos/disease.dto';
 import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
 @Controller('folk-medicine')
 @UseGuards(JwtAuthGuard, PermissionGuard)
@@ -133,13 +133,12 @@ export class FolkMedicineController extends BaseController {
   @HttpCode(HttpStatus.OK)
   async addDiseases(
     @Param('id') id: string,
-    @Body() dto: AddDiseasesToFolkMedicineDto,
+    @Body() dto: DiseaseDto,
     @Res() res: Response,
   ) {
     try {
       const folkMedicineId = this.decode(id);
-      const diseaseIds = dto.diseaseIds.map(diseaseId => Base64EncryptionUtil.decrypt(diseaseId));
-      const data = await this.folkMedicineService.addDiseases(folkMedicineId, diseaseIds);
+      const data = await this.folkMedicineService.addDiseases(folkMedicineId, dto);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -151,13 +150,12 @@ export class FolkMedicineController extends BaseController {
   @HttpCode(HttpStatus.OK)
   async removeDiseases(
     @Param('id') id: string,
-    @Body() dto: RemoveDiseasesFromFolkMedicineDto,
+    @Body() dto: DiseaseDto,
     @Res() res: Response,
   ) {
     try {
       const folkMedicineId = this.decode(id);
-      const diseaseIds = dto.diseaseIds.map(diseaseId => Base64EncryptionUtil.decrypt(diseaseId));
-      const data = await this.folkMedicineService.removeDiseases(folkMedicineId, diseaseIds);
+      const data = await this.folkMedicineService.removeDiseases(folkMedicineId, dto);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -168,13 +166,12 @@ export class FolkMedicineController extends BaseController {
   @RequirePermission('UPDATE', 'folk-medicine')
   async setDiseases(
     @Param('id') id: string,
-    @Body() dto: AddDiseasesToFolkMedicineDto,
+    @Body() dto: DiseaseDto,
     @Res() res: Response,
   ) {
     try {
       const folkMedicineId = this.decode(id);
-      const diseaseIds = dto.diseaseIds.map(diseaseId => Base64EncryptionUtil.decrypt(diseaseId));
-      const data = await this.folkMedicineService.setDiseases(folkMedicineId, diseaseIds);
+      const data = await this.folkMedicineService.addDiseases(folkMedicineId, dto);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);

@@ -13,6 +13,7 @@ import { DataSourceService } from './data-source.service';
 import { FolkMedicineIngredient } from '../entities/folk-medicine-ingredient.entity';
 import { DiseaseService } from './disease.service';
 import { Disease } from 'src/entities/disease.entity';
+import { DiseaseDto } from 'src/dtos/disease.dto';
 
 @Injectable()
 export class FolkMedicineService {
@@ -222,8 +223,9 @@ export class FolkMedicineService {
     return plainToClass(FolkMedicine, folkMedicines);
   }
 
-  async addDiseases(folkMedicineId: number, diseaseIds: number[]): Promise<FolkMedicine> {
+  async addDiseases(folkMedicineId: number, dto: DiseaseDto): Promise<FolkMedicine> {
     const folkMedicine = await this.findOne(folkMedicineId);
+    const diseaseIds = dto.imagePaths?.map(imagePath => Base64EncryptionUtil.decrypt(imagePath)) ?? [];
     const diseases = await this.diseaseService.findByIds(diseaseIds);
     
     if (!folkMedicine.diseases) {
@@ -239,24 +241,13 @@ export class FolkMedicineService {
     return this.findOne(folkMedicineId);
   }
 
-  async removeDiseases(folkMedicineId: number, diseaseIds: number[]): Promise<FolkMedicine> {
+  async removeDiseases(folkMedicineId: number, dto: DiseaseDto): Promise<FolkMedicine> {
     const folkMedicine = await this.findOne(folkMedicineId);
-    
+    const diseaseIds = dto.imagePaths?.map(imagePath => Base64EncryptionUtil.decrypt(imagePath)) ?? [];
     if (folkMedicine.diseases) {
       folkMedicine.diseases = folkMedicine.diseases.filter(d => !diseaseIds.includes(d.id));
-      await this.folkMedicineRepository.save(folkMedicine);
     }
-    
-    return this.findOne(folkMedicineId);
-  }
-
-  async setDiseases(folkMedicineId: number, diseaseIds: number[]): Promise<FolkMedicine> {
-    const folkMedicine = await this.findOne(folkMedicineId);
-    const diseases = await this.diseaseService.findByIds(diseaseIds);
-    
-    folkMedicine.diseases = diseases;
     await this.folkMedicineRepository.save(folkMedicine);
-    
     return this.findOne(folkMedicineId);
   }
 } 
