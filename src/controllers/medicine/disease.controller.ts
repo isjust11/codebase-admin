@@ -100,10 +100,10 @@ export class DiseaseController extends BaseController {
   @Delete(':id')
   @RequirePermission('DELETE', 'disease')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id') id: string, @Res() res: Response) {
+  async deleteById(@Param('id') id: string, @Res() res: Response) {
     try {
-      const data = await this.diseaseService.remove(this.decode(id));
-      return this.success(res, data);
+      await this.diseaseService.deleteById(this.decode(id));
+      return this.success(res, { message: 'Disease deleted successfully' });
     } catch (error) {
       return this.error(res, error);
     }

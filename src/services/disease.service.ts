@@ -51,6 +51,7 @@ export class DiseaseService {
       relations: ['folkMedicines'],
       order: { id: 'DESC' },
     });
+  
     return plainToClass(Disease, data);
   }
 
@@ -89,13 +90,19 @@ export class DiseaseService {
     return plainToClass(Disease, diseases);
   }
 
-  async findOne(id: number): Promise<Disease> {
+  async findOne(id: number): Promise<DiseaseDto> {
     const disease = await this.diseaseRepository.findOne({
       where: { id },
       relations: ['folkMedicines'],
     });
+    const images = await this.multiImageRepository.find({
+      where: { entityType: ImageEntityType.DISEASE, entityId: id },
+    });
     if (!disease) throw new NotFoundException('Disease not found');
-    return plainToClass(Disease, disease);
+    return {
+      ...plainToClass(DiseaseDto, disease),
+      imagePaths: images.map(image => image.url),
+    };
   }
 
   async update(id: number, data: DiseaseDto): Promise<Disease> {
@@ -111,30 +118,33 @@ export class DiseaseService {
       disease.slug = slugify(data.slug, { lower: true, strict: true });
     }
 
-    if(data.imagePaths && data.imagePaths.length > 0) {
-      data.imagePaths.map(async (path) => {
+    if(data.imagePaths && (data.imagePaths || []).length > 0) {
+      const existingImages = await this.multiImageRepository.find({
+        where: { entityType: ImageEntityType.DISEASE, entityId: id },
+      });
+      existingImages.forEach(async (image) => {
+        await this.multiImageRepository.remove(image);
+      });
+      (data.imagePaths || []).map(async (path) => {
         const multiImage = this.multiImageRepository.create({
           entityType: ImageEntityType.DISEASE,
-          entityId: disease.id,
+          entityId: id,
           url: path,
         });
         await this.multiImageRepository.save(multiImage);
       });
     }
-    disease.updatedAt = new Date();
-    return this.diseaseRepository.save(disease);
+    return this.diseaseRepository.save(plainToClass(Disease, disease));
   }
 
-  async remove(id: number): Promise<void> {
-    const result = await this.diseaseRepository.delete(id);
-    if (result.affected === 0) throw new NotFoundException('Disease not found');
-  }
-
-  async findByIds(ids: number[]): Promise<Disease[]> {
-    if (!ids || ids.length === 0) return [];
-    return this.diseaseRepository.find({
-      where: { id: In(ids) },
+  async deleteById(id: number): Promise<void> {
+    const existingImages = await this.multiImageRepository.find({
+      where: { entityType: ImageEntityType.DISEASE, entityId: id },
     });
+    existingImages.forEach(async (image) => {
+      await this.multiImageRepository.remove(image);
+    });
+    await this.diseaseRepository.delete(id);
   }
 }
 
