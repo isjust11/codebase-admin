@@ -226,7 +226,7 @@ export class FolkMedicineService {
   async addDiseases(folkMedicineId: number, dto: DiseaseDto): Promise<FolkMedicine> {
     const folkMedicine = await this.findOne(folkMedicineId);
     const diseaseIds = dto.imagePaths?.map(imagePath => Base64EncryptionUtil.decrypt(imagePath)) ?? [];
-    const diseases = await this.diseaseService.findByIds(diseaseIds);
+    const diseases = await this.diseaseService.findAll();
     
     if (!folkMedicine.diseases) {
       folkMedicine.diseases = [];
