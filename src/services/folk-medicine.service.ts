@@ -14,6 +14,7 @@ import { FolkMedicineIngredient } from '../entities/folk-medicine-ingredient.ent
 import { DiseaseService } from './disease.service';
 import { Disease } from 'src/entities/disease.entity';
 import { DiseaseDto } from 'src/dtos/disease.dto';
+import { FolkMedicineDiseaseDto } from 'src/dtos/folk-medicine-disease.dto';
 
 @Injectable()
 export class FolkMedicineService {
@@ -76,7 +77,7 @@ export class FolkMedicineService {
       const categoryId = Base64EncryptionUtil.decrypt(data.categoryId.toString());
       data.categoryId = categoryId;
     }
-    if (data.authorId != null) { 
+    if (data.authorId != null) {
       const authorId = Base64EncryptionUtil.decrypt(data.authorId.toString());
       data.authorId = authorId;
     }
@@ -106,6 +107,7 @@ export class FolkMedicineService {
           sortOrder: c.sortOrder ?? index,
         };
       });
+
       await this.ingredientRepository.delete({ folkMedicineId: saved.id });
       await this.ingredientRepository.save(ingredients as any);
     }
@@ -163,7 +165,7 @@ export class FolkMedicineService {
       }
     }
 
-    if(data.dataSourceId != null) {
+    if (data.dataSourceId != null) {
       const dataSourceId = Base64EncryptionUtil.decrypt(data.dataSourceId.toString());
       folkMedicine.dataSourceId = dataSourceId;
       try {
@@ -189,7 +191,7 @@ export class FolkMedicineService {
         };
       });
       // update diseases if provided
-     
+
       await this.ingredientRepository.delete({ folkMedicineId: folkMedicine.id });
       const savedIngredients = await this.ingredientRepository.save(ingredients as DeepPartial<FolkMedicineIngredient>[]);
       folkMedicine.ingredientsDetail = savedIngredients as FolkMedicineIngredient[];
@@ -227,16 +229,16 @@ export class FolkMedicineService {
     const folkMedicine = await this.findOne(folkMedicineId);
     const diseaseIds = dto.imagePaths?.map(imagePath => Base64EncryptionUtil.decrypt(imagePath)) ?? [];
     const diseases = await this.diseaseService.findAll();
-    
+
     if (!folkMedicine.diseases) {
       folkMedicine.diseases = [];
     }
-    
+
     // Merge diseases, avoiding duplicates
     const existingDiseaseIds = folkMedicine.diseases.map(d => d.id);
     const newDiseases = diseases.filter(d => !existingDiseaseIds.includes(d.id));
     folkMedicine.diseases = [...folkMedicine.diseases, ...newDiseases];
-    
+
     await this.folkMedicineRepository.save(folkMedicine);
     return this.findOne(folkMedicineId);
   }
