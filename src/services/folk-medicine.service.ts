@@ -14,7 +14,6 @@ import { FolkMedicineIngredient } from '../entities/folk-medicine-ingredient.ent
 import { DiseaseService } from './disease.service';
 import { Disease } from 'src/entities/disease.entity';
 import { DiseaseDto } from 'src/dtos/disease.dto';
-import { FolkMedicineDiseaseDto } from 'src/dtos/folk-medicine-disease.dto';
 
 @Injectable()
 export class FolkMedicineService {
@@ -39,6 +38,7 @@ export class FolkMedicineService {
       { title: Like(`%${search}%`) },
       { slug: Like(`%${search}%`) },
       { summary: Like(`%${search}%`) },
+      { diseases: { name: Like(`%${search}%`) } },
     ] : {};
 
     if (categoryId) {
@@ -86,20 +86,34 @@ export class FolkMedicineService {
       const dataSourceId = Base64EncryptionUtil.decrypt(data.dataSourceId.toString());
       data.dataSourceId = dataSourceId;
     }
+
     data.id = undefined;
     const folkMedicine = this.folkMedicineRepository.create(data as DeepPartial<FolkMedicine>);
     folkMedicine.createdAt = new Date();
     folkMedicine.updatedAt = new Date();
+    
+    // add diseases to folk medicine
+    if (data.diseases && Array.isArray(data.diseases)) {
+      const diseases = await this.diseaseService.findAll(); // Lấy tất cả bệnh từ dịch vụ
+      const diseaseIds = data.diseases.map(d => Base64EncryptionUtil.decrypt(d));
+  
+      // Lọc ra những bệnh mà không có trong hệ thống
+      const newDiseases = diseases.filter(d => diseaseIds.includes(d.id));
+      if (!folkMedicine.diseases) {
+        folkMedicine.diseases = [];
+      }
+      folkMedicine.diseases.push(...newDiseases);
+      await this.folkMedicineRepository.save(folkMedicine);
+      return this.findOne(folkMedicine.id);
+    }
 
-    const saved = await this.folkMedicineRepository.save(folkMedicine);
-
-    // handle components
+    
     if (data.components && Array.isArray(data.components)) {
       const ingredients: DeepPartial<FolkMedicineIngredient>[] = data.components.map((c, index) => {
         const herbalId = Base64EncryptionUtil.decrypt(c.herbalId.toString());
         const unitCategoryId = c.unitCategoryId != null ? Base64EncryptionUtil.decrypt(c.unitCategoryId.toString()) : undefined;
         return {
-          folkMedicineId: saved.id,
+          folkMedicineId: folkMedicine.id,
           herbalId,
           unitCategoryId: unitCategoryId,
           quantity: Number(c.quantity),
@@ -108,11 +122,11 @@ export class FolkMedicineService {
         };
       });
 
-      await this.ingredientRepository.delete({ folkMedicineId: saved.id });
+      await this.ingredientRepository.delete({ folkMedicineId: folkMedicine.id });
       await this.ingredientRepository.save(ingredients as any);
     }
 
-    return this.findOne(saved.id);
+    return this.findOne(folkMedicine.id);
   }
 
   async findAll(): Promise<FolkMedicine[]> {
@@ -174,6 +188,18 @@ export class FolkMedicineService {
       } catch (error) {
         folkMedicine.dataSource = null;
       }
+    }
+
+    // update diseases if provided
+    if (data.diseases && Array.isArray(data.diseases)) {
+      const diseases = await this.diseaseService.findAll();
+      const diseaseIds = data.diseases.map(d => Base64EncryptionUtil.decrypt(d));
+      const newDiseases = diseases.filter(d => diseaseIds.includes(d.id));
+      if (!folkMedicine.diseases) {
+        folkMedicine.diseases = [];
+      }
+      folkMedicine.diseases.push(...newDiseases);
+      await this.folkMedicineRepository.save(folkMedicine);
     }
 
     // update components if provided

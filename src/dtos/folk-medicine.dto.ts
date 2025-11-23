@@ -68,8 +68,7 @@ export class FolkMedicineDto {
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => FolkMedicineDiseaseDto)
-  diseases?: FolkMedicineDiseaseDto[];
+  diseases?: string[]; // base64-encoded disease ids
 } 
 
 export class FolkMedicineComponentDto {
