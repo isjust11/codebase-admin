@@ -21,7 +21,7 @@ export class MultiImageDto {
   entityType: ImageEntityType;
 
   @IsString()
-  entityId: number;
+  entityId: string;
 
   @IsOptional()
   @IsNumber()
@@ -34,7 +34,7 @@ export class MultiImageDto {
   // Deprecated: Giữ lại để tương thích ngược, sẽ map sang entityId và entityType
   @IsOptional()
   @IsString()
-  herbalId?: number;
+  herbalId?: string;
 }
 export class MultiImageResponseDto {
   @IsNumber()

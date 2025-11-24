@@ -8,14 +8,17 @@ import { plainToClass } from 'class-transformer';
 import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
 import { UserService } from './user.service';
 import { CategoryService } from './category.service';
+import { ImageEntityType } from 'src/entities/multi-image.entity';
+import { MultiImageService } from './multi-image.service';
 
 @Injectable()
 export class HerbalService {
   constructor(
     @InjectRepository(Herbal)
     private readonly herbalRepository: Repository<Herbal>,
-    private readonly categoryService: CategoryService
-  ) {}
+    private readonly categoryService: CategoryService,
+    private readonly multiImageService: MultiImageService
+  ) { }
 
   async findPagination(params: PaginationParams): Promise<PaginatedResponse<Herbal>> {
     const { page = 1, size = 10, search = '' } = params;
@@ -33,12 +36,22 @@ export class HerbalService {
       where: whereConditions,
       skip,
       take: size,
-      relations: ['category', 'images'],
+      relations: ['category'],
       order: { id: 'DESC' },
     });
 
+    const dataWithImages = await Promise.all(
+      data.map(async item => ({
+        ...item,
+        images: await this.multiImageService.findByEntity(
+          ImageEntityType.HERBAL,
+          item.id,
+        ),
+      })),
+    );
+
     return {
-      data: plainToClass(Herbal, data),
+      data: dataWithImages,
       total,
       page,
       size,
@@ -46,7 +59,7 @@ export class HerbalService {
     };
   }
 
-  async getAll(){
+  async getAll() {
     const data = this.herbalRepository.find();
     return data;
   }

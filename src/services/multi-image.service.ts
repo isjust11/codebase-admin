@@ -21,12 +21,12 @@ export class MultiImageService {
     if (data.herbalId && !data.entityId) {
       // Tương thích ngược: dùng herbalId
       entityType = ImageEntityType.HERBAL;
-      entityId = data.herbalId;
+      entityId = Base64EncryptionUtil.decrypt(data.herbalId as string);
     } else {
-      entityId = data.entityId;
+      entityId = Base64EncryptionUtil.decrypt(data.entityId as string);
     }
 
-    const imageData = {
+    const imageData = <MultiImage>{
       ...data,
       entityType,
       entityId,
@@ -104,7 +104,7 @@ export class MultiImageService {
     // Hỗ trợ tương thích ngược
     if (data.herbalId && !data.entityId) {
       (multiImage as any).entityType = ImageEntityType.HERBAL;
-      (multiImage as any).entityId = data.herbalId;
+      (multiImage as any).entityId = Base64EncryptionUtil.decrypt(data.herbalId);
     }
 
     Object.assign(multiImage, {
