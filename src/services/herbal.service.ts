@@ -6,7 +6,6 @@ import slugify from 'slugify';
 import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
 import { plainToClass } from 'class-transformer';
 import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
-import { UserService } from './user.service';
 import { CategoryService } from './category.service';
 import { ImageEntityType } from 'src/entities/multi-image.entity';
 import { MultiImageService } from './multi-image.service';
@@ -69,18 +68,15 @@ export class HerbalService {
       data.slug = slugify(data.title, { lower: true, strict: true });
     }
     data.id = undefined;
-    // Xử lý authorId nếu có
-    if (data.authorId != null) {
-      // const authorId = Base64EncryptionUtil.decrypt(data.authorId);
-      // data.authorId = parseInt(authorId, 10);
+    // Xử lý partsUsedId nếu có
+    if (data.partsUsedId != null) {
+      const partsUsedId = Base64EncryptionUtil.decrypt(data.partsUsedId.toString());
+      data.partsUsedId = partsUsedId;
 
-      // const author = await this.userRepository.findOne({
-      //   where: { id: data.authorId },
-      // });
-      // data.author = author ?? null;
+      const partsUsed = await this.categoryService.findOne(data.partsUsedId);
+      data.partsUsedCategory = partsUsed ?? null;
     }
 
-    // Xử lý categoryId nếu có
     if (data.categoryId != null) {
       const categoryId = Base64EncryptionUtil.decrypt(data.categoryId.toString());
       data.categoryId = categoryId;
@@ -122,14 +118,12 @@ export class HerbalService {
       data.slug = slugify(data.title, { lower: true, strict: true });
     }
 
-    if (data.authorId != null) {
-      // const authorId = Base64EncryptionUtil.decrypt(data.authorId);
-      // herbal.authorId = parseInt(authorId, 10);
+    if (data.partsUsedId != null) {
+      const partsUsedId = Base64EncryptionUtil.decrypt(data.partsUsedId.toString());
+      herbal.partsUsedId = partsUsedId;
 
-      // const author = await this.userRepository.findOne({
-      //   where: { id: herbal.authorId },
-      // });
-      // herbal.author = author ?? null;
+      const partsUsed = await this.categoryService.findOne(herbal.partsUsedId);
+      herbal.partsUsedCategory = partsUsed ?? null;
     }
 
     if (data.categoryId != null) {
@@ -168,15 +162,6 @@ export class HerbalService {
   async findByScientificName(scientificName: string): Promise<Herbal[]> {
     const herbals = await this.herbalRepository.find({
       where: { scientificName: Like(`%${scientificName}%`), isActive: true },
-      relations: ['category', 'images'],
-      order: { id: 'DESC' },
-    });
-    return plainToClass(Herbal, herbals);
-  }
-
-  async findByFamily(family: string): Promise<Herbal[]> {
-    const herbals = await this.herbalRepository.find({
-      where: { family: Like(`%${family}%`), isActive: true },
       relations: ['category', 'images'],
       order: { id: 'DESC' },
     });

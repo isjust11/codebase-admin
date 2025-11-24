@@ -89,17 +89,6 @@ export class HerbalController extends BaseController {
     }
   }
 
-  @Get('family/:family')
-  @RequirePermission('READ', 'herbal')
-  async findByFamily(@Param('family') family: string, @Res() res: Response) {
-    try {
-    const herbals = await this.herbalService.findByFamily(family);
-    return this.success(res, herbals);
-    } catch (error) {
-      return this.error(res, error);
-    }
-  }
-
   @Get(':id')
   @RequirePermission('READ', 'herbal')
   async findOne(@Param('id') id: string, @Res() res: Response) {

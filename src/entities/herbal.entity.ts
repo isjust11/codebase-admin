@@ -4,6 +4,7 @@ import { Category } from './category.entity';
 import { Transform } from 'class-transformer';
 import { Author } from './author.entity';
 import { DataSource } from './data-source.entity';
+
 @Entity()
 export class Herbal {
   @PrimaryGeneratedColumn()
@@ -25,13 +26,7 @@ export class Herbal {
   scientificName?: string;
 
   @Column({ type: 'text', nullable: true })
-  commonNames?: string;
-
-  @Column({ type: 'text', nullable: true })
-  family?: string;
-
-  @Column({ type: 'text', nullable: true })
-  partsUsed?: string;
+  partsUsedId?: number;
 
   @Column({ type: 'text', nullable: true })
   activeCompounds?: string;
@@ -60,6 +55,10 @@ export class Herbal {
   @ManyToOne(() => Author, author => author.id, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'authorId' })
   author?: Author | null;
+
+  @ManyToOne(() => Category, category => category.id, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'partsUsedId' })
+  partsUsedCategory?: Category | null;
 
   @ManyToOne(() => Category, category => category.id, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'categoryId' })

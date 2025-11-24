@@ -34,7 +34,7 @@ import { APP_GUARD } from '@nestjs/core';
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'AyTUug0rjLJrLF5FJOdyaVdNkaZgugvp',
-      signOptions: { expiresIn: '60m' },
+      signOptions: { expiresIn: '24h' },
     }),
     TypeOrmModule.forFeature([
       Feature,
