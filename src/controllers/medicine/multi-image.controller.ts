@@ -32,8 +32,8 @@ export class MultiImageController extends BaseController {
   @Post()
   @RequirePermission('CREATE', 'herbal-image')
   async create(@Body() createHerbalImageDto: MultiImageDto,
-   @Res() res: Response) {
-  try {
+    @Res() res: Response) {
+    try {
       const herbalImage = await this.multiImageService.create(createHerbalImageDto);
       return this.success(res, herbalImage);
     } catch (error) {
@@ -78,7 +78,7 @@ export class MultiImageController extends BaseController {
   @RequirePermission('READ', 'herbal-image')
   async getMainImage(@Param('herbalId') herbalId: string, @Res() res: Response) {
     try {
-    const mainImage = await this.multiImageService.getMainImage(this.decode(herbalId));
+      const mainImage = await this.multiImageService.getMainImage(this.decode(herbalId));
       return this.success(res, mainImage);
     } catch (error) {
       return this.error(res, error);
@@ -89,7 +89,7 @@ export class MultiImageController extends BaseController {
   @RequirePermission('READ', 'herbal-image')
   async findOne(@Param('id') id: string, @Res() res: Response) {
     try {
-    const herbalImage = await this.multiImageService.findOne(this.decode(id));
+      const herbalImage = await this.multiImageService.findOne(this.decode(id));
       return this.success(res, herbalImage);
     } catch (error) {
       return this.error(res, error);
@@ -103,7 +103,7 @@ export class MultiImageController extends BaseController {
     @Body() herbalImageDto: MultiImageDto,
     @Res() res: Response) {
     try {
-    const herbalImage = await this.multiImageService.update(this.decode(id), herbalImageDto);
+      const herbalImage = await this.multiImageService.update(this.decode(id), herbalImageDto);
       return this.success(res, herbalImage);
     } catch (error) {
       return this.error(res, error);
@@ -115,7 +115,10 @@ export class MultiImageController extends BaseController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id') id: string, @Res() res: Response) {
     try {
-    await this.multiImageService.remove(this.decode(id));
+      const result = await this.multiImageService.remove(this.decode(id));
+      if (result) {
+        return this.success(res, null);
+      }
     } catch (error) {
       return this.error(res, error);
     }
@@ -126,7 +129,7 @@ export class MultiImageController extends BaseController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async removeByHerbalId(@Param('herbalId') herbalId: string, @Res() res: Response) {
     try {
-    await this.multiImageService.removeByHerbalId(this.decode(herbalId));
+      await this.multiImageService.removeByHerbalId(this.decode(herbalId));
     } catch (error) {
       return this.error(res, error);
     }
@@ -137,7 +140,7 @@ export class MultiImageController extends BaseController {
   @HttpCode(HttpStatus.OK)
   async updateSortOrder(@Body() images: SortOrderDto[], @Res() res: Response) {
     try {
-    await this.multiImageService.updateSortOrder(images);
+      await this.multiImageService.updateSortOrder(images);
     } catch (error) {
       return this.error(res, error);
     }
@@ -151,7 +154,7 @@ export class MultiImageController extends BaseController {
     @Param('entityId') entityId: string,
     @Res() res: Response) {
     try {
-    const images = await this.multiImageService.findByEntity(entityType, this.decode(entityId));
+      const images = await this.multiImageService.findByEntity(entityType, this.decode(entityId));
       return this.success(res, images);
     } catch (error) {
       return this.error(res, error);
@@ -166,8 +169,8 @@ export class MultiImageController extends BaseController {
     @Param('type') type: HerbalImageType,
     @Res() res: Response) {
     try {
-    const images = await this.multiImageService.findByEntityAndType(entityType, this.decode(entityId), type);
-    return this.success(res, images);
+      const images = await this.multiImageService.findByEntityAndType(entityType, this.decode(entityId), type);
+      return this.success(res, images);
     } catch (error) {
       return this.error(res, error);
     }
@@ -180,8 +183,8 @@ export class MultiImageController extends BaseController {
     @Param('entityId') entityId: string,
     @Res() res: Response) {
     try {
-    const mainImage = await this.multiImageService.getMainImageByEntity(entityType, this.decode(entityId));
-    return this.success(res, mainImage);
+      const mainImage = await this.multiImageService.getMainImageByEntity(entityType, this.decode(entityId));
+      return this.success(res, mainImage);
     } catch (error) {
       return this.error(res, error);
     }
@@ -195,7 +198,7 @@ export class MultiImageController extends BaseController {
     @Param('entityId') entityId: string,
     @Res() res: Response) {
     try {
-    await this.multiImageService.removeByEntity(entityType, this.decode(entityId));
+      await this.multiImageService.removeByEntity(entityType, this.decode(entityId));
     } catch (error) {
       return this.error(res, error);
     }
@@ -206,8 +209,8 @@ export class MultiImageController extends BaseController {
   @RequirePermission('READ', 'herbal-image')
   async findByFolkMedicineId(@Param('folkMedicineId') folkMedicineId: string, @Res() res: Response) {
     try {
-    const images = await this.multiImageService.findByEntity(ImageEntityType.FOLK_MEDICINE, this.decode(folkMedicineId));
-    return this.success(res, images);
+      const images = await this.multiImageService.findByEntity(ImageEntityType.FOLK_MEDICINE, this.decode(folkMedicineId));
+      return this.success(res, images);
     } catch (error) {
       return this.error(res, error);
     }
@@ -217,8 +220,8 @@ export class MultiImageController extends BaseController {
   @RequirePermission('READ', 'herbal-image')
   async getFolkMedicineMainImage(@Param('folkMedicineId') folkMedicineId: string, @Res() res: Response) {
     try {
-    const mainImage = await this.multiImageService.getMainImageByEntity(ImageEntityType.FOLK_MEDICINE, this.decode(folkMedicineId));
-    return this.success(res, mainImage);
+      const mainImage = await this.multiImageService.getMainImageByEntity(ImageEntityType.FOLK_MEDICINE, this.decode(folkMedicineId));
+      return this.success(res, mainImage);
     } catch (error) {
       return this.error(res, error);
     }
@@ -229,7 +232,7 @@ export class MultiImageController extends BaseController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async removeByFolkMedicineId(@Param('folkMedicineId') folkMedicineId: string, @Res() res: Response) {
     try {
-    await this.multiImageService.removeByEntity(ImageEntityType.FOLK_MEDICINE, this.decode(folkMedicineId));
+      await this.multiImageService.removeByEntity(ImageEntityType.FOLK_MEDICINE, this.decode(folkMedicineId));
     } catch (error) {
       return this.error(res, error);
     }
@@ -240,8 +243,8 @@ export class MultiImageController extends BaseController {
   @RequirePermission('READ', 'herbal-image')
   async findByDiseaseId(@Param('diseaseId') diseaseId: string, @Res() res: Response) {
     try {
-    const images = await this.multiImageService.findByEntity(ImageEntityType.DISEASE, this.decode(diseaseId));
-    return this.success(res, images);
+      const images = await this.multiImageService.findByEntity(ImageEntityType.DISEASE, this.decode(diseaseId));
+      return this.success(res, images);
     } catch (error) {
       return this.error(res, error);
     }
@@ -251,8 +254,8 @@ export class MultiImageController extends BaseController {
   @RequirePermission('READ', 'herbal-image')
   async getDiseaseMainImage(@Param('diseaseId') diseaseId: string, @Res() res: Response) {
     try {
-    const mainImage = await this.multiImageService.getMainImageByEntity(ImageEntityType.DISEASE, this.decode(diseaseId));
-    return this.success(res, mainImage);
+      const mainImage = await this.multiImageService.getMainImageByEntity(ImageEntityType.DISEASE, this.decode(diseaseId));
+      return this.success(res, mainImage);
     } catch (error) {
       return this.error(res, error);
     }
@@ -263,7 +266,7 @@ export class MultiImageController extends BaseController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async removeByDiseaseId(@Param('diseaseId') diseaseId: string, @Res() res: Response) {
     try {
-    await this.multiImageService.removeByEntity(ImageEntityType.DISEASE, this.decode(diseaseId));
+      await this.multiImageService.removeByEntity(ImageEntityType.DISEASE, this.decode(diseaseId));
     } catch (error) {
       return this.error(res, error);
     }

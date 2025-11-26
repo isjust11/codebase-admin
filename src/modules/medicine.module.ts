@@ -21,11 +21,13 @@ import { FolkMedicineIngredient } from '../entities/folk-medicine-ingredient.ent
 import { Disease } from '../entities/disease.entity';
 import { DiseaseService } from '../services/disease.service';
 import { DiseaseController } from '../controllers/medicine/disease.controller';
+import { MediaModule } from './media.module';
 
 @Module({
   imports: [
     AuthModule,
     CategoryModule, 
+    MediaModule,
     TypeOrmModule.forFeature([
       Herbal, 
       MultiImage, 

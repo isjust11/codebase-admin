@@ -5,12 +5,14 @@ import { MultiImage, HerbalImageType, ImageEntityType } from '../entities/multi-
 import { plainToClass } from 'class-transformer';
 import { MultiImageDto } from 'src/dtos/multi-image.dto';
 import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
+import { MediaService } from './media.service';
 
 @Injectable()
 export class MultiImageService {
   constructor(
     @InjectRepository(MultiImage)
     private readonly multiImageRepository: Repository<MultiImage>,
+    private readonly mediaService: MediaService,
   ) {}
 
   async create(data: MultiImageDto): Promise<MultiImage> {
@@ -117,9 +119,18 @@ export class MultiImageService {
     return this.multiImageRepository.save(multiImage);
   }
 
-  async remove(id: number): Promise<void> {
-    const result = await this.multiImageRepository.delete(id);
+  async remove(id: number): Promise<boolean> {
+    const multiImage = await this.findOne(id);
+    const filename = multiImage.url?.split('/').pop() ?? '';
+    if (filename) {
+      await this.mediaService.deleteFile(filename, 1);
+    }
+    const result = await this.multiImageRepository.delete({
+      id,
+      isActive: true,
+    });
     if (result.affected === 0) throw new NotFoundException('Multi image not found');
+    return true;
   }
 
   async removeByEntity(entityType: ImageEntityType, entityId: number): Promise<void> {
