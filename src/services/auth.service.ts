@@ -186,10 +186,10 @@ export class AuthService {
       return this.generateToken(user);
     } catch (error) {
       console.error('Error in mobileSocialLogin:', error);
-      if (error instanceof UnauthorizedException) {
+      if (error instanceof BadRequestException) {
         throw error;
       }
-      throw new UnauthorizedException('Đăng nhập social không thành công');
+      throw new BadRequestException('Đăng nhập social không thành công');
     }
   }
 
@@ -198,11 +198,11 @@ export class AuthService {
     const user = await this.validateUser(username, password);
 
     if (!user) {
-      throw new UnauthorizedException('Tài khoản hoặc mật khẩu không chính xác');
+      throw new BadRequestException('Tài khoản hoặc mật khẩu không chính xác');
     }
 
     if (user.isWebsiteUser && !user.isEmailVerified) {
-      throw new UnauthorizedException('Email chưa được xác thực');
+      throw new BadRequestException('Email chưa được xác thực');
     }
 
     return this.generateToken(user);
@@ -225,7 +225,7 @@ export class AuthService {
           pin,
           user.fullName || user.username
         );
-        
+
         return {
           code: RegisterCode.Ok,
           message: 'Mã PIN đã được gửi đến email của bạn',
@@ -347,7 +347,7 @@ export class AuthService {
   async refreshAccessToken(refreshTokenString: string) {
     const foundToken = await this.refreshTokenRepository.findOne({
       where: { token: refreshTokenString, isRevoked: false },
-      relations: ['user', 'user.roles','user.roles.permissions']
+      relations: ['user', 'user.roles', 'user.roles.permissions']
     });
 
     if (!foundToken) {
@@ -417,7 +417,7 @@ export class AuthService {
       user: userInfo.user,
       accessToken: userInfo.accessToken,
       refreshToken: userInfo.refreshToken
-    }); 
+    });
 
     // Tự động xóa sau 5 phút
     setTimeout(() => {
@@ -504,7 +504,7 @@ export class AuthService {
    */
   async verifyPin(verifyPinDto: VerifyPinDto) {
     const { email, pin } = verifyPinDto;
-    
+
     const user = await this.userService.findByEmail(email);
     if (!user) {
       throw new UnauthorizedException('Email không tồn tại');
@@ -530,7 +530,7 @@ export class AuthService {
     await this.userService.update(user.id, user);
 
     return {
-      code:'verify',
+      code: 'verify',
       message: 'Xác thực mã PIN thành công'
     };
   }
@@ -540,7 +540,7 @@ export class AuthService {
    */
   async resendPin(resendPinDto: ResendPinDto) {
     const { email } = resendPinDto;
-    
+
     const user = await this.userService.findByEmail(email);
     if (!user) {
       throw new UnauthorizedException('Email không tồn tại');
@@ -560,7 +560,7 @@ export class AuthService {
     );
 
     return {
-      code:'resend',
+      code: 'resend',
       message: 'Mã PIN mới đã được gửi đến email của bạn',
       pin: pin // Trả về PIN để test (trong production nên bỏ dòng này)
     };
@@ -576,7 +576,7 @@ export class AuthService {
       // Kiểm tra format dd/MM/yyyy
       const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
       const match = dateString.match(dateRegex);
-      
+
       if (!match) {
         throw new Error('Invalid date format. Expected dd/MM/yyyy');
       }
@@ -592,7 +592,7 @@ export class AuthService {
 
       // Tạo Date object (month - 1 vì Date constructor sử dụng 0-based month)
       const date = new Date(year, month - 1, day);
-      
+
       // Kiểm tra xem date có hợp lệ không
       if (date.getDate() !== day || date.getMonth() !== month - 1 || date.getFullYear() !== year) {
         throw new Error('Invalid date');
