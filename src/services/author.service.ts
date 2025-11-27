@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Like, Repository } from 'typeorm';
+import { DeepPartial, Like, Repository } from 'typeorm';
 import { Author } from '../entities/author.entity';
 import slugify from 'slugify';
 import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
@@ -54,12 +54,14 @@ export class AuthorService {
       data.slug = slugify(data.name, { lower: true, strict: true });
     }
     
-    if (data.dataSourceId != null) {
+    if (data.dataSourceId != null && data.dataSourceId != '') {
       const dataSourceId = Base64EncryptionUtil.decrypt(data.dataSourceId.toString());
       data.dataSourceId = dataSourceId;
+    }else{
+      data.dataSourceId = null;
     }
 
-    const author = this.authorRepository.create(data);
+    const author = this.authorRepository.create(data as DeepPartial<Author>);
     return this.authorRepository.save(author);
   }
 
@@ -94,7 +96,7 @@ export class AuthorService {
     if (data.name) {
       data.slug = slugify(data.name, { lower: true, strict: true });
     }
-    if(data.dataSourceId != null) {
+    if(data.dataSourceId != null && data.dataSourceId != '') {
       const dataSourceId = Base64EncryptionUtil.decrypt(data.dataSourceId.toString());
       author.dataSourceId = dataSourceId;
     }

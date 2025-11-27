@@ -37,12 +37,12 @@ export class AuthorDto {
   legacy?: string;
 
   @IsOptional()
-  @IsDateString()
-  birthDate?: Date;
+  @IsString()
+  birthDate?: string;
 
   @IsOptional()
-  @IsDateString()
-  deathDate?: Date;
+  @IsString()
+  deathDate?: string;
 
   @IsOptional()
   @IsString()

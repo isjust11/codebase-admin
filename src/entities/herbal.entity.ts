@@ -7,7 +7,11 @@ import { DataSource } from './data-source.entity';
 
 @Entity()
 export class Herbal {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({
+    type: 'integer',
+    name: 'id',
+    comment: 'ID của thuốc thảo dược',
+  })
   id: number;
 
   @Column({ length: 255 })
@@ -26,7 +30,7 @@ export class Herbal {
   scientificName?: string;
 
   @Column({ type: 'text', nullable: true })
-  partsUsedId?: number;
+  partsUsedId?: any;
 
   @Column({ type: 'text', nullable: true })
   activeCompounds?: string;
@@ -65,14 +69,14 @@ export class Herbal {
   category?: Category | null;
 
   @Column({ nullable: true })
-  categoryId?: number;
+  categoryId?: any;
 
   // bổ sung nguồn dữ liệu
   @Column({ type: 'integer', nullable: true })
-  sourceDataId?: number;
+  dataSourceId?: any;
 
   @ManyToOne(() => DataSource, dataSource => dataSource.id)
-  @JoinColumn({ name: 'sourceDataId' })
+  @JoinColumn({ name: 'dataSourceId' })
   dataSource?: DataSource;
 
   @Column({ default: true })

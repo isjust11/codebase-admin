@@ -39,11 +39,11 @@ export class Author {
   @Column({ type: 'text', nullable: true })
   legacy?: string;
 
-  @Column({ type: 'date', nullable: true })
-  birthDate?: Date;
+  @Column({ length: 255, nullable: true })
+  birthDate?: string;
 
-  @Column({ type: 'date', nullable: true })
-  deathDate?: Date;
+  @Column({ length: 255, nullable: true })
+  deathDate?: string;
 
   @Column({ length: 255, nullable: true })
   birthPlace?: string;
@@ -107,7 +107,7 @@ export class Author {
 
   // bổ sung nguồn dữ liệu
   @Column({ type: 'integer', nullable: true })
-  dataSourceId?: number;
+  dataSourceId?: any;
 
   @ManyToOne(() => DataSource, dataSource => dataSource.id)
   @JoinColumn({ name: 'dataSourceId' })

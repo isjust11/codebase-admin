@@ -31,12 +31,6 @@ export class AuthorController extends BaseController {
   @RequirePermission('CREATE', 'author')
   async create(@Body() createAuthorDto: AuthorDto, @Res() res: Response) {
     try {
-      if (createAuthorDto.birthDate) {
-        createAuthorDto.birthDate = new Date(createAuthorDto.birthDate);
-      }
-      if (createAuthorDto.deathDate) {
-        createAuthorDto.deathDate = new Date(createAuthorDto.deathDate);
-      }
       const author = await this.authorService.create(createAuthorDto);
       return this.success(res, author);
     } catch (error) {
@@ -144,12 +138,6 @@ export class AuthorController extends BaseController {
     @Res() res: Response,
   ) {
     try {
-      if (updateAuthorDto.birthDate) {
-        updateAuthorDto.birthDate = new Date(updateAuthorDto.birthDate);
-      }
-      if (updateAuthorDto.deathDate) {
-        updateAuthorDto.deathDate = new Date(updateAuthorDto.deathDate);
-      }
       const author = await this.authorService.update(this.decode(id), updateAuthorDto);
       return this.success(res, author);
     } catch (error) {

@@ -26,7 +26,7 @@ export class CreateHerbalDto {
 
   @IsOptional()
   @IsString()
-  partsUsed?: string;
+  partsUsedId?: string;
 
   @IsOptional()
   @IsString()
@@ -62,7 +62,7 @@ export class CreateHerbalDto {
 
   @IsOptional()
   @IsString()
-  categoryId?: number;
+  categoryId?: string;
 
   @IsOptional()
   @IsBoolean()
@@ -100,7 +100,7 @@ export class UpdateHerbalDto {
 
   @IsOptional()
   @IsString()
-  partsUsed?: string;
+  partsUsedId?: string;
 
   @IsOptional()
   @IsString()
@@ -136,7 +136,7 @@ export class UpdateHerbalDto {
 
   @IsOptional()
   @IsString()
-  categoryId?: number;
+  categoryId?: string;
 
   @IsOptional()
   @IsBoolean()
@@ -178,7 +178,7 @@ export class HerbalResponseDto {
 
   @IsOptional()
   @IsString()
-  partsUsed?: string;
+  partsUsedId?: string;
 
   @IsOptional()
   @IsString()

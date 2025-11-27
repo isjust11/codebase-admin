@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Like, Repository } from 'typeorm';
+import { DeepPartial, Like, Repository } from 'typeorm';
 import { Herbal } from '../entities/herbal.entity';
 import slugify from 'slugify';
 import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
@@ -9,6 +9,7 @@ import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
 import { CategoryService } from './category.service';
 import { ImageEntityType } from 'src/entities/multi-image.entity';
 import { MultiImageService } from './multi-image.service';
+import { CreateHerbalDto, UpdateHerbalDto } from 'src/dtos/herbal.dto';
 
 @Injectable()
 export class HerbalService {
@@ -63,30 +64,41 @@ export class HerbalService {
     return data;
   }
 
-  async create(data: Partial<Herbal>): Promise<Herbal> {
-    if (data.title) {
-      data.slug = slugify(data.title, { lower: true, strict: true });
+  async create(data: CreateHerbalDto): Promise<Herbal> {
+    const herbalEntity = new Herbal();
+    Object.assign(herbalEntity, data);
+    if (herbalEntity.title) {
+      herbalEntity.slug = slugify(herbalEntity.title, { lower: true, strict: true });
     }
-    data.id = undefined;
-    // Xử lý partsUsedId nếu có
-    if (data.partsUsedId != null) {
-      const partsUsedId = Base64EncryptionUtil.decrypt(data.partsUsedId.toString());
-      data.partsUsedId = partsUsedId;
-
-      const partsUsed = await this.categoryService.findOne(data.partsUsedId);
-      data.partsUsedCategory = partsUsed ?? null;
-    }
-
     if (data.categoryId != null) {
       const categoryId = Base64EncryptionUtil.decrypt(data.categoryId.toString());
-      data.categoryId = categoryId;
-
-      const category = await this.categoryService.findOne(data.categoryId);
-      data.category = category ?? null;
+      herbalEntity.categoryId = categoryId;
+      const category = await this.categoryService.findOne(categoryId);
+      herbalEntity.category = category ?? null;
+    }
+    else{
+      herbalEntity.categoryId = undefined;
     }
 
+    if (data.dataSourceId != null && data.dataSourceId != '') {
+      const dataSourceId = Base64EncryptionUtil.decrypt(data.dataSourceId.toString());
+      herbalEntity.dataSourceId = dataSourceId;
+    }else{
+      herbalEntity.dataSourceId = undefined;
+    }
+    
+    if (data.partsUsedId != null && data.partsUsedId != '') {
+      const partsUsedId = Base64EncryptionUtil.decrypt(data.partsUsedId.toString());
+      herbalEntity.partsUsedId = partsUsedId;
+      const partsUsed = await this.categoryService.findOne(partsUsedId);
+      herbalEntity.partsUsedCategory = partsUsed ?? null;
+    }else{
+      herbalEntity.partsUsedId = undefined;
+    }
 
-    const herbal = this.herbalRepository.create(data);
+    const herbal = this.herbalRepository.create(herbalEntity as DeepPartial<Herbal>);
+    herbal.createdAt = new Date();
+    herbal.id = 0;
     return this.herbalRepository.save(herbal);
   }
 
@@ -107,7 +119,7 @@ export class HerbalService {
     return plainToClass(Herbal, herbal);
   }
 
-  async update(id: number, data: Partial<Herbal>): Promise<Herbal> {
+  async update(id: number, data: UpdateHerbalDto): Promise<Herbal> {
     const herbal = await this.findOne(id);
     Object.assign(herbal, {
       ...data,
@@ -115,23 +127,32 @@ export class HerbalService {
     });
 
     if (data.title) {
-      data.slug = slugify(data.title, { lower: true, strict: true });
+      herbal.slug = slugify(data.title, { lower: true, strict: true });
     }
 
-    if (data.partsUsedId != null) {
+    if (data.partsUsedId != null && data.partsUsedId != '') {
       const partsUsedId = Base64EncryptionUtil.decrypt(data.partsUsedId.toString());
       herbal.partsUsedId = partsUsedId;
 
-      const partsUsed = await this.categoryService.findOne(herbal.partsUsedId);
+      const partsUsed = await this.categoryService.findOne(partsUsedId);
       herbal.partsUsedCategory = partsUsed ?? null;
+    }else{
+      herbal.partsUsedId = undefined;
     }
 
-    if (data.categoryId != null) {
+    if (data.categoryId != null && data.categoryId != '') {
       const categoryId = Base64EncryptionUtil.decrypt(data.categoryId.toString());
       herbal.categoryId = categoryId;
 
-      const category = await this.categoryService.findOne(herbal.categoryId);
+      const category = await this.categoryService.findOne(categoryId);
       herbal.category = category ?? null;
+    }
+
+    if (data.dataSourceId != null && data.dataSourceId != '') {
+      const dataSourceId = Base64EncryptionUtil.decrypt(data.dataSourceId.toString());
+      herbal.dataSourceId = dataSourceId;
+    }else{
+      herbal.dataSourceId = undefined;
     }
 
     return this.herbalRepository.save(herbal);

@@ -45,7 +45,7 @@ export class HerbalController extends BaseController {
 
   // get all 
   @Get('all')
-  @RequirePermission('READ','herbal')
+  @RequirePermission('READ', 'herbal')
   async findAll(@Res() res: Response) {
     try {
       const data = await this.herbalService.getAll();
@@ -59,9 +59,8 @@ export class HerbalController extends BaseController {
   @RequirePermission('CREATE', 'herbal')
   async create(@Body() createHerbalDto: CreateHerbalDto, @Res() res: Response) {
     try {
-    const data = await this.herbalService.create({ ...createHerbalDto, 
-      authorId: createHerbalDto.authorId ? this.decode(createHerbalDto.authorId.toString()) : undefined });
-    return this.success(res, data);
+      const data = await this.herbalService.create(createHerbalDto);
+      return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
     }
@@ -72,7 +71,7 @@ export class HerbalController extends BaseController {
   async findByCategory(@Param('categoryId') categoryId: string, @Res() res: Response) {
     try {
       const herbals = await this.herbalService.findByCategory(this.decode(categoryId.toString()));
-    return this.success(res, herbals);
+      return this.success(res, herbals);
     } catch (error) {
       return this.error(res, error);
     }
@@ -82,8 +81,8 @@ export class HerbalController extends BaseController {
   @RequirePermission('READ', 'herbal')
   async findByScientificName(@Param('scientificName') scientificName: string, @Res() res: Response) {
     try {
-    const herbals = await this.herbalService.findByScientificName(scientificName);
-    return this.success(res, herbals);
+      const herbals = await this.herbalService.findByScientificName(scientificName);
+      return this.success(res, herbals);
     } catch (error) {
       return this.error(res, error);
     }
@@ -93,8 +92,8 @@ export class HerbalController extends BaseController {
   @RequirePermission('READ', 'herbal')
   async findOne(@Param('id') id: string, @Res() res: Response) {
     try {
-    const herbal = await this.herbalService.findOne(this.decode(id));
-    return this.success(res, herbal);
+      const herbal = await this.herbalService.findOne(this.decode(id));
+      return this.success(res, herbal);
     } catch (error) {
       return this.error(res, error);
     }
@@ -108,9 +107,8 @@ export class HerbalController extends BaseController {
     @Res() res: Response,
   ) {
     try {
-    const herbal = await this.herbalService.update(this.decode(id), 
-    { ...updateHerbalDto, authorId: updateHerbalDto.authorId ? this.decode(updateHerbalDto.authorId.toString()) : undefined });
-    return this.success(res, herbal);
+      const herbal = await this.herbalService.update(this.decode(id), updateHerbalDto);
+      return this.success(res, herbal);
     } catch (error) {
       return this.error(res, error);
     }
@@ -121,8 +119,8 @@ export class HerbalController extends BaseController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id') id: string, @Res() res: Response) {
     try {
-    const data = await this.herbalService.remove(this.decode(id));
-    return this.success(res, data);
+      const data = await this.herbalService.remove(this.decode(id));
+      return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
     }
@@ -133,8 +131,8 @@ export class HerbalController extends BaseController {
   @HttpCode(HttpStatus.OK)
   async incrementViewCount(@Param('id') id: string, @Res() res: Response) {
     try {
-    const data = await this.herbalService.incrementViewCount(this.decode(id));
-    return this.success(res, data);
+      const data = await this.herbalService.incrementViewCount(this.decode(id));
+      return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
     }
@@ -145,8 +143,8 @@ export class HerbalController extends BaseController {
   @HttpCode(HttpStatus.OK)
   async incrementLikeCount(@Param('id') id: string, @Res() res: Response) {
     try {
-    const data = await this.herbalService.incrementLikeCount(this.decode(id));
-    return this.success(res, data);
+      const data = await this.herbalService.incrementLikeCount(this.decode(id));
+      return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
     }
