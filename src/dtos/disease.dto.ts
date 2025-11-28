@@ -1,6 +1,10 @@
-import { IsString, IsOptional, IsBoolean, IsNotEmpty, IsArray } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsNotEmpty, IsArray, IsNumber } from 'class-validator';
 
 export class DiseaseDto {
+  @IsOptional()
+  @IsNumber()
+  id?: string;
+
   @IsNotEmpty()
   @IsString()
   name: string;
@@ -36,15 +40,15 @@ export class DiseaseDto {
 
   @IsOptional()
   @IsString()
-  authorId?: string;
+  authorId?: any;
 
   @IsOptional()
   @IsString()
-  categoryId?: string;
+  categoryId?: any;
 
   @IsOptional()
   @IsString()
-  dataSourceId?: string;
+  dataSourceId?: any;
 
   @IsOptional()
   @IsString()

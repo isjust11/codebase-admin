@@ -11,7 +11,6 @@ import { AuthorService } from './author.service';
 import { FolkMedicineDto } from 'src/dtos/folk-medicine.dto';
 import { DataSourceService } from './data-source.service';
 import { FolkMedicineIngredient } from '../entities/folk-medicine-ingredient.entity';
-import { DiseaseService } from './disease.service';
 import { Disease } from 'src/entities/disease.entity';
 import { DiseaseDto } from 'src/dtos/disease.dto';
 
@@ -25,7 +24,6 @@ export class FolkMedicineService {
     private readonly categoryService: CategoryService,
     private readonly authorService: AuthorService,
     private readonly dataSourceService: DataSourceService,
-    private readonly diseaseService: DiseaseService,
     @InjectRepository(Disease)
     private readonly diseaseRepository: Repository<Disease>,
   ) { }
@@ -94,15 +92,15 @@ export class FolkMedicineService {
     
     // add diseases to folk medicine
     if (data.diseases && Array.isArray(data.diseases)) {
-      const diseases = await this.diseaseService.findAll(); // Lấy tất cả bệnh từ dịch vụ
-      const diseaseIds = data.diseases.map(d => Base64EncryptionUtil.decrypt(d));
-  
-      // Lọc ra những bệnh mà không có trong hệ thống
-      const newDiseases = diseases.filter(d => diseaseIds.includes(d.id));
+      const diseases = await this.diseaseRepository.find({
+        where: {
+          id: In(data.diseases.map((d: DiseaseDto) => Base64EncryptionUtil.decrypt(d.id ?? ''))),
+        },
+      }); // Lấy tất cả bệnh từ dịch vụ
       if (!folkMedicine.diseases) {
         folkMedicine.diseases = [];
       }
-      folkMedicine.diseases.push(...newDiseases);
+      folkMedicine.diseases.push(...diseases);
       await this.folkMedicineRepository.save(folkMedicine);
       return this.findOne(folkMedicine.id);
     }
@@ -192,16 +190,24 @@ export class FolkMedicineService {
 
     // update diseases if provided
     if (data.diseases && Array.isArray(data.diseases)) {
-      const diseases = await this.diseaseService.findAll();
-      const diseaseIds = data.diseases.map(d => Base64EncryptionUtil.decrypt(d));
-      const newDiseases = diseases.filter(d => diseaseIds.includes(d.id));
+      const diseaseIds = data.diseases.map((d: DiseaseDto) => Base64EncryptionUtil.decrypt(d.id ?? ''));
+      const newDiseases = await this.diseaseRepository.find({
+        where: {
+          id: In(diseaseIds),
+        },
+      });
       if (!folkMedicine.diseases) {
         folkMedicine.diseases = [];
       }
-      folkMedicine.diseases.push(...newDiseases);
-      await this.folkMedicineRepository.save(folkMedicine);
+      const disease = newDiseases.map((d: Disease) => {
+        return {
+          ...d,
+          id: Base64EncryptionUtil.decrypt(d.id.toString()),
+        };
+      });
+      folkMedicine.diseases=disease;
     }
-
+      
     // update components if provided
     if (data.components) {
       const ingredients: DeepPartial<FolkMedicineIngredient>[] = data.components.map((c, index) => {
@@ -253,8 +259,12 @@ export class FolkMedicineService {
 
   async addDiseases(folkMedicineId: number, dto: DiseaseDto): Promise<FolkMedicine> {
     const folkMedicine = await this.findOne(folkMedicineId);
-    const diseaseIds = dto.imagePaths?.map(imagePath => Base64EncryptionUtil.decrypt(imagePath)) ?? [];
-    const diseases = await this.diseaseService.findAll();
+    const diseaseId = Base64EncryptionUtil.decrypt(dto.id ?? '');
+    const diseases = await this.diseaseRepository.find({
+      where: {
+        id: diseaseId,
+      },
+    });
 
     if (!folkMedicine.diseases) {
       folkMedicine.diseases = [];
