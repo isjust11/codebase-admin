@@ -7,10 +7,10 @@ import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
 import { plainToClass } from 'class-transformer';
 import { DiseaseDto } from 'src/dtos/disease.dto';
 import { ImageEntityType, MultiImage } from 'src/entities/multi-image.entity';
-import { Category } from 'src/entities/category.entity';
 import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
-import { Author } from 'src/entities/author.entity';
-import { DataSource } from 'src/entities/data-source.entity';
+import { CategoryService } from './category.service';
+import { AuthorService } from './author.service';
+import { DataSourceService } from './data-source.service';
 
 @Injectable()
 export class DiseaseService {
@@ -19,12 +19,9 @@ export class DiseaseService {
     private readonly diseaseRepository: Repository<Disease>,
     @InjectRepository(MultiImage)
     private readonly multiImageRepository: Repository<MultiImage>,
-    @InjectRepository(Category)
-    private readonly categoryRepository: Repository<Category>,
-    @InjectRepository(Author)
-    private readonly authorRepository: Repository<Author>,
-    @InjectRepository(DataSource)
-    private readonly dataSourceRepository: Repository<DataSource>,
+    private readonly categoryService: CategoryService,
+    private readonly authorService: AuthorService,
+    private readonly dataSourceService: DataSourceService,
   ) { }
 
   async findPagination(params: PaginationParams): Promise<PaginatedResponse<Disease>> {
@@ -73,7 +70,7 @@ export class DiseaseService {
     }
     if (data.categoryId) {
       const categoryId = Base64EncryptionUtil.decrypt(data.categoryId);
-      const category = await this.categoryRepository.findOne({ where: { id: categoryId } });
+      const category = await this.categoryService.findOne(categoryId);
       if (!category) throw new NotFoundException('Category not found');
       data.categoryId = categoryId;
     } else {
@@ -81,7 +78,7 @@ export class DiseaseService {
     }
     if (data.authorId) {
       const authorId = Base64EncryptionUtil.decrypt(data.authorId);
-      const author = await this.authorRepository.findOne({ where: { id: authorId } });
+      const author = await this.authorService.findOne(authorId);
       if (!author) throw new NotFoundException('Author not found');
       data.authorId = authorId;
     } else {
@@ -89,7 +86,7 @@ export class DiseaseService {
     }
     if (data.dataSourceId) {
       const dataSourceId = Base64EncryptionUtil.decrypt(data.dataSourceId);
-      const dataSource = await this.dataSourceRepository.findOne({ where: { id: dataSourceId } });
+      const dataSource = await this.dataSourceService.findOne(dataSourceId);
       if (!dataSource) throw new NotFoundException('Data source not found');
       data.dataSourceId = dataSourceId;
     } else {
@@ -147,7 +144,7 @@ export class DiseaseService {
     }
     if (data.categoryId) {
       const categoryId = Base64EncryptionUtil.decrypt(data.categoryId);
-      const category = await this.categoryRepository.findOne({ where: { id: categoryId } });
+      const category = await this.categoryService.findOne(categoryId);
       if (!category) throw new NotFoundException('Category not found');
       disease.categoryId = categoryId;
     } else {
@@ -155,7 +152,7 @@ export class DiseaseService {
     }
     if (data.authorId) {
       const authorId = Base64EncryptionUtil.decrypt(data.authorId);
-      const author = await this.authorRepository.findOne({ where: { id: authorId } });
+      const author = await this.authorService.findOne(authorId);
       if (!author) throw new NotFoundException('Author not found');
       disease.authorId = authorId;
     } else {
@@ -163,7 +160,7 @@ export class DiseaseService {
     }
     if (data.dataSourceId) {
       const dataSourceId = Base64EncryptionUtil.decrypt(data.dataSourceId);
-      const dataSource = await this.dataSourceRepository.findOne({ where: { id: dataSourceId } });
+      const dataSource = await this.dataSourceService.findOne(dataSourceId);
       if (!dataSource) throw new NotFoundException('Data source not found');
       disease.dataSourceId = dataSourceId;
     } else {

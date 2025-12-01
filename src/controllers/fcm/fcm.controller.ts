@@ -24,19 +24,16 @@ export class FcmController {
     @Request() req,
   ) {
     const userId = req.user?.id;
-    
     // Lưu FCM token vào database với userId
-    await this.fcmTokenService.registerOrUpdate({
+    await this.fcmTokenService.registerOrUpdate( {
       token: body.token,
-      userId: userId,
       platform: body.platform,
       deviceId: body.deviceId,
-      isActive: true,
-    });
+      app_version: body.app_version,
+    }, userId);
     
     console.log('FCM Token registered:', {
       token: body.token,
-      userId: userId,
       platform: body.platform,
       app_version: body.app_version,
       timestamp: new Date().toISOString(),

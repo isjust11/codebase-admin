@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, HttpCode, HttpStatus, Res, Req } from '@nestjs/common';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { PermissionGuard } from '../../guards/permission.guard';
 import { RequirePermission } from '../../decorators/require-permissions.decorator';
 import { BaseController } from '../base/base.controller';
 import { FcmTokenService } from '../../services/fcm-token.service';
-
+import { Response } from 'express';
+import { FcmTokenDto } from '../../dtos/fcm-token.dto';
 @Controller('fcm-tokens')
 @UseGuards(JwtAuthGuard, PermissionGuard)
 export class FcmTokenController extends BaseController {
@@ -18,7 +19,19 @@ export class FcmTokenController extends BaseController {
 
   @Post('register')
   @RequirePermission('CREATE', 'fcm_token')
-  register(@Body() body: any) { return this.service.registerOrUpdate(body); }
+  async register(@Body() body: FcmTokenDto,@Res() res: Response, @Req() req) { 
+    try {
+      const userId = req.user?.id;
+      const result = await this.service.registerOrUpdate({
+        token: body.token,
+        platform: body.platform,
+        deviceId: body.deviceId,
+      }, userId);
+      return this.success(res, result);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
 
   @Patch(':id/deactivate')
   @RequirePermission('UPDATE', 'fcm_token')
