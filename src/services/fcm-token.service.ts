@@ -25,6 +25,7 @@ export class FcmTokenService {
     if (existing) {
       existing.deviceId = data.deviceId ?? existing.deviceId ?? '';
       existing.userId = userId;
+      existing.isActive = true;
       existing.updatedAt = new Date();
       return this.fcmRepo.save(existing);
     }
@@ -40,8 +41,16 @@ export class FcmTokenService {
     return this.fcmRepo.save(entity);
   }
 
-  findOne(id: number) {
+  findById(id: number) {
     return this.fcmRepo.findOne({ where: { id } });
+  }
+
+  findByUserId(userId: number) {
+    return this.fcmRepo.find({ where: { userId }, order: { createdAt: 'DESC' } });
+  }
+
+  registerMany(tokens: FcmTokenDto[], userId: number) {
+    return Promise.all(tokens.map((token) => this.registerOrUpdate(token, userId)));
   }
 
   async deactivate(id: number) {

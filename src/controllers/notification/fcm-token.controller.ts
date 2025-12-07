@@ -33,6 +33,40 @@ export class FcmTokenController extends BaseController {
     }
   }
 
+  @Post('batch-register')
+  @RequirePermission('CREATE', 'fcm_token')
+  async batchRegister(@Body() body: FcmTokenDto[], @Res() res: Response, @Req() req) {
+    try {
+      const userId = req.user?.id;
+      const result = await this.service.registerMany(body, userId);
+      return this.success(res, result);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Get('user/:userId')
+  @RequirePermission('READ', 'fcm_token')
+  async findByUser(@Param('userId') userId: string, @Res() res: Response) {
+    try {
+      const result = await this.service.findByUserId(this.decode(userId));
+      return this.success(res, result);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Get(':id')
+  @RequirePermission('READ', 'fcm_token')
+  async findOne(@Param('id') id: string, @Res() res: Response) {
+    try {
+      const result = await this.service.findById(this.decode(id));
+      return this.success(res, result);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
   @Patch(':id/deactivate')
   @RequirePermission('UPDATE', 'fcm_token')
   @HttpCode(HttpStatus.NO_CONTENT)
