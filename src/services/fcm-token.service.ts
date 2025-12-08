@@ -1,13 +1,17 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, forwardRef, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository } from 'typeorm';
 import { FcmToken } from '../entities/fcm-token.entity';
 import { FcmTokenDto } from '../dtos/fcm-token.dto';
+import { FcmService } from './fcm.service';
+
 @Injectable()
 export class FcmTokenService {
   constructor(
     @InjectRepository(FcmToken)
     private readonly fcmRepo: Repository<FcmToken>,
+    @Inject(forwardRef(() => FcmService))
+    private readonly fcmService: FcmService,
   ) {}
 
   async findPagination(page = 1, size = 10, search = '') {
@@ -59,6 +63,95 @@ export class FcmTokenService {
 
   async remove(id: number) {
     await this.fcmRepo.delete(id);
+  }
+  /**
+   * Subscribe all active FCM tokens to a topic
+   * @param topic Topic name to subscribe to
+   * @param userId Optional: Subscribe only tokens of a specific user
+   */
+  async subscribeTopic(topic: string, userId?: number) {
+    // Get active FCM tokens from database
+    const where: any = { isActive: true };
+    if (userId) {
+      where.userId = userId;
+    }
+    
+    const tokens = await this.fcmRepo.find({ where });
+    
+    if (tokens.length === 0) {
+      return { 
+        successCount: 0, 
+        failureCount: 0, 
+        message: 'No active tokens found to subscribe',
+        errors: [] 
+      };
+    }
+
+    // Extract token strings
+    const tokenStrings = tokens.map(t => t.token);
+
+    // Subscribe to topic using Firebase Admin SDK
+    const result = await this.fcmService.subscribeToTopic(tokenStrings, topic);
+    
+    return {
+      ...result,
+      totalTokens: tokens.length,
+      message: `Subscribed ${result.successCount}/${tokens.length} tokens to topic: ${topic}`,
+    };
+  }
+
+  /**
+   * Unsubscribe all active FCM tokens from a topic
+   * @param topic Topic name to unsubscribe from
+   * @param userId Optional: Unsubscribe only tokens of a specific user
+   */
+  async unsubscribeTopic(topic: string, userId?: number) {
+    // Get active FCM tokens from database
+    const where: any = { isActive: true };
+    if (userId) {
+      where.userId = userId;
+    }
+    
+    const tokens = await this.fcmRepo.find({ where });
+    
+    if (tokens.length === 0) {
+      return { 
+        successCount: 0, 
+        failureCount: 0, 
+        message: 'No active tokens found to unsubscribe',
+        errors: [] 
+      };
+    }
+
+    // Extract token strings
+    const tokenStrings = tokens.map(t => t.token);
+
+    // Unsubscribe from topic using Firebase Admin SDK
+    const result = await this.fcmService.unsubscribeFromTopic(tokenStrings, topic);
+    
+    return {
+      ...result,
+      totalTokens: tokens.length,
+      message: `Unsubscribed ${result.successCount}/${tokens.length} tokens from topic: ${topic}`,
+    };
+  }
+
+  /**
+   * Subscribe specific tokens to a topic
+   * @param tokens Array of token strings
+   * @param topic Topic name
+   */
+  async subscribeTokensToTopic(tokens: string[], topic: string) {
+    return await this.fcmService.subscribeToTopic(tokens, topic);
+  }
+
+  /**
+   * Unsubscribe specific tokens from a topic
+   * @param tokens Array of token strings
+   * @param topic Topic name
+   */
+  async unsubscribeTokensFromTopic(tokens: string[], topic: string) {
+    return await this.fcmService.unsubscribeFromTopic(tokens, topic);
   }
 }
 

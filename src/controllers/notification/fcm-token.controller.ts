@@ -66,7 +66,26 @@ export class FcmTokenController extends BaseController {
       return this.error(res, error);
     }
   }
-
+  @Post('subscribe-topic')
+  @RequirePermission('CREATE', 'fcm_token')
+  async subscribeTopic(@Body() body: { topic: string }, @Res() res: Response) {
+    try {
+      const result = await this.service.subscribeTopic(body.topic);
+      return this.success(res, result);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+  @Post('unsubscribe-topic')
+  @RequirePermission('CREATE', 'fcm_token')
+  async unsubscribeTopic(@Body() body: { topic: string }, @Res() res: Response) {
+    try {
+      const result = await this.service.unsubscribeTopic(body.topic);
+      return this.success(res, result);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
   @Patch(':id/deactivate')
   @RequirePermission('UPDATE', 'fcm_token')
   @HttpCode(HttpStatus.NO_CONTENT)

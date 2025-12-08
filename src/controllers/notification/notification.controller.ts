@@ -74,7 +74,11 @@ export class NotificationController extends BaseController{
   @Post('fcm/send-topic')
   @RequirePermission('CREATE', 'notification')
   async sendFcmToTopic(@Body() body: { topic: string; title: string; body: string; data?: Record<string, string> }) {
-    const result = await this.fcmService.sendToTopic(body.topic, { title: body.title, body: body.body, data: body.data });
-    return { success: true, messageId: result };
+    try {
+      const result = await this.fcmService.sendToTopic(body.topic, { title: body.title, body: body.body, data: body.data });
+      return { success: true, messageId: result };
+    } catch (error) {
+      return { success: false, message: 'Error sending FCM to topic', error: error.message };
+      }
+    }
   }
-} 

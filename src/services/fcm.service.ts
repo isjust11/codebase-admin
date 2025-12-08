@@ -55,6 +55,82 @@ export class FcmService {
     } as const;
     return await messaging.send(message);
   }
+
+  /**
+   * Subscribe multiple FCM tokens to a topic
+   * @param tokens Array of FCM tokens to subscribe
+   * @param topic Topic name to subscribe to
+   */
+  async subscribeToTopic(tokens: string[], topic: string) {
+    const messaging = this.firebase.messaging;
+    if (!messaging) {
+      this.logger.warn('FCM messaging not initialized. Skipping subscribeToTopic');
+      return { successCount: 0, failureCount: tokens.length, errors: [] };
+    }
+    
+    if (tokens.length === 0) {
+      return { successCount: 0, failureCount: 0, errors: [] };
+    }
+
+    try {
+      const response = await messaging.subscribeToTopic(tokens, topic);
+      this.logger.log(`Subscribed ${response.successCount} tokens to topic: ${topic}`);
+      
+      if (response.failureCount > 0) {
+        this.logger.warn(`Failed to subscribe ${response.failureCount} tokens to topic: ${topic}`);
+        response.errors.forEach((err, idx) => {
+          this.logger.error(`Token ${tokens[idx]}: ${err.error}`);
+        });
+      }
+      
+      return {
+        successCount: response.successCount,
+        failureCount: response.failureCount,
+        errors: response.errors,
+      };
+    } catch (error) {
+      this.logger.error(`Error subscribing to topic ${topic}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Unsubscribe multiple FCM tokens from a topic
+   * @param tokens Array of FCM tokens to unsubscribe
+   * @param topic Topic name to unsubscribe from
+   */
+  async unsubscribeFromTopic(tokens: string[], topic: string) {
+    const messaging = this.firebase.messaging;
+    if (!messaging) {
+      this.logger.warn('FCM messaging not initialized. Skipping unsubscribeFromTopic');
+      return { successCount: 0, failureCount: tokens.length, errors: [] };
+    }
+    
+    if (tokens.length === 0) {
+      return { successCount: 0, failureCount: 0, errors: [] };
+    }
+
+    try {
+      const response = await messaging.unsubscribeFromTopic(tokens, topic);
+      this.logger.log(`Unsubscribed ${response.successCount} tokens from topic: ${topic}`);
+      
+      if (response.failureCount > 0) {
+        this.logger.warn(`Failed to unsubscribe ${response.failureCount} tokens from topic: ${topic}`);
+        response.errors.forEach((err, idx) => {
+          this.logger.error(`Token ${tokens[idx]}: ${err.error}`);
+        });
+      }
+      
+      return {
+        successCount: response.successCount,
+        failureCount: response.failureCount,
+        errors: response.errors,
+      };
+    } catch (error) {
+      this.logger.error(`Error unsubscribing from topic ${topic}:`, error);
+      throw error;
+    }
+  }
 }
 
 
