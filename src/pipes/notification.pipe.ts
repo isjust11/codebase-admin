@@ -13,8 +13,8 @@ export class NotificationPipe implements PipeTransform {
     return {
       ...value,
       timestamp: new Date(),
-      status: value.status || NotificationStatus.PENDING,
-      type: value.type || NotificationType.ORDER,
+      status: value.status || NotificationStatus.UNREAD,
+      type: value.type || NotificationType.SYSTEM,
       priority: value.priority || NotificationPriority.MEDIUM,
     };
   }

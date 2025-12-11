@@ -15,20 +15,7 @@ export class NotificationFilter implements ExceptionFilter {
     const status = exception.getStatus();
 
     // Gửi thông báo lỗi
-    this.notificationService.notifySystemError({
-      orderId: request.body?.orderId || 'unknown',
-      userId: request.user?.id || 'unknown',
-      userName: request.user?.name || 'unknown',
-      error: exception.message,
-      event: NOTIFICATION_EVENTS.SYSTEM_ERROR,
-      room: NOTIFICATION_ROOMS.MANAGER_ROOM,
-      message: 'Có lỗi hệ thống xảy ra',
-      timestamp: new Date(),
-      status: NotificationStatus.FAILED,
-      type: NotificationType.SYSTEM,
-      priority: NotificationPriority.LOW,
-      tableStatus:0
-    });
+  
 
     response.status(status).json({
       statusCode: status,

@@ -1,13 +1,14 @@
 export enum NotificationStatus {
-  PENDING = 'PENDING',
-  PROCESSING = 'PROCESSING',
-  COMPLETED = 'COMPLETED',
-  FAILED = 'FAILED',
+  READ = 'READ',
+  UNREAD = 'UNREAD',
 }
 
 export enum NotificationType {
-  ORDER = 'ORDER',
-  PAYMENT = 'PAYMENT',
+  NEW_ARTICLE = 'NEW_ARTICLE', 
+  FOLK_MEDICINE = 'FOLK_MEDICINE',
+  HERBAL = 'HERBAL',
+  FEEDBACK = 'FEEDBACK',
+  DISEASE = 'DISEASE',
   SYSTEM = 'SYSTEM',
 }
 

@@ -1,74 +1,96 @@
 import { Injectable } from '@nestjs/common';
-import { NotificationsGateway } from '../gateways/notifications.gateway';
-import {
-  NOTIFICATION_EVENTS,
-  NOTIFICATION_ROOMS,
-  NOTIFICATION_MESSAGES,
-} from '../constants/notification.constants';
-import { NotificationData } from '../interfaces/notification.interface';
+import { InjectRepository } from '@nestjs/typeorm';
 import { NotificationStatus, NotificationType, NotificationPriority } from '../enums/notification.enum';
+import { Article } from 'src/entities/article.entity';
+import { DeepPartial, Repository } from 'typeorm';
+import { Notification } from 'src/entities/notification.entity';
+import { FolkMedicine } from 'src/entities/folk-medicine.entity';
+import { Feedback } from 'src/entities/feedback.entity';
 
 @Injectable()
 export class NotificationService {
-  constructor(private readonly notificationsGateway: NotificationsGateway) {}
+  constructor(
+    @InjectRepository(Notification)
+    private readonly notificationRepository: Repository<Notification>,
+  ) {}
 
-  // Gửi thông báo khi có order mới
-  async notifyNewOrder(data: Omit<NotificationData, 'event' | 'room' | 'message' | 'status' | 'type' | 'priority'>) {
-    const notificationData: NotificationData = {
-      ...data,
-      event: NOTIFICATION_EVENTS.NEW_ORDER,
-      room: NOTIFICATION_ROOMS.CHEF_ROOM,
-      message: NOTIFICATION_MESSAGES.NEW_ORDER,
-      timestamp: new Date(),
-      status: NotificationStatus.PENDING,
-      type: NotificationType.ORDER,
-      priority: NotificationPriority.HIGH,
-    };
-    this.notificationsGateway.notifyNewOrder(notificationData);
+  // find all notifications
+  findAll() {
+    return this.notificationRepository.find();
   }
 
-  // Gửi thông báo khi món ăn đã sẵn sàng
-  async notifyFoodReady(data: Omit<NotificationData, 'event' | 'room' | 'message' | 'status' | 'type' | 'priority'>) {
-    const notificationData: NotificationData = {
-      ...data,
-      event: NOTIFICATION_EVENTS.FOOD_READY,
-      room: NOTIFICATION_ROOMS.WAITER_ROOM,
-      message: NOTIFICATION_MESSAGES.FOOD_READY,
-      timestamp: new Date(),
-      status: NotificationStatus.PROCESSING,
-      type: NotificationType.ORDER,
-      priority: NotificationPriority.MEDIUM,
-    };
-    this.notificationsGateway.notifyFoodReady(notificationData);
+  // find one notification
+  findOne(id: number) {
+    return this.notificationRepository.findOne({ where: { id } });
   }
 
-  // Gửi thông báo khi có thanh toán
-  async notifyPayment(data: Omit<NotificationData, 'event' | 'room' | 'message' | 'status' | 'type' | 'priority'>) {
-    const notificationData: NotificationData = {
-      ...data,
-      event: NOTIFICATION_EVENTS.PAYMENT_RECEIVED,
-      room: NOTIFICATION_ROOMS.MANAGER_ROOM,
-      message: NOTIFICATION_MESSAGES.PAYMENT_RECEIVED,
-      timestamp: new Date(),
-      status: NotificationStatus.COMPLETED,
-      type: NotificationType.PAYMENT,
-      priority: NotificationPriority.LOW,
-    };
-    this.notificationsGateway.notifyPayment(notificationData);
+  // find notifications by user id
+  findByUserId(userId: number) {
+    return this.notificationRepository.find({ where: { userId } });
   }
 
-  // Gửi thông báo lỗi hệ thống
-  async notifySystemError(data: NotificationData) {
-    const notificationData: NotificationData = {
-      ...data,
-      event: NOTIFICATION_EVENTS.SYSTEM_ERROR,
-      room: NOTIFICATION_ROOMS.MANAGER_ROOM,
-      message: 'Có lỗi hệ thống xảy ra',
-      timestamp: new Date(),
-      status: NotificationStatus.FAILED,
-      type: NotificationType.SYSTEM,
-      priority: NotificationPriority.URGENT,
-    };
-    this.notificationsGateway.notifyRoom(NOTIFICATION_ROOMS.MANAGER_ROOM, NOTIFICATION_EVENTS.SYSTEM_ERROR, notificationData);
+  // find notifications by type
+  findByType(type: NotificationType) {
+    return this.notificationRepository.find({ where: { type } });
   }
-} 
+
+  // find notifications by status
+  findByStatus(status: NotificationStatus) {
+    return this.notificationRepository.find({ where: { status } });
+  }
+
+  // find notifications by priority
+  findByPriority(priority: NotificationPriority) {
+    return this.notificationRepository.find({ where: { priority } });
+  }
+
+  // find notifications by created at
+  findByCreatedAt(createdAt: Date) {
+    return this.notificationRepository.find({ where: { createdAt } });
+  }
+
+  // find notifications by updated at
+  findByUpdatedAt(updatedAt: Date) {
+    return this.notificationRepository.find({ where: { updatedAt } });
+  }
+  newNotification(type: NotificationType, data: any, title?: string, content?: string){
+    const template = this.buildTemplateNotification(type);
+    if (template) {
+      var notification = this.notificationRepository.create({
+        title: title ?? template.title,
+        content: content ?? template.content,
+        type: type,
+        status: NotificationStatus.UNREAD,
+        priority: NotificationPriority.MEDIUM,
+        metadata: data
+      });
+      return this.notificationRepository.save(notification);
+    }
+    return null;
+  }
+  // build template notification by type
+  buildTemplateNotification(type: NotificationType) {
+    switch (type) {
+      case NotificationType.NEW_ARTICLE:
+        return {
+          title: 'New article created',
+          content: 'New article created'
+        };
+      case NotificationType.FOLK_MEDICINE:
+        return {
+          title: 'New folk medicine created',
+          content: 'New folk medicine created'
+        };
+      case NotificationType.FEEDBACK:
+        return {
+          title: 'New feedback created',
+          content: 'New feedback created'
+        };
+      case NotificationType.SYSTEM:
+        return {
+          title: 'System error',
+          content: 'System error'
+        };
+    }
+  }
+}

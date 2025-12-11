@@ -13,6 +13,9 @@ import { InteractionTarget } from '../enums/interaction-target.enum';
 import { InteractionStats } from '../entities/interaction-stats.entity';
 import { CategoryTypeService } from './category-type.service';
 import { CategoryTypeEnum } from 'src/enums/category-type.enum';
+import { NotificationService } from './notification.service';
+import { NotificationType } from 'src/enums/notification.enum';
+import { FcmService } from './fcm.service';
 
 
 @Injectable()
@@ -23,8 +26,10 @@ export class ArticleService {
     private readonly authorService: AuthorService,
     private readonly categoryService: CategoryService,
     private readonly categoryTypeService: CategoryTypeService,
-    private readonly userInteractionService: UserInteractionService
-  ) { }
+    private readonly userInteractionService: UserInteractionService,
+    private readonly notificationService: NotificationService,
+    private readonly fcmService: FcmService
+  ) {}
 
   async findPagination(params: PaginationParams, userId?: number, articleCode?: string, categoryId?: number): Promise<PaginatedResponse<any>> {
     const { page = 1, size = 10, search = '' } = params;
@@ -138,7 +143,12 @@ export class ArticleService {
     }
 
     const article = this.articleRepository.create(data as DeepPartial<Article>);
-    return this.articleRepository.save(article);
+    const savedArticle = await this.articleRepository.save(article);
+    const sendResult = await this.fcmService.sendToTopic('all', { title: 'Có bài viết mới', body: article.title, data: article.id.toString() as any });
+    if (sendResult) {
+      this.notificationService.newNotification(NotificationType.NEW_ARTICLE, savedArticle,'Có bài viết mới',article.title);
+    }
+    return savedArticle;
   }
 
   async findByDiscovery(params: PaginationParams, categoryId: number): Promise<Article[]> {

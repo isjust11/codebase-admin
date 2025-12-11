@@ -24,39 +24,6 @@ export class NotificationController extends BaseController{
     super();
   }
 
-  @Post('new-order')
-  @RequirePermission('CREATE', 'notification')
-  @UsePipes(NotificationPipe, EventPipe, RoomPipe)
-  @Notification({ type: NotificationType.ORDER, priority: NotificationPriority.HIGH })
-  @Event({ event: NOTIFICATION_EVENTS.NEW_ORDER, description: 'Thông báo đơn hàng mới' })
-  @Room({ room: NOTIFICATION_ROOMS.CHEF_ROOM, description: 'Phòng đầu bếp' })
-  async createNewOrder(@Body() data: CreateNotificationDto & { timestamp: Date }) {
-    await this.notificationService.notifyNewOrder(data);
-    return { success: true, message: 'Thông báo đơn hàng mới đã được gửi' };
-  }
-
-  @Post('food-ready')
-  @RequirePermission('CREATE', 'notification')
-  @UsePipes(NotificationPipe, EventPipe, RoomPipe)
-  @Notification({ type: NotificationType.ORDER, priority: NotificationPriority.MEDIUM })
-  @Event({ event: NOTIFICATION_EVENTS.FOOD_READY, description: 'Thông báo món ăn đã sẵn sàng' })
-  @Room({ room: NOTIFICATION_ROOMS.WAITER_ROOM, description: 'Phòng nhân viên phục vụ' })
-  async notifyFoodReady(@Body() data: CreateNotificationDto & { timestamp: Date }) {
-    await this.notificationService.notifyFoodReady(data);
-    return { success: true, message: 'Thông báo món ăn đã sẵn sàng đã được gửi' };
-  }
-
-  @Post('payment')
-  @RequirePermission('CREATE', 'notification')
-  @UsePipes(NotificationPipe, EventPipe, RoomPipe)
-  @Notification({ type: NotificationType.PAYMENT, priority: NotificationPriority.LOW })
-  @Event({ event: NOTIFICATION_EVENTS.PAYMENT_RECEIVED, description: 'Thông báo thanh toán' })
-  @Room({ room: NOTIFICATION_ROOMS.MANAGER_ROOM, description: 'Phòng quản lý' })
-  async notifyPayment(@Body() data: CreateNotificationDto & { timestamp: Date }) {
-    await this.notificationService.notifyPayment(data);
-    return { success: true, message: 'Thông báo thanh toán đã được gửi' };
-  }
-
   @Post('fcm/send-token')
   @RequirePermission('CREATE', 'notification')
   async sendFcmToToken(@Body() body: { token: string; title: string; body: string; data?: Record<string, string> }) {

@@ -91,8 +91,8 @@ export class TableService {
       userId: 'system',
       userName: 'System',
       tableStatus:0,
-      status: NotificationStatus.PENDING,
-      type: NotificationType.ORDER,
+      status: NotificationStatus.UNREAD,
+      type: NotificationType.SYSTEM,
       priority: NotificationPriority.MEDIUM,
       additionalData: newTable
     };
@@ -143,8 +143,8 @@ export class TableService {
         userId: 'system',
         userName: 'System',
         tableStatus:0,
-        status: NotificationStatus.PENDING,
-        type: NotificationType.ORDER,
+        status: NotificationStatus.UNREAD,
+        type: NotificationType.SYSTEM,
         priority: NotificationPriority.MEDIUM,
         additionalData: updatedTable
       };
@@ -173,8 +173,8 @@ export class TableService {
       userId: 'system',
       userName: 'System',
       tableStatus:0,
-      status: NotificationStatus.PENDING,
-      type: NotificationType.ORDER,
+      status: NotificationStatus.UNREAD,
+      type: NotificationType.SYSTEM,
       priority: NotificationPriority.MEDIUM,
       additionalData: { id }
     };

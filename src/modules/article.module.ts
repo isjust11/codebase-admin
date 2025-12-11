@@ -8,9 +8,11 @@ import { CategoryModule } from './category.module';
 import { AuthorService } from 'src/services/author.service';
 import { Author } from 'src/entities/author.entity';
 import { UserInteractionModule } from './user-interaction.module';
+import { NotificationModule } from './notification.module';
 
 @Module({
   imports: [AuthModule,
+    NotificationModule,
             TypeOrmModule.forFeature([Article, Author]), 
             CategoryModule, 
             UserInteractionModule,

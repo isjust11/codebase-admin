@@ -18,17 +18,14 @@ import { MessageFilter } from '../filters/message.filter';
 import { CategoryModule } from './category.module';
 import { AuthModule } from './auth.module';
 import { Notification } from '../entities/notification.entity';
-import { NotificationTemplate } from '../entities/notification-template.entity';
 import { NotificationConfig } from '../entities/notification-config.entity';
 import { FcmToken } from '../entities/fcm-token.entity';
 import { NotificationRecordService } from '../services/notification-record.service';
-import { NotificationTemplateService } from '../services/notification-template.service';
 import { NotificationConfigService } from '../services/notification-config.service';
 import { FcmTokenService } from '../services/fcm-token.service';
 import { FirebaseService } from '../services/firebase.service';
 import { FcmService } from '../services/fcm.service';
 import { NotificationRecordController } from '../controllers/notification/notification-record.controller';
-import { NotificationTemplateController } from '../controllers/notification/notification-template.controller';
 import { NotificationConfigController } from '../controllers/notification/notification-config.controller';
 import { FcmTokenController } from '../controllers/notification/fcm-token.controller';
 
@@ -36,13 +33,12 @@ import { FcmTokenController } from '../controllers/notification/fcm-token.contro
   imports:[
     AuthModule,
     CategoryModule,
-    TypeOrmModule.forFeature([Notification, NotificationTemplate, NotificationConfig, FcmToken])
+    TypeOrmModule.forFeature([Notification, NotificationConfig, FcmToken])
   ],
   providers: [
     NotificationsGateway,
     NotificationService,
     NotificationRecordService,
-    NotificationTemplateService,
     NotificationConfigService,
     FcmTokenService,
     FirebaseService,
@@ -63,7 +59,6 @@ import { FcmTokenController } from '../controllers/notification/fcm-token.contro
   controllers: [
     NotificationController,
     NotificationRecordController,
-    NotificationTemplateController,
     NotificationConfigController,
     FcmTokenController,
   ],

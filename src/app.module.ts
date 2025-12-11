@@ -14,7 +14,6 @@ import { Permission } from './entities/permission.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { NotificationModule } from './modules/notification.module';
 import { Notification } from './entities/notification.entity';
-import { NotificationTemplate } from './entities/notification-template.entity';
 import { NotificationConfig } from './entities/notification-config.entity';
 import { FcmToken } from './entities/fcm-token.entity';
 import { UserInteraction } from './entities/user-interaction.entity';
@@ -104,7 +103,6 @@ import { Disease } from './entities/disease.entity';
         AdvertisingSlider,
         DataSource,
         Notification,
-        NotificationTemplate,
         NotificationConfig,
         FcmToken,
         UserInteraction,

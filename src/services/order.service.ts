@@ -82,20 +82,7 @@ export class OrderService {
 
     savedOrder.totalAmount = totalAmount;
     const result = await this.orderRepository.save(savedOrder);
-    const notificationData: NotificationData = {
-      event: NOTIFICATION_EVENTS.NEW_ORDER,
-      room: NOTIFICATION_ROOMS.MANAGER_ROOM,
-      message: NOTIFICATION_MESSAGES.NEW_ORDER,
-      timestamp: new Date(),
-      orderId: savedOrder.id.toString(),
-      userId: 'system',
-      userName: 'System',
-      tableStatus: table?.tableStatusId ?? 0,
-      status: NotificationStatus.PENDING,
-      type: NotificationType.ORDER,
-      priority: NotificationPriority.MEDIUM,
-      additionalData: savedOrder
-    };
+    
     // this.notificationsGateway.notifyAll(NOTIFICATION_EVENTS.NEW_ORDER, notificationData);
     return result;
   }

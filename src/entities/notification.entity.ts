@@ -1,6 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { NotificationStatus, NotificationType, NotificationPriority } from '../enums/notification.enum';
-import { NotificationTemplate } from './notification-template.entity';
 
 @Entity()
 export class Notification {
@@ -19,7 +18,7 @@ export class Notification {
   @Column({ type: 'enum', enum: NotificationPriority, default: NotificationPriority.LOW })
   priority: NotificationPriority;
 
-  @Column({ type: 'enum', enum: NotificationStatus, default: NotificationStatus.PENDING })
+  @Column({ type: 'enum', enum: NotificationStatus, default: NotificationStatus.UNREAD })
   status: NotificationStatus;
 
   @Column({ nullable: true })
@@ -30,13 +29,6 @@ export class Notification {
 
   @Column({ type: 'json', nullable: true })
   metadata: any;
-
-  @ManyToOne(() => NotificationTemplate, { nullable: true })
-  @JoinColumn({ name: 'templateId' })
-  template: NotificationTemplate;
-
-  @Column({ nullable: true })
-  templateId: number;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
