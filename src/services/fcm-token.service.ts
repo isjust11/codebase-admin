@@ -4,6 +4,7 @@ import { Like, Repository } from 'typeorm';
 import { FcmToken } from '../entities/fcm-token.entity';
 import { FcmTokenDto } from '../dtos/fcm-token.dto';
 import { FcmService } from './fcm.service';
+import { TopicSubscriptionService } from './topic-subscription.service';
 
 @Injectable()
 export class FcmTokenService {
@@ -12,6 +13,8 @@ export class FcmTokenService {
     private readonly fcmRepo: Repository<FcmToken>,
     @Inject(forwardRef(() => FcmService))
     private readonly fcmService: FcmService,
+    @Inject(forwardRef(() => TopicSubscriptionService))
+    private readonly topicSubscriptionService: TopicSubscriptionService,
   ) {}
 
   async findPagination(page = 1, size = 10, search = '') {
@@ -93,6 +96,19 @@ export class FcmTokenService {
     // Subscribe to topic using Firebase Admin SDK
     const result = await this.fcmService.subscribeToTopic(tokenStrings, topic);
     
+    // Track subscriptions in database for each user
+    if (result.successCount > 0) {
+      // Get unique user IDs from successfully subscribed tokens
+      const uniqueUserIds = [...new Set(tokens.map(t => t.userId).filter(id => id != null))];
+      
+      // Create subscription records
+      await Promise.all(
+        uniqueUserIds.map(uid => 
+          this.topicSubscriptionService.subscribe(uid, topic)
+        )
+      );
+    }
+    
     return {
       ...result,
       totalTokens: tokens.length,
@@ -128,6 +144,19 @@ export class FcmTokenService {
 
     // Unsubscribe from topic using Firebase Admin SDK
     const result = await this.fcmService.unsubscribeFromTopic(tokenStrings, topic);
+    
+    // Remove subscription records from database
+    if (result.successCount > 0) {
+      // Get unique user IDs from successfully unsubscribed tokens
+      const uniqueUserIds = [...new Set(tokens.map(t => t.userId).filter(id => id != null))];
+      
+      // Remove subscription records
+      await Promise.all(
+        uniqueUserIds.map(uid => 
+          this.topicSubscriptionService.unsubscribe(uid, topic)
+        )
+      );
+    }
     
     return {
       ...result,

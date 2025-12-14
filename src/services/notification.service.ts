@@ -53,7 +53,8 @@ export class NotificationService {
   findByUpdatedAt(updatedAt: Date) {
     return this.notificationRepository.find({ where: { updatedAt } });
   }
-  newNotification(type: NotificationType, data: any, title?: string, content?: string){
+  
+  newNotification(type: NotificationType, data: any, title?: string, content?: string, userId?: number){
     const template = this.buildTemplateNotification(type);
     if (template) {
       var notification = this.notificationRepository.create({
@@ -62,11 +63,51 @@ export class NotificationService {
         type: type,
         status: NotificationStatus.UNREAD,
         priority: NotificationPriority.MEDIUM,
-        metadata: data
+        metadata: data,
+        userId: userId, // Add userId to track which user this notification is for
       });
       return this.notificationRepository.save(notification);
     }
     return null;
+  }
+
+  /**
+   * Create notifications for multiple users (used for topic notifications)
+   * @param userIds Array of user IDs to create notifications for
+   * @param type Notification type
+   * @param data Notification metadata
+   * @param title Notification title
+   * @param content Notification content
+   */
+  async createNotificationsForUsers(
+    userIds: number[],
+    type: NotificationType,
+    data: any,
+    title?: string,
+    content?: string,
+  ) {
+    if (userIds.length === 0) {
+      return [];
+    }
+
+    const template = this.buildTemplateNotification(type);
+    if (!template) {
+      return [];
+    }
+
+    const notifications = userIds.map(userId => 
+      this.notificationRepository.create({
+        title: title ?? template.title,
+        content: content ?? template.content,
+        type: type,
+        status: NotificationStatus.UNREAD,
+        priority: NotificationPriority.MEDIUM,
+        metadata: data,
+        userId: userId,
+      })
+    );
+
+    return this.notificationRepository.save(notifications);
   }
   // build template notification by type
   buildTemplateNotification(type: NotificationType) {

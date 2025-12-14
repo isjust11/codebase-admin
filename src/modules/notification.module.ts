@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { NotificationsGateway } from '../gateways/notifications.gateway';
 import { NotificationService } from '../services/notification.service';
-import { NotificationController } from '../controllers/notification/notification.controller';
 import { NotificationGuard } from '../guards/notification.guard';
 import { EventGuard } from '../guards/event.guard';
 import { RoomGuard } from '../guards/room.guard';
@@ -20,12 +19,13 @@ import { AuthModule } from './auth.module';
 import { Notification } from '../entities/notification.entity';
 import { NotificationConfig } from '../entities/notification-config.entity';
 import { FcmToken } from '../entities/fcm-token.entity';
+import { TopicSubscription } from '../entities/topic-subscription.entity';
 import { NotificationRecordService } from '../services/notification-record.service';
 import { NotificationConfigService } from '../services/notification-config.service';
 import { FcmTokenService } from '../services/fcm-token.service';
 import { FirebaseService } from '../services/firebase.service';
 import { FcmService } from '../services/fcm.service';
-import { NotificationRecordController } from '../controllers/notification/notification-record.controller';
+import { TopicSubscriptionService } from '../services/topic-subscription.service';
 import { NotificationConfigController } from '../controllers/notification/notification-config.controller';
 import { FcmTokenController } from '../controllers/notification/fcm-token.controller';
 
@@ -33,7 +33,7 @@ import { FcmTokenController } from '../controllers/notification/fcm-token.contro
   imports:[
     AuthModule,
     CategoryModule,
-    TypeOrmModule.forFeature([Notification, NotificationConfig, FcmToken])
+    TypeOrmModule.forFeature([Notification, NotificationConfig, FcmToken, TopicSubscription])
   ],
   providers: [
     NotificationsGateway,
@@ -41,6 +41,7 @@ import { FcmTokenController } from '../controllers/notification/fcm-token.contro
     NotificationRecordService,
     NotificationConfigService,
     FcmTokenService,
+    TopicSubscriptionService,
     FirebaseService,
     FcmService,
     NotificationGuard,
@@ -57,11 +58,9 @@ import { FcmTokenController } from '../controllers/notification/fcm-token.contro
     MessageFilter,
   ],
   controllers: [
-    NotificationController,
-    NotificationRecordController,
     NotificationConfigController,
     FcmTokenController,
   ],
-  exports: [NotificationService, FcmService, FcmTokenService],
+  exports: [NotificationService, FcmService, FcmTokenService, TopicSubscriptionService],
 })
 export class NotificationModule {} 

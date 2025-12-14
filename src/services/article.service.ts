@@ -16,6 +16,7 @@ import { CategoryTypeEnum } from 'src/enums/category-type.enum';
 import { NotificationService } from './notification.service';
 import { NotificationType } from 'src/enums/notification.enum';
 import { FcmService } from './fcm.service';
+import { TopicSubscriptionService } from './topic-subscription.service';
 
 
 @Injectable()
@@ -28,6 +29,7 @@ export class ArticleService {
     private readonly categoryTypeService: CategoryTypeService,
     private readonly userInteractionService: UserInteractionService,
     private readonly notificationService: NotificationService,
+    private readonly topicSubscriptionService: TopicSubscriptionService,
     private readonly fcmService: FcmService
   ) {}
 
@@ -144,10 +146,35 @@ export class ArticleService {
 
     const article = this.articleRepository.create(data as DeepPartial<Article>);
     const savedArticle = await this.articleRepository.save(article);
-    const sendResult = await this.fcmService.sendToTopic('all', { title: 'Có bài viết mới', body: article.title, data: article.id.toString() as any });
+    
+    // Send FCM notification to topic
+    const topicName = 'topic-article';
+    const sendResult = await this.fcmService.sendToTopic(topicName, { 
+      title: 'Có bài viết mới', 
+      body: article.title, 
+      data: { articleId: article.id.toString() }
+    });
+    
     if (sendResult) {
-      this.notificationService.newNotification(NotificationType.NEW_ARTICLE, savedArticle,'Có bài viết mới',article.title);
+      // Get all users subscribed to this topic
+      const subscribedUserIds = await this.topicSubscriptionService.getUserIdsByTopic(topicName);
+      
+      if (subscribedUserIds.length > 0) {
+        // Create individual notifications for each subscribed user
+        await this.notificationService.createNotificationsForUsers(
+          subscribedUserIds,
+          NotificationType.NEW_ARTICLE,
+          savedArticle,
+          'Có bài viết mới',
+          article.title
+        );
+        
+        console.log(`Created ${subscribedUserIds.length} notifications for topic: ${topicName}`);
+      } else {
+        console.log(`No users subscribed to topic: ${topicName}`);
+      }
     }
+    
     return savedArticle;
   }
 
