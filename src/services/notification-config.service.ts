@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository, IsNull } from 'typeorm';
 import { NotificationConfig } from '../entities/notification-config.entity';
@@ -92,6 +92,12 @@ export class NotificationConfigService {
   }
 
   async remove(id: number) {
+    const existing = await this.findOne(id);
+    if (!existing) throw new NotFoundException('Config not found');
+    existing.isActive = false;
+    if(existing.isDefault){
+      throw new BadRequestException('Default config cannot be deleted');
+    }
     await this.configRepo.delete(id);
   }
 }

@@ -10,6 +10,19 @@ export class TopicSubscriptionService {
     private readonly subscriptionRepo: Repository<TopicSubscription>,
   ) {}
 
+  async findActive(): Promise<TopicSubscription[]> {
+    return this.subscriptionRepo.find({
+      where: { isActive: true },
+    });
+  }
+  async findAll(): Promise<TopicSubscription[]> {
+    return this.subscriptionRepo.find({
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  // create topic subscription
+
   /**
    * Subscribe a user to a topic
    */

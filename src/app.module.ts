@@ -145,7 +145,7 @@ import { TopicSubscription } from './entities/topic-subscription.entity';
     DashboardModule,
     UserInteractionModule,
     PageModule,
-    FeedbackModule
+    FeedbackModule,
   ],
   controllers: [FcmController],
 })

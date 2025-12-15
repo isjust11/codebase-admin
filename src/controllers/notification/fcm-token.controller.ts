@@ -188,60 +188,24 @@ export class FcmTokenController extends BaseController {
      }
    }
  
-   /**
-    * Get available topics to subscribe
-    * @route GET /topic-subscriptions/available-topics
-    */
-   @Get('available-topics')
-   async getAvailableTopics(@Res() res: Response) {
-     try {
-     // Define available topics
-     const topics = [
-       {
-         id: 'topic-article',
-         name: 'Bài viết mới',
-         description: 'Nhận thông báo khi có bài viết mới',
-         icon: '📝',
-         category: 'content',
-       },
-       {
-         id: 'topic-folk-medicine',
-         name: 'Bài thuốc dân gian',
-         description: 'Nhận thông báo về bài thuốc dân gian mới',
-         icon: '🌿',
-         category: 'content',
-       },
-       {
-         id: 'topic-news',
-         name: 'Tin tức',
-         description: 'Tin tức và cập nhật mới nhất',
-         icon: '📰',
-         category: 'news',
-       },
-       {
-         id: 'topic-updates',
-         name: 'Cập nhật hệ thống',
-         description: 'Thông báo về cập nhật và bảo trì',
-         icon: '🔔',
-         category: 'system',
-       },
-       {
-         id: 'topic-promotions',
-         name: 'Khuyến mãi',
-         description: 'Ưu đãi và chương trình khuyến mãi',
-         icon: '🎁',
-         category: 'marketing',
-       },
-     ];
- 
-       return this.success(res, {
-         success: true,
-         data: topics,
-       });
-     } catch (error) {
-       return this.error(res, error);
-     }
-   }
+  /**
+   * Get available topics to subscribe
+   * @route GET /fcm-tokens/available-topics
+   */
+  @Get('available-topics')
+  async getAvailableTopics(@Res() res: Response) {
+    try {
+      // Get active topics from database
+      const topics = await this.topicSubscriptionService.findAll();
+      
+      return this.success(res, {
+        success: true,
+        data: topics,
+      });
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
  
    /**
     * Batch subscribe to multiple topics
@@ -300,32 +264,33 @@ export class FcmTokenController extends BaseController {
        }
      }
  
-   /**
-    * Admin: Get all stats for all topics
-    * @route GET /topic-subscriptions/admin/stats
-    */
-   @Get('admin/stats')
-   @RequirePermission('READ', 'notification')
-   async getAllTopicsStats(@Res() res: Response) {
-     try {
-       const topics = [
-         'topic-article',
-         'topic-folk-medicine',
-         'topic-news',
-         'topic-updates',
-         'topic-promotions',
-       ];
-       const stats = await Promise.all(
-         topics.map(topic => this.topicSubscriptionService.getTopicStats(topic))
-       );
-       return this.success(res, {
-         success: true,
-         data: stats,
-       });
-     } catch (error) {
-       return this.error(res, error);
-     }
-   }
+  /**
+   * Admin: Get all stats for all topics
+   * @route GET /fcm-tokens/admin/stats
+   */
+  @Get('admin/stats')
+  @RequirePermission('READ', 'notification')
+  async getAllTopicsStats(@Res() res: Response) {
+    try {
+      // Get all topic subscriptions
+      const subscriptions = await this.topicSubscriptionService.findAll();
+      
+      // Get unique topics
+      const uniqueTopics = [...new Set(subscriptions.map(sub => sub.topic))];
+      
+      // Get stats for each topic
+      const stats = await Promise.all(
+        uniqueTopics.map(topic => this.topicSubscriptionService.getTopicStats(topic))
+      );
+      
+      return this.success(res, {
+        success: true,
+        data: stats,
+      });
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
  
    /**
     * Admin: Get subscribers for a topic
