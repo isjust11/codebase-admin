@@ -1,5 +1,6 @@
+import { NotificationType, NotificationPriority, NotificationStatus } from 'src/enums/notification.enum';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { NotificationStatus, NotificationType, NotificationPriority } from '../enums/notification.enum';
+
 
 @Entity()
 export class Notification {

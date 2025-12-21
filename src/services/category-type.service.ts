@@ -46,14 +46,6 @@ export class CategoryTypeService {
     });
   }
 
-  async findTipType(): Promise<CategoryType | null> {
-    return this.categoryTypeRepository.findOne({
-      where: {
-        code: CategoryTypeEnum.TIPS
-      }, relations: ['categories']
-    });
-  }
-
   async create(categoryType: CategoryType): Promise<CategoryType> {
     return this.categoryTypeRepository.save(categoryType);
   }

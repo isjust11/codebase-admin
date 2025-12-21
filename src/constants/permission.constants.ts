@@ -6,21 +6,9 @@ export const RESOURCES = {
   FEATURE: 'FEATURE',
   ARTICLE: 'ARTICLE',
   CATEGORY: 'CATEGORY',
-  ORDER: 'ORDER',
-  PAYMENT: 'PAYMENT',
-  RESERVATION: 'RESERVATION',
-  TABLE: 'TABLE',
-  EXAM: 'EXAM',
-  QUESTION: 'QUESTION',
   MEDIA: 'MEDIA',
   NOTIFICATION: 'NOTIFICATION',
-  HISTORY: 'HISTORY',
-  FOOD_ITEM: 'FOOD_ITEM',
   CATEGORY_TYPE: 'CATEGORY_TYPE',
-  AUTHOR: 'AUTHOR',
-  FOLK_MEDICINE: 'FOLK_MEDICINE',
-  HERBAL: 'HERBAL',
-  DATA_SOURCE: 'DATA_SOURCE',
   STATIC_PAGE: 'STATIC_PAGE',
 } as const;
 
@@ -77,28 +65,6 @@ export const PERMISSION_TEMPLATES = {
       { action: ACTIONS.EXPORT, name: 'Xuất bài viết', code: 'ARTICLE_EXPORT' },
     ]
   },
-  [RESOURCES.ORDER]: {
-    name: 'Quản lý đơn hàng',
-    permissions: [
-      { action: ACTIONS.READ, name: 'Xem đơn hàng', code: 'ORDER_READ' },
-      { action: ACTIONS.CREATE, name: 'Tạo đơn hàng', code: 'ORDER_CREATE' },
-      { action: ACTIONS.UPDATE, name: 'Cập nhật đơn hàng', code: 'ORDER_UPDATE' },
-      { action: ACTIONS.DELETE, name: 'Xóa đơn hàng', code: 'ORDER_DELETE' },
-      { action: ACTIONS.APPROVE, name: 'Phê duyệt đơn hàng', code: 'ORDER_APPROVE' },
-      { action: ACTIONS.REJECT, name: 'Từ chối đơn hàng', code: 'ORDER_REJECT' },
-    ]
-  },
-  [RESOURCES.PAYMENT]: {
-    name: 'Quản lý thanh toán',
-    permissions: [
-      { action: ACTIONS.READ, name: 'Xem thanh toán', code: 'PAYMENT_READ' },
-      { action: ACTIONS.CREATE, name: 'Tạo thanh toán', code: 'PAYMENT_CREATE' },
-      { action: ACTIONS.UPDATE, name: 'Cập nhật thanh toán', code: 'PAYMENT_UPDATE' },
-      { action: ACTIONS.DELETE, name: 'Xóa thanh toán', code: 'PAYMENT_DELETE' },
-      { action: ACTIONS.APPROVE, name: 'Phê duyệt thanh toán', code: 'PAYMENT_APPROVE' },
-      { action: ACTIONS.REJECT, name: 'Từ chối thanh toán', code: 'PAYMENT_REJECT' },
-    ]
-  },
   [RESOURCES.CATEGORY]: {
     name: 'Quản lý danh mục',
     permissions: [
@@ -135,42 +101,6 @@ export const PERMISSION_TEMPLATES = {
       { action: ACTIONS.DELETE, name: 'Xóa loại danh mục', code: 'CATEGORY_TYPE_DELETE' },
     ]
   },
-  [RESOURCES.TABLE]: {
-    name: 'Quản lý bàn',
-    permissions: [
-      { action: ACTIONS.READ, name: 'Xem bàn', code: 'TABLE_READ' },
-      { action: ACTIONS.CREATE, name: 'Tạo bàn', code: 'TABLE_CREATE' },
-      { action: ACTIONS.UPDATE, name: 'Cập nhật bàn', code: 'TABLE_UPDATE' },
-      { action: ACTIONS.DELETE, name: 'Xóa bàn', code: 'TABLE_DELETE' },
-    ]
-  },
-  [RESOURCES.RESERVATION]: {
-    name: 'Quản lý đặt bàn',
-    permissions: [
-      { action: ACTIONS.READ, name: 'Xem đặt bàn', code: 'RESERVATION_READ' },
-      { action: ACTIONS.CREATE, name: 'Tạo đặt bàn', code: 'RESERVATION_CREATE' },
-      { action: ACTIONS.UPDATE, name: 'Cập nhật đặt bàn', code: 'RESERVATION_UPDATE' },
-      { action: ACTIONS.DELETE, name: 'Xóa đặt bàn', code: 'RESERVATION_DELETE' },
-    ]
-  },
-  [RESOURCES.EXAM]: {
-    name: 'Quản lý đề thi',
-    permissions: [
-      { action: ACTIONS.READ, name: 'Xem đề thi', code: 'EXAM_READ' },
-      { action: ACTIONS.CREATE, name: 'Tạo đề thi', code: 'EXAM_CREATE' },
-      { action: ACTIONS.UPDATE, name: 'Cập nhật đề thi', code: 'EXAM_UPDATE' },
-      { action: ACTIONS.DELETE, name: 'Xóa đề thi', code: 'EXAM_DELETE' },
-    ]
-  },
-  [RESOURCES.QUESTION]: {
-    name: 'Quản lý câu hỏi',
-    permissions: [
-      { action: ACTIONS.READ, name: 'Xem câu hỏi', code: 'QUESTION_READ' },
-      { action: ACTIONS.CREATE, name: 'Tạo câu hỏi', code: 'QUESTION_CREATE' },
-      { action: ACTIONS.UPDATE, name: 'Cập nhật câu hỏi', code: 'QUESTION_UPDATE' },
-      { action: ACTIONS.DELETE, name: 'Xóa câu hỏi', code: 'QUESTION_DELETE' },
-    ]
-  },
   [RESOURCES.MEDIA]: {
     name: 'Quản lý media',
     permissions: [
@@ -189,42 +119,6 @@ export const PERMISSION_TEMPLATES = {
       { action: ACTIONS.CREATE, name: 'Tạo thông báo', code: 'NOTIFICATION_CREATE' },
       { action: ACTIONS.UPDATE, name: 'Cập nhật thông báo', code: 'NOTIFICATION_UPDATE' },
       { action: ACTIONS.DELETE, name: 'Xóa thông báo', code: 'NOTIFICATION_DELETE' },
-    ]
-  },
-  [RESOURCES.AUTHOR]: {
-    name: 'Quản lý tác giả',
-    permissions: [
-      { action: ACTIONS.READ, name: 'Xem tác giả', code: 'AUTHOR_READ' },
-      { action: ACTIONS.CREATE, name: 'Tạo tác giả', code: 'AUTHOR_CREATE' },
-      { action: ACTIONS.UPDATE, name: 'Cập nhật tác giả', code: 'AUTHOR_UPDATE' },
-      { action: ACTIONS.DELETE, name: 'Xóa tác giả', code: 'AUTHOR_DELETE' },
-    ]
-  },
-  [RESOURCES.FOLK_MEDICINE]: {
-    name: 'Quản lý thuốc dân tộc',
-    permissions: [
-      { action: ACTIONS.READ, name: 'Xem thuốc dân tộc', code: 'FOLK_MEDICINE_READ' },
-      { action: ACTIONS.CREATE, name: 'Tạo thuốc dân tộc', code: 'FOLK_MEDICINE_CREATE' },
-      { action: ACTIONS.UPDATE, name: 'Cập nhật thuốc dân tộc', code: 'FOLK_MEDICINE_UPDATE' },
-      { action: ACTIONS.DELETE, name: 'Xóa thuốc dân tộc', code: 'FOLK_MEDICINE_DELETE' },
-    ]
-  },
-  [RESOURCES.HERBAL]: {
-    name: 'Quản lý thuốc thảo dược',
-    permissions: [
-      { action: ACTIONS.READ, name: 'Xem thuốc thảo dược', code: 'HERBAL_READ' },
-      { action: ACTIONS.CREATE, name: 'Tạo thuốc thảo dược', code: 'HERBAL_CREATE' },
-      { action: ACTIONS.UPDATE, name: 'Cập nhật thuốc thảo dược', code: 'HERBAL_UPDATE' },
-      { action: ACTIONS.DELETE, name: 'Xóa thuốc thảo dược', code: 'HERBAL_DELETE' },
-    ]
-  },
-  [RESOURCES.DATA_SOURCE]: {
-    name: 'Quản lý nguồn dữ liệu',
-    permissions: [
-      { action: ACTIONS.READ, name: 'Xem nguồn dữ liệu', code: 'DATA_SOURCE_READ' },
-      { action: ACTIONS.CREATE, name: 'Tạo nguồn dữ liệu', code: 'DATA_SOURCE_CREATE' },
-      { action: ACTIONS.UPDATE, name: 'Cập nhật nguồn dữ liệu', code: 'DATA_SOURCE_UPDATE' },
-      { action: ACTIONS.DELETE, name: 'Xóa nguồn dữ liệu', code: 'DATA_SOURCE_DELETE' },
     ]
   },
   [RESOURCES.STATIC_PAGE]: {

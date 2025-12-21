@@ -5,10 +5,7 @@ export enum NotificationStatus {
 
 export enum NotificationType {
   NEW_ARTICLE = 'NEW_ARTICLE', 
-  FOLK_MEDICINE = 'FOLK_MEDICINE',
-  HERBAL = 'HERBAL',
   FEEDBACK = 'FEEDBACK',
-  DISEASE = 'DISEASE',
   SYSTEM = 'SYSTEM',
 }
 

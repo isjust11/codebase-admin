@@ -1,11 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { NotificationStatus, NotificationType, NotificationPriority } from '../enums/notification.enum';
-import { Article } from 'src/entities/article.entity';
-import { DeepPartial, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Notification } from 'src/entities/notification.entity';
-import { FolkMedicine } from 'src/entities/folk-medicine.entity';
-import { Feedback } from 'src/entities/feedback.entity';
+import { NotificationPriority, NotificationStatus, NotificationType } from 'src/enums/notification.enum';
 
 @Injectable()
 export class NotificationService {
@@ -55,7 +52,7 @@ export class NotificationService {
   }
   
   newNotification(type: NotificationType, data: any, title?: string, content?: string, userId?: number){
-    const template = this.buildTemplateNotification(type);
+    const template = this.buildTemplateNotification(type.toString());
     if (template) {
       var notification = this.notificationRepository.create({
         title: title ?? template.title,
@@ -97,8 +94,8 @@ export class NotificationService {
 
     const notifications = userIds.map(userId => 
       this.notificationRepository.create({
-        title: title ?? template.title,
-        content: content ?? template.content,
+        title: title ?? template.title as string,
+        content: content ?? template.content as string,
         type: type,
         status: NotificationStatus.UNREAD,
         priority: NotificationPriority.MEDIUM,
@@ -110,24 +107,19 @@ export class NotificationService {
     return this.notificationRepository.save(notifications);
   }
   // build template notification by type
-  buildTemplateNotification(type: NotificationType) {
+  buildTemplateNotification(type: string) {
     switch (type) {
-      case NotificationType.NEW_ARTICLE:
+      case 'NEW_ARTICLE':
         return {
           title: 'New article created',
           content: 'New article created'
         };
-      case NotificationType.FOLK_MEDICINE:
-        return {
-          title: 'New folk medicine created',
-          content: 'New folk medicine created'
-        };
-      case NotificationType.FEEDBACK:
+      case 'FEEDBACK':
         return {
           title: 'New feedback created',
           content: 'New feedback created'
         };
-      case NotificationType.SYSTEM:
+      case 'SYSTEM':
         return {
           title: 'System error',
           content: 'System error'

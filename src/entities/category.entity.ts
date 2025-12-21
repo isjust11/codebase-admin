@@ -1,12 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, CreateDateColumn, UpdateDateColumn, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 import { CategoryType } from './category-type.entity';
-import { FoodItem } from './food-item.entity';
-import { Table } from './table.entity';
-import { Reservation } from './reservation.entity';
-import { Order } from './order.entity';
 import { Feature } from './feature.entity';
-import { FolkMedicine } from './folk-medicine.entity';
-import { Product } from './product.entity';
 import { Book } from './book.entity';
 
 @Entity()
@@ -52,38 +46,8 @@ export class Category {
   @Column()
   categoryTypeId: number;
 
-  @OneToMany(() => Product, product => product.category)
-  products: Product[];
-
-  @OneToMany(() => FoodItem, foodItem => foodItem.foodCategory)
-  foodItems: FoodItem[];
-
-  @OneToMany(() => FoodItem, foodItem => foodItem.statusCategory)
-  foodStatusItems: FoodItem[];
-
-  @OneToMany(() => FoodItem, foodItem => foodItem.unitCategory)
-  foodUnitItems: FoodItem[];
-
-  @OneToMany(() => Table, table => table.tableType)
-  tableType: Table[];
-
-  @OneToMany(() => Table, table => table.tableStatus)
-  tableStatus: Table[];
-
-  @OneToMany(() => Table, table => table.tableArea)
-  tableArea: Table[];
-
-  @OneToMany(() => Reservation, res => res.reservationStatus)
-  reservation: Reservation[];
-
-  @OneToMany(() => Order, order => order.orderStatus)
-  orders: Order[];
-
   @OneToMany(() => Feature, features => features.featureType)
   feature: Feature[];
-
-  @OneToMany(() => FolkMedicine, folkMedicine => folkMedicine.category)
-  folkMedicines: FolkMedicine[];
 
   @OneToMany(() => Book, book => book.category)
   books: Book[];

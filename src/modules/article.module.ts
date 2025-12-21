@@ -5,19 +5,17 @@ import { ArticleController } from 'src/controllers/article/article.controller';
 import { ArticleService } from 'src/services/article.service';
 import { AuthModule } from './auth.module';
 import { CategoryModule } from './category.module';
-import { AuthorService } from 'src/services/author.service';
-import { Author } from 'src/entities/author.entity';
 import { UserInteractionModule } from './user-interaction.module';
 import { NotificationModule } from './notification.module';
 
 @Module({
   imports: [AuthModule,
     NotificationModule,
-            TypeOrmModule.forFeature([Article, Author]), 
+            TypeOrmModule.forFeature([Article]), 
             CategoryModule, 
             UserInteractionModule,
           ],
-  providers: [ArticleService, AuthorService],
+  providers: [ArticleService],
   controllers: [ArticleController],
   exports: [ArticleService],
 })

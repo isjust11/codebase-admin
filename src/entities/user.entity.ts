@@ -2,9 +2,6 @@ import { Entity, Column, PrimaryGeneratedColumn, BeforeInsert, ManyToMany, JoinT
 import * as bcrypt from 'bcrypt';
 import { Role } from './role.entity';
 import { Exclude } from 'class-transformer';
-import { Reservation } from './reservation.entity';
-import { Order } from './order.entity';
-import { UserInteraction } from './user-interaction.entity';
 import { ReadingProgress } from './reading-progress.entity';
 
 @Entity()
@@ -104,15 +101,6 @@ export class User {
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
   updatedAt: Date;
-
-  @OneToMany(() => Reservation, reservation => reservation.account)
-  reservations: Reservation[];
-
-  @OneToMany(() => Order, order => order.account)
-  orders: Order[];
-
-  @OneToMany(() => UserInteraction, interaction => interaction.user)
-  interactions: UserInteraction[];
 
   @OneToMany(() => ReadingProgress, progress => progress.user)
   readingProgress: ReadingProgress[];

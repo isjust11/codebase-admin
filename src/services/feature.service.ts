@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Like, Repository } from 'typeorm';
-import { Role } from '../entities/role.entity';
+import { Repository } from 'typeorm';
 import { AssignRoleDto } from 'src/dtos/assign-role.dto';
 import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
 import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';

@@ -19,12 +19,12 @@ import {
   UpdateUserInteractionDto,
   UserInteractionQueryDto,
 } from '../../dtos/user-interaction.dto';
-import { InteractionType } from '../../enums/interaction-type.enum';
-import { InteractionTarget } from '../../enums/interaction-target.enum';
 import { Response } from 'express';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { BaseController } from '../base/base.controller';
 import { UserInteraction } from 'src/entities/user-interaction.entity';
+import { InteractionTarget } from 'src/enums/interaction-target.enum';
+import { InteractionType } from 'src/enums/interaction-type.enum';
 
 @Controller('user-interactions')
 @UseGuards(JwtAuthGuard)
@@ -132,31 +132,11 @@ export class UserInteractionController extends BaseController {
     }
   }
 
-  @Get('status/:targetType/:targetId')
-  async getInteractionStatus(
-    @Request() req: any,
-    @Param('targetType') targetType: InteractionTarget,
-    @Param('targetId') targetId: string,
-    @Res() res: Response,
-  ) {
-    try {
-      const userId = req.user.id;
-      const targetNumber = this.decode(targetId);
-      const data = await this.userInteractionService.getUserInteractionStatus(
-        userId,
-        targetType,
-        targetNumber,
-      );
-      return this.success(res, data);
-    } catch (error) {
-      return this.error(res, error);
-    }
-  }
 
   @Post('view/:targetType/:targetId')
   async view(
     @Request() req: any,
-    @Param('targetType') targetType: InteractionTarget,
+    @Param('targetType') targetType: string,
     @Param('targetId') targetId: string,
     @Res() res: Response,
   ) {
@@ -165,7 +145,7 @@ export class UserInteractionController extends BaseController {
       const targetIdNumber = this.decode(targetId);
       const data = await this.userInteractionService.createInteraction(userId, {
         interactionType: InteractionType.VIEW,
-        targetType, 
+        targetType: targetType as InteractionTarget,
         targetId: targetIdNumber,
       });
       return this.success(res, data);
@@ -179,7 +159,7 @@ export class UserInteractionController extends BaseController {
   @HttpCode(HttpStatus.CREATED)
   async like(
     @Request() req: any,
-    @Param('targetType') targetType: InteractionTarget,
+    @Param('targetType') targetType: string,
     @Param('targetId') targetId: string,
     @Res() res: Response,
   ) {
@@ -188,7 +168,7 @@ export class UserInteractionController extends BaseController {
       const targetNumber = this.decode(targetId)
       const data = await this.userInteractionService.createInteraction(userId, {
         interactionType: InteractionType.LIKE,
-        targetType,
+        targetType: targetType as InteractionTarget,
         targetId: targetNumber,
       });
       return this.success(res, data);
@@ -202,7 +182,7 @@ export class UserInteractionController extends BaseController {
   @HttpCode(HttpStatus.CREATED)
   async bookmark(
     @Request() req: any,
-    @Param('targetType') targetType: InteractionTarget,
+    @Param('targetType') targetType: string,
     @Param('targetId') targetId: string,
     @Res() res: Response,
   ) {
@@ -211,7 +191,7 @@ export class UserInteractionController extends BaseController {
       const targetIdNumber = this.decode(targetId);
       const data = await this.userInteractionService.createInteraction(userId, {
         interactionType: InteractionType.BOOKMARK,
-        targetType,
+        targetType: targetType as InteractionTarget,
         targetId: targetIdNumber,
       });
       return this.success(res, data);
@@ -224,7 +204,7 @@ export class UserInteractionController extends BaseController {
   @HttpCode(HttpStatus.CREATED)
   async share(
     @Request() req: any,
-    @Param('targetType') targetType: InteractionTarget,
+    @Param('targetType') targetType: string,
     @Param('targetId') targetId: string,
     @Body() body: { sharePlatform?: string },
     @Res() res: Response,
@@ -234,7 +214,7 @@ export class UserInteractionController extends BaseController {
       const targetIdNumber = this.decode(targetId);
       const data = await this.userInteractionService.createInteraction(userId, {
         interactionType: InteractionType.SHARE,
-        targetType,
+        targetType: targetType as InteractionTarget,
         targetId: targetIdNumber,
         sharePlatform: body.sharePlatform,
       });
@@ -249,7 +229,7 @@ export class UserInteractionController extends BaseController {
   @HttpCode(HttpStatus.CREATED)
   async rate(
     @Request() req: any,
-    @Param('targetType') targetType: InteractionTarget,
+    @Param('targetType') targetType: string,
     @Param('targetId') targetId: string,
     @Body() body: { rating: number },
     @Res() res: Response,
@@ -259,7 +239,7 @@ export class UserInteractionController extends BaseController {
       const targetIdNumber = this.decode(targetId);
       const data = await this.userInteractionService.createInteraction(userId, {
         interactionType: InteractionType.RATE,
-        targetType,
+        targetType: targetType as InteractionTarget,
         targetId: targetIdNumber,
         rating: body.rating,
       });
@@ -273,7 +253,7 @@ export class UserInteractionController extends BaseController {
   @HttpCode(HttpStatus.CREATED)
   async follow(
     @Request() req: any,
-    @Param('targetType') targetType: InteractionTarget,
+    @Param('targetType') targetType: string,
     @Param('targetId') targetId: string,
     @Res() res: Response,
   ) {
@@ -282,7 +262,7 @@ export class UserInteractionController extends BaseController {
       const targetIdNumber = this.decode(targetId);
       const data = await this.userInteractionService.createInteraction(userId, {
         interactionType: InteractionType.FOLLOW,
-        targetType,
+        targetType: targetType as InteractionTarget,
         targetId: targetIdNumber,
       });
       return this.success(res, data);
@@ -297,6 +277,7 @@ export class UserInteractionController extends BaseController {
   async unlike(
     @Request() req: any,
     @Param('targetType') targetType: InteractionTarget,
+    @Param('interactionType') interactionType: InteractionType,
     @Param('targetId') targetId: string,
     @Res() res: Response,
   ) {
@@ -305,9 +286,9 @@ export class UserInteractionController extends BaseController {
       const targetIdNumber = this.decode(targetId);
       const data = await this.userInteractionService.removeInteraction(
         userId,
-        targetType,
+        targetType as InteractionTarget,
         targetIdNumber,
-        InteractionType.LIKE,
+        interactionType as InteractionType,
       );
       return this.success(res, new UserInteraction(
       ));
@@ -320,6 +301,7 @@ export class UserInteractionController extends BaseController {
   async unbookmark(
     @Request() req: any,
     @Param('targetType') targetType: InteractionTarget,
+    @Param('interactionType') interactionType: InteractionType,
     @Param('targetId') targetId: string,
     @Res() res: Response,
   ) {
@@ -330,7 +312,7 @@ export class UserInteractionController extends BaseController {
         userId,
         targetType,
         targetIdNumber,
-        InteractionType.BOOKMARK,
+        interactionType,
       );
       return this.success(res, data);
     } catch (error) {
@@ -343,6 +325,7 @@ export class UserInteractionController extends BaseController {
   async unfollow(
     @Request() req: any,
     @Param('targetType') targetType: InteractionTarget,
+    @Param('interactionType') interactionType: InteractionType,
     @Param('targetId') targetId: string,
     @Res() res: Response,
   ) {
@@ -353,7 +336,7 @@ export class UserInteractionController extends BaseController {
         userId,
         targetType,
         targetIdNumber,
-        InteractionType.FOLLOW,
+        interactionType,
       );
       return this.success(res, data);
     } catch (error) {

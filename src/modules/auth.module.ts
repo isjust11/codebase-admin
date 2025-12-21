@@ -4,7 +4,6 @@ import { RoleService } from '../services/role.service';
 import { Role } from '../entities/role.entity';
 import { Feature } from '../entities/feature.entity';
 import { Permission } from '../entities/permission.entity';
-import { Guest } from 'src/entities/guest.entity';
 import { User } from 'src/entities/user.entity';
 import { Media } from 'src/entities/media.entity';
 import { RefreshToken } from 'src/entities/refresh-token.entity';
@@ -39,7 +38,6 @@ import { APP_GUARD } from '@nestjs/core';
     TypeOrmModule.forFeature([
       Feature,
       User,
-      Guest,
       Media,
       Permission,
       Role,

@@ -20,7 +20,7 @@ import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { BaseController } from '../base/base.controller';
 
 @ApiTags('Books')
-@Controller('api/books')
+@Controller('books')
 export class BookController extends BaseController{
   constructor(private bookService: BookService) {
     super();

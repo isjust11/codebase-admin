@@ -1,11 +1,10 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Like, Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
 import { RegisterDto } from '../dtos/auth.dto';
 import { Role } from '../entities/role.entity';
 import { UpdateUserDto } from '../dtos/user.dto';
-import { RoleEnum } from 'src/enums/role.enum';
 import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
 
 @Injectable()
@@ -87,7 +86,7 @@ export class UserService {
     if (isFirstUser) {
       const adminRole = await this.roleRepository.findOne({
         where: {
-          code: RoleEnum.ADMIN,
+          code: 'ADMIN',
         },
       });
       if (adminRole) {
@@ -98,7 +97,7 @@ export class UserService {
     } else {
       const roleCustomer = await this.roleRepository.findOne({
         where: {
-          code: RoleEnum.CUSTOMER,
+          code: 'CUSTOMER',
         },
       });
       if (roleCustomer) {

@@ -1,6 +1,6 @@
 import { IsEnum, IsNumber, IsOptional, IsString, IsDecimal, IsObject, Min, Max } from 'class-validator';
-import { InteractionType } from '../enums/interaction-type.enum';
-import { InteractionTarget } from '../enums/interaction-target.enum';
+import { InteractionType } from 'src/enums/interaction-type.enum';
+import { InteractionTarget } from 'src/enums/interaction-target.enum';
 
 export class CreateUserInteractionDto {
   @IsEnum(InteractionType)

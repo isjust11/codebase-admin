@@ -2,60 +2,29 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MoreThanOrEqual, Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
-import { Order } from '../entities/order.entity';
-import { Product } from '../entities/product.entity';
 import { Article } from '../entities/article.entity';
-import { Author } from '../entities/author.entity';
-import { Herbal } from '../entities/herbal.entity';
 
 @Injectable()
 export class DashboardService {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
-    @InjectRepository(Order)
-    private orderRepository: Repository<Order>,
-    @InjectRepository(Product)
-    private productRepository: Repository<Product>,
     @InjectRepository(Article)
     private articleRepository: Repository<Article>,
-    @InjectRepository(Author)
-    private authorRepository: Repository<Author>,
-    @InjectRepository(Herbal)
-    private herbalRepository: Repository<Herbal>,
   ) {}
 
   async getOverview() {
     const [
       totalUsers,
       totalOrders,
-      totalRevenue,
-      totalProducts,
-      totalArticles,
-      totalAuthors,
-      totalHerbals,
     ] = await Promise.all([
       this.userRepository.count(),
-      this.orderRepository.count(),
-      this.orderRepository
-        .createQueryBuilder('order')
-        .select('SUM(order.totalAmount)', 'total')
-        .where('order.statusId = :status', { status: 'completed' })
-        .getRawOne(),
-      this.productRepository.count(),
       this.articleRepository.count(),
-      this.authorRepository.count(),
-      this.herbalRepository.count(),
     ]);
 
     return {
       totalUsers,
       totalOrders,
-      totalRevenue: totalRevenue?.total || 0,
-      totalProducts,
-      totalArticles,
-      totalAuthors,
-      totalHerbals,
     };
   }
 
@@ -80,24 +49,9 @@ export class DashboardService {
     const [
       newUsers,
       newOrders,
-      newRevenue,
-      newProducts,
-      newArticles,
     ] = await Promise.all([
       this.userRepository.count({
         where: { createdAt: MoreThanOrEqual(startDate) },
-      }),
-      this.orderRepository.count({
-        where: { createdAt: MoreThanOrEqual(startDate) },
-      }),
-      this.orderRepository
-        .createQueryBuilder('order')
-        .select('SUM(order.totalAmount)', 'total')
-        .where('order.createdAt >= :startDate', { startDate })
-        .andWhere('order.statusId = :status', { status: 'completed' })
-        .getRawOne(),
-      this.productRepository.count({
-          where: { createdAt: MoreThanOrEqual(startDate) },
       }),
       this.articleRepository.count({
         where: { createdAt: MoreThanOrEqual(startDate) },
@@ -108,14 +62,11 @@ export class DashboardService {
       period,
       newUsers,
       newOrders,
-      newRevenue: newRevenue?.total || 0,
-      newProducts,
-      newArticles,
     };
   }
 
   async getRecentActivities(limit: number) {
-    const activities = await this.orderRepository
+    const activities = await this.articleRepository
       .createQueryBuilder('order')
       .leftJoinAndSelect('order.account', 'user')
       .select([
@@ -133,25 +84,13 @@ export class DashboardService {
     return activities.map(activity => ({
       id: activity.id,
       type: 'order',
-      description: `Đơn hàng ${activity.statusId} từ ${activity.account?.username}`,
-      amount: activity.totalAmount,
-      timestamp: activity.createdAt,
-      user: activity.account?.username,
     }));
   }
 
   async getTopPerformers(type: string, limit: number) {
     switch (type) {
       case 'products':
-        return this.productRepository
-          .createQueryBuilder('product')
-          .select([
-            'product.id',
-            'product.title'
-          ])
-          .limit(limit)
-          .getMany();
-
+        return [];
       case 'articles':
         return this.articleRepository
           .createQueryBuilder('article')
@@ -166,14 +105,7 @@ export class DashboardService {
           .getMany();
 
       case 'authors':
-        return this.authorRepository
-          .createQueryBuilder('author')
-          .select([
-            'author.id',
-            'author.name'
-          ])
-          .limit(limit)
-          .getMany();
+        return [];
 
       default:
         return [];
@@ -203,15 +135,14 @@ export class DashboardService {
         groupBy = 'DATE(order.createdAt)';
     }
 
-    const revenueData = await this.orderRepository
-      .createQueryBuilder('order')
+    const revenueData = await this.articleRepository
+      .createQueryBuilder('article')
       .select([
         `${groupBy} as date`,
-        'SUM(order.totalAmount) as revenue',
-        'COUNT(order.id) as orders',
+        'SUM(article.view) as revenue',
+        'COUNT(article.id) as orders',
       ])
-      .where('order.createdAt >= :startDate', { startDate })
-      .andWhere('order.statusId = :status', { status: 'completed'   })
+      .where('article.createdAt >= :startDate', { startDate })
       .groupBy('date')
       .orderBy('date', 'ASC')
       .getRawMany();

@@ -4,9 +4,7 @@ import { Repository, Like } from 'typeorm';
 import { Category } from '../entities/category.entity';
 import { CategoryType } from '../entities/category-type.entity';
 import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
-import { CategoryTypeEnum } from '../enums/category-type.enum';
-import { EncryptionUtil } from 'src/utils/encryption.util';
-import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
+import { CategoryTypeEnum } from 'src/enums/category-type.enum';
 
 @Injectable()
 export class CategoryService {

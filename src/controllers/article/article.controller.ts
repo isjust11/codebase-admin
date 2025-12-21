@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Param, Put, Delete, Query, UseGuards, Request, Res } from '@nestjs/common';
-import { ArticleService } from '../../services/article.service';
+import { ArticleService } from 'src/services/article.service';
 import { ArticleDto } from '../../dtos/article.dto';
 import { PaginationParams } from 'src/dtos/filter.dto';
 import { BaseController } from '../base/base.controller';

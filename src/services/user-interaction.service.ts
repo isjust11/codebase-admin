@@ -7,9 +7,6 @@ import { CreateUserInteractionDto, UpdateUserInteractionDto, UserInteractionQuer
 import { InteractionType } from '../enums/interaction-type.enum';
 import { InteractionTarget } from '../enums/interaction-target.enum';
 import { Article } from '../entities/article.entity';
-import { Herbal } from '../entities/herbal.entity';
-import { FolkMedicine } from '../entities/folk-medicine.entity';
-import { Author } from '../entities/author.entity';
 import { Category } from '../entities/category.entity';
 
 @Injectable()
@@ -21,12 +18,6 @@ export class UserInteractionService {
     private interactionStatsRepository: Repository<InteractionStats>,
     @InjectRepository(Article)
     private articleRepository: Repository<Article>,
-    @InjectRepository(Herbal)
-    private herbalRepository: Repository<Herbal>,
-    @InjectRepository(FolkMedicine)
-    private folkMedicineRepository: Repository<FolkMedicine>,
-    @InjectRepository(Author)
-    private authorRepository: Repository<Author>,
     @InjectRepository(Category)
     private categoryRepository: Repository<Category>,
     private dataSource: DataSource,
@@ -40,9 +31,7 @@ export class UserInteractionService {
     const existingInteraction = await this.userInteractionRepository.findOne({
       where: {
         userId,
-        targetType: createDto.targetType,
         targetId: createDto.targetId,
-        interactionType: createDto.interactionType,
       },
     });
 
@@ -80,9 +69,9 @@ export class UserInteractionService {
     const interaction = await this.userInteractionRepository.findOne({
       where: {
         userId,
-        targetType,
+        targetType: targetType.toString(),
         targetId,
-        interactionType,
+        interactionType: interactionType.toString(),
       },
     });
 
@@ -90,7 +79,20 @@ export class UserInteractionService {
       throw new NotFoundException('Interaction not found');
     }
 
-    Object.assign(interaction, updateDto);
+    // Update fields
+    if (updateDto.rating !== undefined) {
+      interaction.rating = updateDto.rating;
+    }
+    if (updateDto.comment !== undefined) {
+      interaction.comment = updateDto.comment;
+    }
+    if (updateDto.sharePlatform !== undefined) {
+      interaction.sharePlatform = updateDto.sharePlatform;
+    }
+    if (updateDto.metadata !== undefined) {
+      interaction.metadata = updateDto.metadata;
+    }
+
     return await this.userInteractionRepository.save(interaction);
   }
 
@@ -103,7 +105,7 @@ export class UserInteractionService {
     const interaction = await this.userInteractionRepository.findOne({
       where: {
         userId,
-        targetType,
+        targetType: targetType.toString(),
         targetId,
         interactionType,
       },
@@ -186,14 +188,14 @@ export class UserInteractionService {
     const interactions = await this.userInteractionRepository.find({
       where: {
         userId,
-        targetType,
+        targetType: targetType.toString(),
         targetId,
       },
     });
 
     const status: { [key in InteractionType]?: boolean } = {};
     interactions.forEach((interaction) => {
-      status[interaction.interactionType] = true;
+      status[interaction.interactionType as InteractionType] = true;
     });
 
     return status;
@@ -206,16 +208,7 @@ export class UserInteractionService {
       case InteractionTarget.ARTICLE:
         exists = await this.articleRepository.findOne({ where: { id: targetId } }) !== null;
         break;
-      case InteractionTarget.HERBAL:
-        exists = await this.herbalRepository.findOne({ where: { id: targetId } }) !== null;
-        break;
-      case InteractionTarget.FOLK_MEDICINE:
-        exists = await this.folkMedicineRepository.findOne({ where: { id: targetId } }) !== null;
-        break;
-      case InteractionTarget.AUTHOR:
-        exists = await this.authorRepository.findOne({ where: { id: targetId } }) !== null;
-        break;
-      case InteractionTarget.CATEGORY:
+      case InteractionTarget.BOOK:
         exists = await this.categoryRepository.findOne({ where: { id: targetId } }) !== null;
         break;
       default:
@@ -236,17 +229,8 @@ export class UserInteractionService {
       case InteractionTarget.ARTICLE:
         interaction.articleId = targetId;
         break;
-      case InteractionTarget.HERBAL:
-        interaction.herbalId = targetId;
-        break;
-      case InteractionTarget.FOLK_MEDICINE:
-        interaction.folkMedicineId = targetId;
-        break;
-      case InteractionTarget.AUTHOR:
-        interaction.authorId = targetId;
-        break;
-      case InteractionTarget.CATEGORY:
-        interaction.categoryId = targetId;
+      case InteractionTarget.BOOK:
+        interaction.bookId = targetId;
         break;
     }
   }
@@ -259,7 +243,7 @@ export class UserInteractionService {
   ): Promise<void> {
     await this.dataSource.transaction(async (manager) => {
       let stats = await manager.findOne(InteractionStats, {
-        where: { targetType, targetId },
+        where: { targetType: targetType, targetId },
       });
 
       if (!stats) {

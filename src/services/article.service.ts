@@ -5,18 +5,17 @@ import { Article } from '../entities/article.entity';
 import slugify from 'slugify';
 import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
 import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
-import { AuthorService } from './author.service';
 import { CategoryService } from './category.service';
 import { ArticleDto } from 'src/dtos/article.dto';
 import { UserInteractionService } from './user-interaction.service';
-import { InteractionTarget } from '../enums/interaction-target.enum';
 import { InteractionStats } from '../entities/interaction-stats.entity';
 import { CategoryTypeService } from './category-type.service';
-import { CategoryTypeEnum } from 'src/enums/category-type.enum';
 import { NotificationService } from './notification.service';
-import { NotificationType } from 'src/enums/notification.enum';
 import { FcmService } from './fcm.service';
 import { TopicSubscriptionService } from './topic-subscription.service';
+import { CategoryTypeEnum } from 'src/enums/category-type.enum';
+import { InteractionTarget } from 'src/enums/interaction-target.enum';
+import { NotificationType } from 'src/enums/notification.enum';
 
 
 @Injectable()
@@ -24,7 +23,6 @@ export class ArticleService {
   constructor(
     @InjectRepository(Article)
     private readonly articleRepository: Repository<Article>,
-    private readonly authorService: AuthorService,
     private readonly categoryService: CategoryService,
     private readonly categoryTypeService: CategoryTypeService,
     private readonly userInteractionService: UserInteractionService,
@@ -201,12 +199,12 @@ export class ArticleService {
   //get list tips
   async getTipList(params: PaginationParams, categoryId: number): Promise<Article[]> {
     const { page = 1, size = 10, search = '' } = params;
-    const tipType = await this.categoryTypeService.findByCode(CategoryTypeEnum.TIPS);
+    const tipType = await this.categoryTypeService.findByCode(CategoryTypeEnum.ARTICLE);
     if (!tipType) throw new NotFoundException('Tip type not found');
     if (!categoryId || categoryId == 0) {
-      const tipType = await this.categoryTypeService.findTipType();
+      const tipType = await this.categoryTypeService.findArticleType();
       if (!tipType) throw new NotFoundException('Tip type not found');
-      const categoryIds = tipType.categories.map(cat => cat.id);
+      const categoryIds = tipType.map(cat => cat.id);
       const articles = await this.articleRepository.find({
         where: { categoryId: In(categoryIds), title: Like(`%${search}%`) },
       skip: (page - 1) * size,
@@ -318,11 +316,6 @@ export class ArticleService {
     if (data.dataSourceId != null) {
       const dataSourceId = Base64EncryptionUtil.decrypt(data.dataSourceId.toString());
       article.dataSourceId = dataSourceId;
-    }
-
-    if (data.authorId != null) {
-      const authorId = Base64EncryptionUtil.decrypt(data.authorId.toString());
-      article.authorId = authorId;
     }
 
     return this.articleRepository.save(article);
