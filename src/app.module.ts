@@ -57,6 +57,9 @@ import { ConfigModule } from '@nestjs/config';
 import { FcmController } from './controllers/fcm/fcm.controller';
 import { Disease } from './entities/disease.entity';
 import { TopicSubscription } from './entities/topic-subscription.entity';
+import { Book } from './entities/book.entity';
+import { ReadingProgress } from './entities/reading-progress.entity';
+import { EbookModule } from './modules/ebook.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -112,6 +115,8 @@ import { TopicSubscription } from './entities/topic-subscription.entity';
         Feedback,
         Disease,
         TopicSubscription,
+        ReadingProgress,
+        Book,
       ],
       synchronize: true,
       migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
@@ -146,6 +151,7 @@ import { TopicSubscription } from './entities/topic-subscription.entity';
     UserInteractionModule,
     PageModule,
     FeedbackModule,
+    EbookModule,
   ],
   controllers: [FcmController],
 })

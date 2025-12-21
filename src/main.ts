@@ -5,6 +5,7 @@ import { join } from 'path';
 import * as dotenv from 'dotenv';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import { ValidationPipe } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 //config env
 dotenv.config();
 
@@ -32,6 +33,16 @@ async function bootstrap() {
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
     prefix: '/uploads/',
   });
+
+  // Swagger configuration
+  const config = new DocumentBuilder()
+    .setTitle('Codebase Admin API')
+    .setDescription('Codebase Admin API Documentation')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('swagger-ui', app, document);
   
   app.useWebSocketAdapter(new IoAdapter(app));
 

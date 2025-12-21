@@ -6,8 +6,8 @@ import { Reservation } from './reservation.entity';
 import { Order } from './order.entity';
 import { Feature } from './feature.entity';
 import { FolkMedicine } from './folk-medicine.entity';
-import { features } from 'process';
 import { Product } from './product.entity';
+import { Book } from './book.entity';
 
 @Entity()
 export class Category {
@@ -84,6 +84,9 @@ export class Category {
 
   @OneToMany(() => FolkMedicine, folkMedicine => folkMedicine.category)
   folkMedicines: FolkMedicine[];
+
+  @OneToMany(() => Book, book => book.category)
+  books: Book[];
 
   @Column({
     default:0
