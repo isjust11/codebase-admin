@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xác thực tài khoản</title>
+    <title>Xác thực tài khoản {{appName}}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -65,13 +65,13 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Xác thực tài khoản</h1>
+            <h1>Xác thực tài khoản {{appName}}</h1>
         </div>
         
         <div class="content">
             <p>Xin chào <strong>{{fullName}}</strong>,</p>
             
-            <p>Cảm ơn bạn đã đăng ký tài khoản tại Easy Order. Để hoàn tất quá trình đăng ký, vui lòng xác thực địa chỉ email của bạn bằng cách nhấp vào nút bên dưới:</p>
+            <p>Cảm ơn bạn đã đăng ký tài khoản tại {{appName}}. Để hoàn tất quá trình đăng ký, vui lòng xác thực địa chỉ email của bạn bằng cách nhấp vào nút bên dưới:</p>
             
             <div style="text-align: center;">
                 <a href="{{verificationUrl}}" class="button">Xác thực Email</a>
@@ -82,11 +82,11 @@
             
             <p>Nếu bạn không yêu cầu xác thực này, vui lòng bỏ qua email này.</p>
             
-            <p>Trân trọng,<br>Đội ngũ Easy Order</p>
+            <p>Trân trọng,<br>Đội ngũ {{appName}}</p>
         </div>
         
         <div class="footer">
-            <p>© 2025 Easy Order. All rights reserved.</p>
+            <p>© 2025 {{appName}}. All rights reserved.</p>
             <div class="social-links">
                 <a href="#">Facebook</a> |
                 <a href="#">Twitter</a> |
