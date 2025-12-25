@@ -10,6 +10,8 @@ export const RequirePermissions = (...permissions: string[]) => SetMetadata(PERM
 export const RequirePermission = (action: string, resource?: string) => 
   SetMetadata(PERMISSION_ACTION_KEY, { action, resource });
 
+
+
 // Decorator để yêu cầu nhiều permission
 export const RequirePermissionsAction = (...permissions: { action: string; resource?: string }[]) => 
   SetMetadata(PERMISSION_ACTION_KEY, permissions); 

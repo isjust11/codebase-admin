@@ -201,9 +201,9 @@ export class AuthService {
       throw new BadRequestException('Tài khoản hoặc mật khẩu không chính xác');
     }
 
-    if (user.isWebsiteUser && !user.isEmailVerified) {
-      throw new BadRequestException('Email chưa được xác thực');
-    }
+    // if (user.isWebsiteUser && !user.isEmailVerified) {
+    //   throw new BadRequestException('Email chưa được xác thực');
+    // }
 
     return this.generateToken(user);
   }

@@ -13,19 +13,22 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { BookService } from 'src/services/book.service';
 import { CreateBookDto, UpdateBookDto } from 'src/dtos/book.dto';
-import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { JwtAuthGuard, Public } from 'src/guards/jwt-auth.guard';
 import { BaseController } from '../base/base.controller';
+import { PermissionGuard } from 'src/guards/permission.guard';
 
 @ApiTags('Books')
 @Controller('books')
+@UseGuards(JwtAuthGuard, PermissionGuard)
 export class BookController extends BaseController{
   constructor(private bookService: BookService) {
     super();
   }
 
+  @Public()
   @Get('public')
   @ApiOperation({ summary: 'Lấy tất cả sách công khai (không cần đăng nhập)' })
   async getPublicBooks() {
@@ -34,12 +37,11 @@ export class BookController extends BaseController{
 
   @Get()
   @ApiOperation({ summary: 'Lấy tất cả sách (cần đăng nhập)' })
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
   async getAllBooks() {
     return this.bookService.getAllBooks();
   }
 
+  @Public()
   @Get('public/:id')
   @ApiOperation({ summary: 'Lấy sách công khai theo ID' })
   async getPublicBookById(@Param('id') id: number) {
@@ -52,8 +54,6 @@ export class BookController extends BaseController{
 
   @Get(':id')
   @ApiOperation({ summary: 'Lấy sách theo ID' })
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
   async getBookById(@Param('id') id: number) {
     const book = await this.bookService.getBookById(id);
     if (!book) {
@@ -64,8 +64,6 @@ export class BookController extends BaseController{
 
   @Post()
   @ApiOperation({ summary: 'Tạo sách mới' })
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.CREATED)
   async createBook(@Body() createBookDto: CreateBookDto) {
     try {
@@ -77,8 +75,6 @@ export class BookController extends BaseController{
 
   @Put(':id')
   @ApiOperation({ summary: 'Cập nhật sách' })
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
   async updateBook(@Param('id') id: number, @Body() updateBookDto: UpdateBookDto) {
     const book = await this.bookService.updateBook(id, updateBookDto);
     if (!book) {
@@ -89,8 +85,6 @@ export class BookController extends BaseController{
 
   @Delete(':id')
   @ApiOperation({ summary: 'Xóa sách' })
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteBook(@Param('id') id: number) {
     const deleted = await this.bookService.deleteBook(id);
@@ -99,6 +93,7 @@ export class BookController extends BaseController{
     }
   }
 
+  @Public()
   @Get('public/search')
   @ApiOperation({ summary: 'Tìm kiếm sách công khai' })
   async searchPublicBooks(@Query('keyword') keyword: string) {
@@ -107,20 +102,17 @@ export class BookController extends BaseController{
 
   @Get('search')
   @ApiOperation({ summary: 'Tìm kiếm tất cả sách' })
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
   async searchAllBooks(@Query('keyword') keyword: string) {
     return this.bookService.searchBooks(keyword);
   }
 
   @Get('category/:categoryId')
   @ApiOperation({ summary: 'Lấy sách theo category' })
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
   async getBooksByCategory(@Param('categoryId') categoryId: number) {
     return this.bookService.getBooksByCategory(categoryId);
   }
 
+  @Public()
   @Get('public/category/:categoryId')
   @ApiOperation({ summary: 'Lấy sách công khai theo category' })
   async getPublicBooksByCategory(@Param('categoryId') categoryId: number) {
@@ -128,12 +120,14 @@ export class BookController extends BaseController{
     return books.filter((book) => book.isPublic);
   }
 
+  @Public()
   @Get('public/title')
   @ApiOperation({ summary: 'Tìm kiếm theo tiêu đề (công khai)' })
   async searchPublicBooksByTitle(@Query('q') q: string) {
     return this.bookService.searchByTitle(q);
   }
 
+  @Public()
   @Get('public/author')
   @ApiOperation({ summary: 'Tìm kiếm theo tác giả (công khai)' })
   async searchPublicBooksByAuthor(@Query('q') q: string) {

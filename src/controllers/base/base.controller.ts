@@ -1,5 +1,3 @@
-import { UseInterceptors } from '@nestjs/common';
-import { EncryptionInterceptor } from '../../interceptors/encryption.interceptor';
 import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
 import { Response } from 'express';
 

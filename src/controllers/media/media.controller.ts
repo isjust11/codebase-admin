@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator, Request, Query, Patch, HttpCode, ClassSerializerInterceptor } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator, Request, Query, HttpCode, BadRequestException } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { MediaService } from '../../services/media.service';
 import { Media } from '../../entities/media.entity';
@@ -7,12 +7,13 @@ import { PaginationParams } from 'src/dtos/filter.dto';
 import { BaseController } from '../base/base.controller';
 import { RequirePermission } from 'src/decorators/require-permissions.decorator';
 import { PermissionGuard } from 'src/guards/permission.guard';
-import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { JwtAuthGuard, Public } from 'src/guards/jwt-auth.guard';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('media')
 @UseGuards(JwtAuthGuard, PermissionGuard)
 export class MediaController extends BaseController{
-  constructor(private mediaService: MediaService) {
+  constructor(private mediaService: MediaService, private configService: ConfigService) {
     super();
   }
 
@@ -37,20 +38,21 @@ export class MediaController extends BaseController{
   }
 
   @Post('upload')
-  @RequirePermission('CREATE', 'media')
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(
-    @UploadedFile(
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 10 }), // 10MB
-          new FileTypeValidator({ fileType: /(jpg|jpeg|png|gif|mp3|wav|m4a|aac|ogg|flac|mp4|mov|wmv|avi|flv|mkv|webm|webp|mpeg|mpg|3gp|m4v)$/i }),
-        ],
-      }),
-    )
+    @UploadedFile()
     file: Express.Multer.File,
     @Request() req,
   ): Promise<Media> {
+    const maxSize = Number(this.configService.get('MAX_FILE_SIZE') || 10485760);
+    if (file.size > maxSize) {
+      throw new BadRequestException(`File size exceeds the maximum allowed size of ${maxSize / 1024 / 1024}MB`);
+    }
+    // validate file type
+    const allowedTypes = this.configService.get('ALLOWED_FILE_TYPES')?.split(',') || ['jpg', 'jpeg', 'png', 'gif', 'mp3', 'wav', 'm4a', 'aac', 'ogg', 'flac', 'mp4', 'mov', 'wmv', 'avi', 'flv', 'mkv', 'webm', 'webp', 'mpeg', 'mpg', '3gp', 'm4v', 'pdf', 'epub', 'mobi'];
+    if (!allowedTypes.includes(file.mimetype)) {
+      throw new BadRequestException(`File type ${file.mimetype} is not allowed`);
+    }
     return this.mediaService.upload(file, req.user);
   }
 
