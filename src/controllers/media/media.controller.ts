@@ -44,15 +44,31 @@ export class MediaController extends BaseController{
     file: Express.Multer.File,
     @Request() req,
   ): Promise<Media> {
-    const maxSize = Number(this.configService.get('MAX_FILE_SIZE') || 10485760);
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+
+    // Validate file size
+    const maxSize = Number(this.configService.get('MAX_FILE_SIZE') || 10485760); // 10MB default
     if (file.size > maxSize) {
       throw new BadRequestException(`File size exceeds the maximum allowed size of ${maxSize / 1024 / 1024}MB`);
     }
-    // validate file type
-    const allowedTypes = this.configService.get('ALLOWED_FILE_TYPES')?.split(',') || ['jpg', 'jpeg', 'png', 'gif', 'mp3', 'wav', 'm4a', 'aac', 'ogg', 'flac', 'mp4', 'mov', 'wmv', 'avi', 'flv', 'mkv', 'webm', 'webp', 'mpeg', 'mpg', '3gp', 'm4v', 'pdf', 'epub', 'mobi'];
-    if (!allowedTypes.includes(file.mimetype)) {
-      throw new BadRequestException(`File type ${file.mimetype} is not allowed`);
+
+    // Validate file type by extension (more reliable than mimetype)
+    const allowedExtensions = this.configService.get('ALLOWED_FILE_EXTENSIONS')?.split(',') || 
+      ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp3', 'wav', 'm4a', 'aac', 'ogg', 'flac', 
+       'mp4', 'mov', 'wmv', 'avi', 'flv', 'mkv', 'webm', 'mpeg', 'mpg', '3gp', 'm4v', 
+       'pdf', 'epub', 'mobi'];
+    
+    // Extract file extension from filename
+    const fileExtension = file.originalname.split('.').pop()?.toLowerCase();
+    
+    if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
+      throw new BadRequestException(
+        `File type ".${fileExtension}" is not allowed. Allowed types: ${allowedExtensions.join(', ')}`
+      );
     }
+
     return this.mediaService.upload(file, req.user);
   }
 
