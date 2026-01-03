@@ -3,6 +3,7 @@ import * as bcrypt from 'bcrypt';
 import { Role } from './role.entity';
 import { Exclude } from 'class-transformer';
 import { ReadingProgress } from './reading-progress.entity';
+import { Book } from './book.entity';
 
 @Entity()
 export class User {
@@ -107,6 +108,9 @@ export class User {
 
   @Column({ type: 'json', nullable: true })
   permissions: string[];
+  
+  @OneToMany(() => Book, book => book.createBy)
+  books: Book[];
 
   @BeforeInsert()
   async hashPassword() {

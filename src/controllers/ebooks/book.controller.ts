@@ -12,6 +12,7 @@ import {
   HttpStatus,
   NotFoundException,
   BadRequestException,
+  Request,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { BookService } from 'src/services/book.service';
@@ -65,9 +66,9 @@ export class BookController extends BaseController{
   @Post()
   @ApiOperation({ summary: 'Tạo sách mới' })
   @HttpCode(HttpStatus.CREATED)
-  async createBook(@Body() createBookDto: CreateBookDto) {
+  async createBook(@Body() createBookDto: CreateBookDto, @Request() req) {
     try {
-      return await this.bookService.createBook(createBookDto);
+      return await this.bookService.createBook({ ...createBookDto, createById: req?.user?.id });
     } catch (error) {
       throw new BadRequestException('Lỗi: ' + error.message);
     }
@@ -75,8 +76,8 @@ export class BookController extends BaseController{
 
   @Put(':id')
   @ApiOperation({ summary: 'Cập nhật sách' })
-  async updateBook(@Param('id') id: number, @Body() updateBookDto: UpdateBookDto) {
-    const book = await this.bookService.updateBook(id, updateBookDto);
+  async updateBook(@Param('id') id: number, @Body() updateBookDto: UpdateBookDto, @Request() req) {
+    const book = await this.bookService.updateBook(id, { ...updateBookDto, createById: req?.user?.id });
     if (!book) {
       throw new NotFoundException('Sách không tồn tại');
     }

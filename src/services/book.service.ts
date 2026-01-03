@@ -53,6 +53,7 @@ export class BookService {
       where: [
         { title: Like(`%${keyword}%`), isPublic: true },
         { author: Like(`%${keyword}%`), isPublic: true },
+        { createBy: { username: Like(`%${keyword}%`) } },
       ],
       relations: ['category'],
     });

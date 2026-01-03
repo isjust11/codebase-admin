@@ -177,7 +177,7 @@ export class MediaService {
     newMedia.path = stored.publicUrl; // keep relative
     newMedia.url = this.buildAbsoluteUrl(stored.publicUrl);
     newMedia.user = user;
-    newMedia.userId = user.id;
+    newMedia.userId = user?.id;
     newMedia.publicRelativePath = stored.publicUrl;
 
     // await this.mediaRepository.save(newMedia);
