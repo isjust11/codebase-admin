@@ -38,7 +38,6 @@ export class MediaController extends BaseController{
   }
 
   @Post('upload')
-  @Public()
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(
     @UploadedFile()

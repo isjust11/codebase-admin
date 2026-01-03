@@ -2,6 +2,7 @@ import { Injectable, CanActivate, ExecutionContext, Logger } from '@nestjs/commo
 import { Reflector } from '@nestjs/core';
 import { PERMISSIONS_KEY, PERMISSION_ACTION_KEY } from '../decorators/require-permissions.decorator';
 import { RoleService } from '../services/role.service';
+import { RoleEnum } from 'src/enums/role.enum';
 
 @Injectable()
 export class PermissionGuard implements CanActivate {
@@ -98,8 +99,8 @@ export class PermissionGuard implements CanActivate {
     this.logger.debug(`User role: ${role.code}, permissions: ${JSON.stringify(role.permissions?.map(p => ({ action: p.action, resource: p.resource })))}`);
 
     // Admin có tất cả quyền
-    if (role.code === 'ADMIN') {
-      this.logger.debug('User is ADMIN, granting access');
+    if (role.code === RoleEnum.SUPPER_ADMIN || role.code === RoleEnum.ADMIN) {
+      this.logger.debug('User is SUPER_ADMIN or ADMIN, granting access');
       return true;
     }
 
@@ -132,7 +133,7 @@ export class PermissionGuard implements CanActivate {
       return false;
     }
 
-    if (role.code === 'ADMIN') {
+    if (role.code === RoleEnum.SUPPER_ADMIN || role.code === RoleEnum.ADMIN) {
       return true;
     }
 

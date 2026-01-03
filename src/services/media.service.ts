@@ -148,6 +148,7 @@ export class MediaService {
     // Upload buffer to centralized storage service
     const form = new FormData();
     form.append('file', file.buffer, { filename: file.originalname, contentType: file.mimetype, knownLength: file.size });
+    form.append('createById', user?.id?.toString() || '');
     const uploadRes = await axios.post(`${this.storageServiceUrl}/storage/upload`, form, {
       headers: { ...form.getHeaders(), [this.storageClientHeaderName]: this.storageClientKey },
       maxBodyLength: Infinity,
