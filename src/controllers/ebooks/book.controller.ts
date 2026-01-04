@@ -13,6 +13,7 @@ import {
   NotFoundException,
   BadRequestException,
   Request,
+  Res,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { BookService } from 'src/services/book.service';
@@ -20,6 +21,8 @@ import { CreateBookDto, UpdateBookDto } from 'src/dtos/book.dto';
 import { JwtAuthGuard, Public } from 'src/guards/jwt-auth.guard';
 import { BaseController } from '../base/base.controller';
 import { PermissionGuard } from 'src/guards/permission.guard';
+import { PaginationParams } from 'src/dtos/filter.dto';
+import { Response } from 'express';
 
 @ApiTags('Books')
 @Controller('books')
@@ -32,8 +35,24 @@ export class BookController extends BaseController{
   @Public()
   @Get('public')
   @ApiOperation({ summary: 'Lấy tất cả sách công khai (không cần đăng nhập)' })
-  async getPublicBooks() {
-    return this.bookService.getPublicBooks();
+  async getPublicBooks( @Query('page') page: number,
+  @Query('size') size: number,
+  @Query('search') search: string,
+  @Request() req,
+  @Res() res: Response,
+  @Query('isFavorite') isFavorite?: boolean,
+  @Query('isArchived') isArchived?: boolean,) {
+    try {
+    const filter: PaginationParams = {
+      page: page || 1,
+      size: size || 10,
+      search: search || '',
+    };
+    const data = await this.bookService.getPublicBooks(filter, isFavorite, isArchived);
+    return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 
   @Get()

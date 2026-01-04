@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository } from 'typeorm';
 import { Book } from '../entities/book.entity';
 import { CreateBookDto, UpdateBookDto } from 'src/dtos/book.dto';
+import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
 
 @Injectable()
 export class BookService {
@@ -15,11 +16,38 @@ export class BookService {
     return this.bookRepository.find({ relations: ['category'] });
   }
 
-  async getPublicBooks(): Promise<Book[]> {
-    return this.bookRepository.find({
-      where: { isPublic: true },
+  async getPublicBooks(filter: PaginationParams, isFavorite?: boolean, isArchived?: boolean): Promise<PaginatedResponse<Book>> {
+    const { page, size, search } = filter;
+    const skip = ((page || 1) - 1) * (size || 10);
+    const take = size;
+    const query = this.bookRepository.createQueryBuilder('book')
+    .where('book.isPublic = true');
+    if (isFavorite) {
+      query.andWhere('book.isFavorite = true');
+    }
+    if (isArchived) {
+      query.andWhere('book.isArchived = true');
+    }
+    if (search) {
+      query.andWhere('book.title LIKE :search OR book.author LIKE :search OR book.createBy.username LIKE :search', { search: `%${search}%` });
+    }
+    const [data, total] = await this.bookRepository.findAndCount({
+      where: {
+        title: Like(`%${search}%`),
+        author: Like(`%${search}%`),
+        createBy: { username: Like(`%${search}%`) },
+      },
       relations: ['category'],
+      skip,
+      take,
     });
+    return {
+      data,
+      total,
+      page: page ?? 1,
+      size: size ?? 10,
+      totalPages: Math.ceil(total / (size || 10)),
+    };
   }
 
   async getBookById(id: number): Promise<Book | null> {
