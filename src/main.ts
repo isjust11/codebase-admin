@@ -13,13 +13,34 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   
   // Enable CORS
-  app.enableCors({
-    origin: [process.env.CLIENT_URL || 'http://localhost:3000',],
+  // Hỗ trợ nhiều origins: web client và mobile app
+  // CLIENT_URL: URL của web client (ví dụ: http://localhost:3000)
+  // MOBILE_ORIGINS: Danh sách origins của mobile app, phân cách bởi dấu phẩy
+  // (ví dụ: http://localhost:8080,http://192.168.1.100:8080,capacitor://localhost)
+  const clientUrl = process.env.CLIENT_URL;
+  const mobileOrigins = process.env.MOBILE_ORIGINS 
+    ? process.env.MOBILE_ORIGINS.split(',').map(url => url.trim())
+    : [];
+  
+  // Tạo danh sách origins: web client + mobile origins
+  const allowedOrigins: string[] = [];
+  if (clientUrl) {
+    allowedOrigins.push(clientUrl);
+  }
+  allowedOrigins.push(...mobileOrigins);
+  
+  // Nếu không có origin nào được cấu hình, cho phép tất cả (chỉ dùng cho development)
+  const corsOptions = {
+    origin: allowedOrigins.length > 0 
+      ? allowedOrigins 
+      : (process.env.NODE_ENV === 'production' ? false : '*'),
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
     credentials: true,
     exposedHeaders: ['Authorization'],
-  });
+  };
+  
+  app.enableCors(corsOptions);
 
   // Enable validation pipe globally
   // app.useGlobalPipes(new ValidationPipe({

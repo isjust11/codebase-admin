@@ -490,7 +490,7 @@ export class AuthService {
   async generateAndSavePin(user: User): Promise<string> {
     const pin = this.generatePin();
     const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + 10); // PIN hết hạn sau 10 phút
+    expiresAt.setMinutes(expiresAt.getMinutes() + 1); // PIN hết hạn sau 10 phút
 
     user.pinCode = pin;
     user.pinExpiresAt = expiresAt;
@@ -562,7 +562,7 @@ export class AuthService {
     return {
       code: 'resend',
       message: 'Mã PIN mới đã được gửi đến email của bạn',
-      pin: pin // Trả về PIN để test (trong production nên bỏ dòng này)
+      // pin: pin // Trả về PIN để test (trong production nên bỏ dòng này)
     };
   }
 

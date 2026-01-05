@@ -28,9 +28,9 @@ export class EmailService {
     
     // Thay thế các biến trong template
     htmlContent = htmlContent
-      .replace('{{fullName}}', fullName)
+      .replace(/{{fullName}}/g, fullName)
       .replace(/{{verificationUrl}}/g, verificationUrl)
-      .replace('{{appName}}', this.appName || 'ReadBox Admin');
+      .replace(/{{appName}}/g, this.appName || 'ReadBox Admin');
     
     const mailOptions = {
       from: this.configService.get<string>('EMAIL_USER'),
@@ -55,9 +55,9 @@ export class EmailService {
     let htmlContent = fs.readFileSync(templatePath, 'utf8');
 
     htmlContent = htmlContent
-      .replace('{{fullName}}', fullName)
+      .replace(/{{fullName}}/g, fullName)
       .replace(/{{verificationUrl}}/g, verificationUrl)
-      .replace('{{appName}}', this.appName || 'ReadBox Admin');
+      .replace(/{{appName}}/g, this.appName || 'ReadBox Admin');
 
     const mailOptions = {
       from: this.configService.get<string>('EMAIL_USER'),
@@ -80,10 +80,10 @@ export class EmailService {
     let htmlContent = fs.readFileSync(templatePath, 'utf8');
 
     htmlContent = htmlContent
-      .replace('{{fullName}}', fullName)
-      .replace('{{pin}}', pin)
-      .replace('{{expiresIn}}', '10')
-      .replace('{{appName}}', this.appName || 'ReadBox Admin');
+      .replace(/{{fullName}}/g, fullName)
+      .replace(/{{pin}}/g, pin)
+      .replace(/{{expiresIn}}/g, this.configService.get<string>('PIN_EXPIRES_IN') || '10')
+      .replace(/{{appName}}/g, this.appName || 'ReadBox Admin');
 
     const subject = 'Mã PIN xác thực tài khoản - ' + this.appName;
 
