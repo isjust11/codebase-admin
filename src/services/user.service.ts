@@ -6,6 +6,7 @@ import { RegisterDto } from '../dtos/auth.dto';
 import { Role } from '../entities/role.entity';
 import { UpdateUserDto } from '../dtos/user.dto';
 import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
+import { RoleEnum } from 'src/enums/role.enum';
 
 @Injectable()
 export class UserService {
@@ -84,26 +85,26 @@ export class UserService {
     // Tìm role ADMIN nếu là tài khoản đầu tiên
     let roleIds: number[] = [];
     if (isFirstUser) {
+      const superAdminRole = await this.roleRepository.findOne({
+        where: {
+          code: RoleEnum.SUPPER_ADMIN,
+        },
+      });
+      if (superAdminRole) {
+        roleIds = [superAdminRole.id];
+      }
+      user.roles = [superAdminRole!];
+      user.isAdmin = true;
+    } else {
       const adminRole = await this.roleRepository.findOne({
         where: {
-          code: 'ADMIN',
+          code: RoleEnum.ADMIN,
         },
       });
       if (adminRole) {
         roleIds = [adminRole.id];
       }
       user.roles = [adminRole!];
-      user.isAdmin = isFirstUser;
-    } else {
-      const roleCustomer = await this.roleRepository.findOne({
-        where: {
-          code: 'CUSTOMER',
-        },
-      });
-      if (roleCustomer) {
-        roleIds = [roleCustomer.id];
-      }
-      user.roles = [roleCustomer!];
     }
 
     return this.userRepository.save(user);

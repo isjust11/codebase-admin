@@ -61,6 +61,11 @@ export class CreateBookDto {
   @IsNumber()
   @IsOptional()
   categoryId?: number;
+
+  @ApiProperty({ required: false })
+  @IsNumber()
+  @IsOptional()
+  createById?: number;
 }
 
 export class UpdateBookDto {
@@ -123,5 +128,10 @@ export class UpdateBookDto {
   @IsNumber()
   @IsOptional()
   categoryId?: number;
+
+  @ApiProperty({ required: false })
+  @IsNumber()
+  @IsOptional()
+  createById?: number;
 }
 

@@ -12,6 +12,8 @@ import {
   HttpStatus,
   NotFoundException,
   BadRequestException,
+  Request,
+  Res,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { BookService } from 'src/services/book.service';
@@ -19,6 +21,8 @@ import { CreateBookDto, UpdateBookDto } from 'src/dtos/book.dto';
 import { JwtAuthGuard, Public } from 'src/guards/jwt-auth.guard';
 import { BaseController } from '../base/base.controller';
 import { PermissionGuard } from 'src/guards/permission.guard';
+import { PaginationParams } from 'src/dtos/filter.dto';
+import { Response } from 'express';
 
 @ApiTags('Books')
 @Controller('books')
@@ -31,8 +35,24 @@ export class BookController extends BaseController{
   @Public()
   @Get('public')
   @ApiOperation({ summary: 'Lấy tất cả sách công khai (không cần đăng nhập)' })
-  async getPublicBooks() {
-    return this.bookService.getPublicBooks();
+  async getPublicBooks( @Query('page') page: number,
+  @Query('size') size: number,
+  @Query('search') search: string,
+  @Request() req,
+  @Res() res: Response,
+  @Query('isFavorite') isFavorite?: boolean,
+  @Query('isArchived') isArchived?: boolean,) {
+    try {
+    const filter: PaginationParams = {
+      page: page || 1,
+      size: size || 10,
+      search: search || '',
+    };
+    const data = await this.bookService.getPublicBooks(filter, isFavorite, isArchived);
+    return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 
   @Get()
@@ -65,9 +85,9 @@ export class BookController extends BaseController{
   @Post()
   @ApiOperation({ summary: 'Tạo sách mới' })
   @HttpCode(HttpStatus.CREATED)
-  async createBook(@Body() createBookDto: CreateBookDto) {
+  async createBook(@Body() createBookDto: CreateBookDto, @Request() req) {
     try {
-      return await this.bookService.createBook(createBookDto);
+      return await this.bookService.createBook({ ...createBookDto, createById: req?.user?.id });
     } catch (error) {
       throw new BadRequestException('Lỗi: ' + error.message);
     }
@@ -75,8 +95,8 @@ export class BookController extends BaseController{
 
   @Put(':id')
   @ApiOperation({ summary: 'Cập nhật sách' })
-  async updateBook(@Param('id') id: number, @Body() updateBookDto: UpdateBookDto) {
-    const book = await this.bookService.updateBook(id, updateBookDto);
+  async updateBook(@Param('id') id: number, @Body() updateBookDto: UpdateBookDto, @Request() req) {
+    const book = await this.bookService.updateBook(id, { ...updateBookDto, createById: req?.user?.id });
     if (!book) {
       throw new NotFoundException('Sách không tồn tại');
     }

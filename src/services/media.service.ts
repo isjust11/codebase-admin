@@ -84,7 +84,11 @@ export class MediaService {
     // Attempt to delete old remote file (ignore if not found)
     if (oldFilename) {
       try {
-        await axios.delete(`${this.storageServiceUrl}/storage/${encodeURIComponent(oldFilename)}`, {
+        // Use the path from media if available (may include userId), otherwise use filename
+        const fileToDelete = media.path || media.publicRelativePath || oldFilename;
+        // Extract relative path if it's a full path
+        const relativePath = fileToDelete.includes('/') ? fileToDelete.split('/').slice(-2).join('/') : fileToDelete;
+        await axios.delete(`${this.storageServiceUrl}/storage/file/${encodeURIComponent(relativePath)}`, {
           headers: { [this.storageClientHeaderName]: this.storageClientKey },
         });
       } catch (_err) {
@@ -95,12 +99,13 @@ export class MediaService {
     // Upload new file to storage service
     const form = new FormData();
     form.append('file', file.buffer, { filename: file.originalname, contentType: file.mimetype, knownLength: file.size });
+    form.append('createById', user?.id?.toString() || '');
     const uploadRes = await axios.post(`${this.storageServiceUrl}/storage/upload`, form, {
       headers: { ...form.getHeaders(), [this.storageClientHeaderName]: this.storageClientKey },
       maxBodyLength: Infinity,
       maxContentLength: Infinity,
     });
-    const stored = uploadRes.data as { filename: string; size: number; mimeType: string; url: string };
+    const stored = uploadRes.data as { filename: string; size: number; mimeType: string; url: string, publicUrl: string };
 
     let width: number | null = null;
     let height: number | null = null;
@@ -121,8 +126,11 @@ export class MediaService {
     media.size = stored.size ?? file.size;
     media.width = width;
     media.height = height;
-    media.path = stored.url; // keep original relative for traceability
-    media.url = this.buildAbsoluteUrl(stored.url);
+    media.path = stored.publicUrl || stored.url; // keep relative path
+    media.url = this.buildAbsoluteUrl(stored.publicUrl || stored.url);
+    if (stored.publicUrl) {
+      media.publicRelativePath = stored.publicUrl;
+    }
 
     return this.mediaRepository.save(media);
   }
@@ -148,6 +156,7 @@ export class MediaService {
     // Upload buffer to centralized storage service
     const form = new FormData();
     form.append('file', file.buffer, { filename: file.originalname, contentType: file.mimetype, knownLength: file.size });
+    form.append('createById', user?.id?.toString() || '');
     const uploadRes = await axios.post(`${this.storageServiceUrl}/storage/upload`, form, {
       headers: { ...form.getHeaders(), [this.storageClientHeaderName]: this.storageClientKey },
       maxBodyLength: Infinity,
@@ -177,7 +186,7 @@ export class MediaService {
     newMedia.path = stored.publicUrl; // keep relative
     newMedia.url = this.buildAbsoluteUrl(stored.publicUrl);
     newMedia.user = user;
-    newMedia.userId = user.id;
+    newMedia.userId = user?.id;
     newMedia.publicRelativePath = stored.publicUrl;
 
     // await this.mediaRepository.save(newMedia);

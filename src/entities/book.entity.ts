@@ -11,6 +11,7 @@ import {
 
 import { Category } from './category.entity';
 import { ReadingProgress } from './reading-progress.entity';
+import { User } from './user.entity';
 
 @Entity('books')
 export class Book {
@@ -56,6 +57,13 @@ export class Book {
   @ManyToOne(() => Category, (category) => category.books, { eager: true })
   @JoinColumn({ name: 'category_id' })
   category: Category;
+
+  @Column({ name: 'create_by_id', nullable: true })
+  createById: number;
+
+  @ManyToOne(() => User, (user) => user.books, { eager: true })
+  @JoinColumn({ name: 'create_by_id' })
+  createBy: User;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

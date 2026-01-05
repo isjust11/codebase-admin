@@ -50,9 +50,9 @@ export class MediaController extends BaseController{
 
     // Validate file size
     const maxSize = Number(this.configService.get('MAX_FILE_SIZE') || 10485760); // 10MB default
-    if (file.size > maxSize) {
-      throw new BadRequestException(`File size exceeds the maximum allowed size of ${maxSize / 1024 / 1024}MB`);
-    }
+    // if (file.size > maxSize) {
+    //   throw new BadRequestException(`File size exceeds the maximum allowed size of ${maxSize / 1024 / 1024}MB`);
+    // }
 
     // Validate file type by extension (more reliable than mimetype)
     const allowedExtensions = this.configService.get('ALLOWED_FILE_EXTENSIONS')?.split(',') || 
