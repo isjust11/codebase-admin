@@ -3,7 +3,7 @@ import { User } from './user.entity';
 import { Article } from './article.entity';
 import { Transform } from 'class-transformer';
 import { Book } from './book.entity';
-import { Category } from './category.entity';
+import { InteractionType } from 'src/enums/interaction-type.enum';
 
 @Entity()
 @Index(['userId', 'targetType', 'targetId', 'interactionType'], { unique: true })
@@ -25,9 +25,6 @@ export class UserInteraction {
   @Column()
   targetType: string;
 
-  @Column()
-  interactionType: string;
-
   // Optional foreign key relationships based on target type
   @Column({ nullable: true })
   articleId?: number;
@@ -39,6 +36,9 @@ export class UserInteraction {
   @Column({ nullable: true })
   bookId?: number;
 
+  @Column({ type: 'enum', enum: InteractionType, default: InteractionType.VIEW })
+  @Column({ nullable: true })
+  interactionType: InteractionType;
 
   @ManyToOne(() => Book, book => book.id, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'bookId' })

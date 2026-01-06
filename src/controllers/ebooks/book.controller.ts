@@ -23,6 +23,7 @@ import { BaseController } from '../base/base.controller';
 import { PermissionGuard } from 'src/guards/permission.guard';
 import { PaginationParams } from 'src/dtos/filter.dto';
 import { Response } from 'express';
+import { FilterType } from 'src/enums/filter-type.enum';
 
 @ApiTags('Books')
 @Controller('books')
@@ -40,15 +41,15 @@ export class BookController extends BaseController{
   @Query('search') search: string,
   @Request() req,
   @Res() res: Response,
-  @Query('isFavorite') isFavorite?: boolean,
-  @Query('isArchived') isArchived?: boolean,) {
+  @Query('filterType') filterType?: FilterType,
+  @Query('categoryId') categoryId?: number,) {
     try {
     const filter: PaginationParams = {
       page: page || 1,
       size: size || 10,
       search: search || '',
     };
-    const data = await this.bookService.getPublicBooks(filter, isFavorite, isArchived);
+    const data = await this.bookService.getPublicBooks(filter, filterType, categoryId);
     return this.success(res, data);
     } catch (error) {
       return this.error(res, error);

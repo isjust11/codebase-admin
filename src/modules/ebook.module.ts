@@ -10,9 +10,9 @@ import { ReadingProgressController } from 'src/controllers/ebooks/reading-progre
 import { CategoryModule } from './category.module';
 
 @Module({
-  imports: [AuthModule, TypeOrmModule.forFeature([Book, ReadingProgress]), CategoryModule],
+  imports: [AuthModule, TypeOrmModule.forFeature([Book, ReadingProgress]), CategoryModule ],
   controllers: [BookController, ReadingProgressController],
-  providers: [BookService, ReadingProgressService],
-  exports: [BookService, ReadingProgressService],
+  providers: [BookService, ReadingProgressService,],
+  exports: [BookService, ReadingProgressService,],
 })
 export class EbookModule { }

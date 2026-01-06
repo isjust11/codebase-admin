@@ -4,6 +4,11 @@ import { Like, Repository } from 'typeorm';
 import { Book } from '../entities/book.entity';
 import { CreateBookDto, UpdateBookDto } from 'src/dtos/book.dto';
 import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
+import { FilterType } from 'src/enums/filter-type.enum';
+import { UserInteraction } from 'src/entities/user-interaction.entity';
+import { InteractionType } from 'src/enums/interaction-type.enum';
+import { InteractionTarget } from 'src/enums/interaction-target.enum';
+import { UserInteractionService } from './user-interaction.service';
 
 @Injectable()
 export class BookService {
@@ -16,31 +21,30 @@ export class BookService {
     return this.bookRepository.find({ relations: ['category'] });
   }
 
-  async getPublicBooks(filter: PaginationParams, isFavorite?: boolean, isArchived?: boolean): Promise<PaginatedResponse<Book>> {
+  async getPublicBooks(filter: PaginationParams, filterType?: FilterType, categoryId?: number): Promise<PaginatedResponse<Book>> {
     const { page, size, search } = filter;
     const skip = ((page || 1) - 1) * (size || 10);
     const take = size;
     const query = this.bookRepository.createQueryBuilder('book')
+    .leftJoinAndSelect('book.category', 'category')
+    // .leftJoin(UserInteraction, 'user_interaction', 'user_interaction.targetId = book.id AND user_interaction.targetType = :targetType', { targetType: InteractionTarget.BOOK })
     .where('book.isPublic = true');
-    if (isFavorite) {
-      query.andWhere('book.isFavorite = true');
+    if (filterType) {
+      if (filterType === FilterType.FAVORITE) {
+        query.andWhere('user_interaction.interactionType = :interactionType', { interactionType: InteractionType.FAVORITE });
+      } else if (filterType === FilterType.ARCHIVED) {
+        query.andWhere('user_interaction.interactionType = :interactionType', { interactionType: InteractionType.ARCHIVE });
+      } else {
+        // query.andWhere('user_interaction.interactionType = :interactionType', { interactionType: InteractionType.PUBLIC });
+      }
     }
-    if (isArchived) {
-      query.andWhere('book.isArchived = true');
+    if (categoryId) {
+      query.andWhere('book.categoryId = :categoryId', { categoryId });
     }
     if (search) {
-      query.andWhere('book.title LIKE :search OR book.author LIKE :search OR book.createBy.username LIKE :search', { search: `%${search}%` });
+      query.andWhere('book.title LIKE :search OR book.author LIKE :search', { search: `%${search}%` });
     }
-    const [data, total] = await this.bookRepository.findAndCount({
-      where: {
-        title: Like(`%${search}%`),
-        author: Like(`%${search}%`),
-        createBy: { username: Like(`%${search}%`) },
-      },
-      relations: ['category'],
-      skip,
-      take,
-    });
+    const [data, total] = await query.skip(skip).take(take).getManyAndCount();
     return {
       data,
       total,

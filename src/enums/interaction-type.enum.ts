@@ -7,5 +7,9 @@ export enum InteractionType {
   COMMENT = 'comment',
   RATE = 'rate',
   FOLLOW = 'follow',
-  UNFOLLOW = 'unfollow'
+  UNFOLLOW = 'unfollow',
+  FAVORITE = 'favorite',
+  ARCHIVE = 'archive',
+  PUBLIC = 'public',
+  DOWNLOAD = 'download',
 }

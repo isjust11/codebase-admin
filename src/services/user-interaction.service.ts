@@ -71,7 +71,7 @@ export class UserInteractionService {
         userId,
         targetType: targetType.toString(),
         targetId,
-        interactionType: interactionType.toString(),
+        interactionType: interactionType,
       },
     });
 
