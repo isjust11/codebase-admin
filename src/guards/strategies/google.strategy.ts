@@ -24,7 +24,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     profile: any,
     done: VerifyCallback,
   ): Promise<any> {
-    const { id, name, emails, photos, displayName } = profile;
+    const { id, name, emails, photos, displayName, deviceId, platform, fcmToken } = profile;
     const user = {
       email: emails[0].value,
       fullName: displayName,
@@ -32,6 +32,9 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       accessToken,
       platformId: id,
       isGoogleUser: true,
+      deviceId: deviceId,
+      platform: platform,
+      fcmToken: fcmToken,
     };
 
     const validatedUser = await this.authService.validateSocialUser(user);

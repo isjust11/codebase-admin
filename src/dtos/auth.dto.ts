@@ -8,6 +8,18 @@ export class LoginDto {
 
   @IsString()
   password: string;
+
+  @IsString()
+  @IsOptional()
+  fcmToken?: string;
+
+  @IsString()
+  @IsOptional()
+  platform?: string;
+
+  @IsString()
+  @IsOptional()
+  deviceId?: string;
 }
 export enum RegisterCode{
   AccountValidated = 'account_validated',
@@ -76,6 +88,18 @@ export class RegisterDto {
   @IsBoolean()
   @IsOptional()
   isWebsiteUser?: boolean;
+
+  @IsString()
+  @IsOptional()
+  deviceId?: string;
+
+  @IsString()
+  @IsOptional()
+  platform?: string;
+
+  @IsString()
+  @IsOptional()
+  fcmToken?: string;
 }
 
 export class ResendEmailDto {

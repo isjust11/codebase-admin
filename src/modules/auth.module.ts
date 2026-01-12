@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RoleService } from '../services/role.service';
 import { Role } from '../entities/role.entity';
@@ -26,6 +26,7 @@ import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { GoogleStrategy } from 'src/guards/strategies/google.strategy';
 import { SocialTokenVerificationService } from 'src/services/social-token-verification.service';
 import { APP_GUARD } from '@nestjs/core';
+import { NotificationModule } from './notification.module';
 
 @Module({
   imports: [
@@ -42,7 +43,9 @@ import { APP_GUARD } from '@nestjs/core';
       Permission,
       Role,
       RefreshToken,
-    ])],
+    ]),
+    forwardRef(() => NotificationModule),
+  ],
   controllers: [
     AuthController, 
     UserController,

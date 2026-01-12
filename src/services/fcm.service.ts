@@ -23,6 +23,22 @@ export class FcmService {
       token,
       notification: { title: payload.title, body: payload.body },
       data: payload.data ?? {},
+      android: {
+        priority: 'high' as const,
+        notification: {
+          channelId: 'readbox_channel',
+          sound: 'default',
+          priority: 'high' as const,
+        },
+      },
+      apns: {
+        payload: {
+          aps: {
+            sound: 'default',
+            badge: 1,
+          },
+        },
+      },
     } as const;
     return await messaging.send(message);
   }
@@ -38,6 +54,22 @@ export class FcmService {
       tokens,
       notification: { title: payload.title, body: payload.body },
       data: payload.data ?? {},
+      android: {
+        priority: 'high' as const,
+        notification: {
+          channelId: 'readbox_channel',
+          sound: 'default',
+          priority: 'high' as const,
+        },
+      },
+      apns: {
+        payload: {
+          aps: {
+            sound: 'default',
+            badge: 1,
+          },
+        },
+      },
     } as const;
     return await messaging.sendEachForMulticast(message);
   }
@@ -52,6 +84,22 @@ export class FcmService {
       topic,
       notification: { title: payload.title, body: payload.body },
       data: payload.data ?? {},
+      android: {
+        priority: 'high' as const,
+        notification: {
+          channelId: 'readbox_channel',
+          sound: 'default',
+          priority: 'high' as const,
+        },
+      },
+      apns: {
+        payload: {
+          aps: {
+            sound: 'default',
+            badge: 1,
+          },
+        },
+      },
     } as const;
     return await messaging.send(message);
   }

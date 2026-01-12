@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from './user.service';
 import { LoginDto, RegisterDto, JwtPayload, ResendEmailDto, RegisterResultDto, RegisterCode, VerifyPinDto, ResendPinDto } from '../dtos/auth.dto';
@@ -11,6 +11,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RefreshToken } from '../entities/refresh-token.entity';
 import { UpdateProfileDto } from 'src/dtos/update-profile-dto';
+import { FcmToken } from 'src/entities/fcm-token.entity';
+import { FcmTokenService } from './fcm-token.service';
 
 @Injectable()
 export class AuthService {
@@ -23,6 +25,8 @@ export class AuthService {
     private socialTokenVerificationService: SocialTokenVerificationService,
     @InjectRepository(RefreshToken)
     private refreshTokenRepository: Repository<RefreshToken>,
+    @Inject(forwardRef(() => FcmTokenService))
+    private fcmTokenService: FcmTokenService,
   ) { }
 
   async validateUser(username: string, password: string): Promise<any> {
@@ -120,8 +124,18 @@ export class AuthService {
           picture: socialUser.picture, // Lưu ảnh đại diện
           isGoogleUser: socialUser.isGoogleUser || false, // Đánh dấu là user đăng nhập bằng Google
           isFacebookUser: socialUser.isFacebookUser || false,
+          deviceId: socialUser.deviceId,
+          platform: socialUser.platform,
+          fcmToken: socialUser.fcmToken,
         };
         user = await this.userService.create(registerDto);
+        if (socialUser.fcmToken) {
+          await this.fcmTokenService.registerOrUpdate({
+            token: socialUser.fcmToken,
+            platform: socialUser.platform,
+            deviceId: socialUser.deviceId,
+          }, user.id);
+        }
       } else {
         // Cập nhật thông tin nếu user đã tồn tại
         user.platformId = socialUser.platformId;
@@ -130,6 +144,13 @@ export class AuthService {
         user.isFacebookUser = socialUser.isFacebookUser || false;
 
         await this.userService.update(user.id, user);
+        if (socialUser.fcmToken) {
+          await this.fcmTokenService.registerOrUpdate({
+            token: socialUser.fcmToken,
+            platform: socialUser.platform,
+            deviceId: socialUser.deviceId,
+          }, user.id);
+        }
       }
 
       return this.generateToken(user);
@@ -194,7 +215,7 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto) {
-    const { username, password } = loginDto;
+    const { username, password, fcmToken } = loginDto;
     const user = await this.validateUser(username, password);
 
     if (!user) {
@@ -204,7 +225,13 @@ export class AuthService {
     // if (user.isWebsiteUser && !user.isEmailVerified) {
     //   throw new BadRequestException('Email chưa được xác thực');
     // }
-
+    if (fcmToken) {
+      await this.fcmTokenService.registerOrUpdate({
+        token: fcmToken,
+        platform: 'web',
+        deviceId: '',
+      }, user.id);
+    }
     return this.generateToken(user);
   }
 
