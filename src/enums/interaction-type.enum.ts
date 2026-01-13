@@ -12,4 +12,5 @@ export enum InteractionType {
   ARCHIVE = 'archive',
   PUBLIC = 'public',
   DOWNLOAD = 'download',
+  READ = 'read',
 }

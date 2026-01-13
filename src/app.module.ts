@@ -35,6 +35,7 @@ import { TopicSubscription } from './entities/topic-subscription.entity';
 import { Book } from './entities/book.entity';
 import { ReadingProgress } from './entities/reading-progress.entity';
 import { EbookModule } from './modules/ebook.module';
+import { UserInteraction } from './entities/user-interaction.entity';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -70,6 +71,8 @@ import { EbookModule } from './modules/ebook.module';
         TopicSubscription,
         ReadingProgress,
         Book,
+        UserInteraction,
+        InteractionStats,
       ],
       synchronize: true,
       migrations: [join(__dirname, 'migrations', '*.{ts,js}')],

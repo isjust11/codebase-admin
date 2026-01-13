@@ -32,11 +32,16 @@ export class UserInteractionService {
       where: {
         userId,
         targetId: createDto.targetId,
+        interactionType: createDto.interactionType,
       },
     });
 
     if (existingInteraction) {
-      if(createDto.interactionType === InteractionType.VIEW){
+      if(createDto.interactionType === InteractionType.VIEW
+        || createDto.interactionType === InteractionType.READ
+        || createDto.interactionType === InteractionType.DOWNLOAD
+        || createDto.interactionType === InteractionType.FAVORITE
+      ){
         await this.updateInteractionStats(createDto.targetType, createDto.targetId, createDto.interactionType, 1);
         return existingInteraction;
       }

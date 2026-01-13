@@ -25,9 +25,9 @@ import { BaseController } from '../base/base.controller';
 import { UserInteraction } from 'src/entities/user-interaction.entity';
 import { InteractionTarget } from 'src/enums/interaction-target.enum';
 import { InteractionType } from 'src/enums/interaction-type.enum';
-
+import { PermissionGuard } from '../../guards/permission.guard';
 @Controller('user-interactions')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissionGuard)
 export class UserInteractionController extends BaseController {
   constructor(private readonly userInteractionService: UserInteractionService) {
     super();
@@ -270,6 +270,29 @@ export class UserInteractionController extends BaseController {
       return this.error(res, error);
     }
 
+  }
+  // interaction common for all targets
+  @Post('action/:actionType/:targetType/:targetId')
+  @HttpCode(HttpStatus.CREATED)
+  async action(
+    @Request() req: any,
+    @Param('targetType') targetType: InteractionTarget,
+    @Param('actionType') actionType: InteractionType,
+    @Param('targetId') targetId: string,
+    @Res() res: Response,
+  ) {
+    try {
+      const userId = req.user.id;
+      const targetIdNumber = this.decode(targetId);
+      const data = await this.userInteractionService.createInteraction(userId, {
+        interactionType: actionType,
+        targetType: targetType,
+        targetId: targetIdNumber,
+      });
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 
   @Post('unlike/:targetType/:targetId')

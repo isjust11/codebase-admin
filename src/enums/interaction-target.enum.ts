@@ -3,5 +3,4 @@ export enum InteractionTarget {
   USER = 'user',
   COMMENT = 'comment',
   BOOK = 'book',
-  
 }

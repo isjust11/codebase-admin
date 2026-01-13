@@ -6,9 +6,10 @@ import { UserInteraction } from '../entities/user-interaction.entity';
 import { InteractionStats } from '../entities/interaction-stats.entity';
 import { Article } from '../entities/article.entity';
 import { Category } from '../entities/category.entity';
-
+import { AuthModule } from './auth.module';
 @Module({
   imports: [
+    AuthModule,
     TypeOrmModule.forFeature([
       UserInteraction,
       InteractionStats,
