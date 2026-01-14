@@ -4,6 +4,7 @@ export interface PaginationParams {
     search?: string;
     mimeType?: string;
     categoryId?: string;
+    isRead?: number;
   }
   
  export interface PaginatedResponse<T> {

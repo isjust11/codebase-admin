@@ -1,13 +1,12 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, HttpCode, HttpStatus, Res, Req, Request } from '@nestjs/common';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
-import { PermissionGuard } from '../../guards/permission.guard';
 import { RequirePermission } from '../../decorators/require-permissions.decorator';
 import { BaseController } from '../base/base.controller';
 import { NotificationRecordService } from '../../services/notification-record.service';
 import { PaginationParams } from 'src/dtos/filter.dto';
 import { Response } from 'express';
 @Controller('notifications')
-@UseGuards(JwtAuthGuard, PermissionGuard)
+@UseGuards(JwtAuthGuard)
 export class NotificationController extends BaseController {
   constructor(private readonly service: NotificationRecordService) {
     super();
@@ -18,12 +17,14 @@ export class NotificationController extends BaseController {
   async findByPage(@Query('page') page: number,
    @Query('size') size: number,
    @Query('search') search: string,
+   @Query('isRead') isRead: number  ,
    @Request() req : any ,
    @Res() res: Response) {
     const filter: PaginationParams = {
-      page: page || 1,
-      size: size || 10,
+      page: parseInt(page.toString()) || 1,
+      size: parseInt(size.toString()) || 10,
       search: search || '',
+      isRead: isRead || 2,
     };
     try {
       const userId = req.user.id;

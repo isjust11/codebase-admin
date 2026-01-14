@@ -8,6 +8,7 @@ import { InteractionType } from '../enums/interaction-type.enum';
 import { InteractionTarget } from '../enums/interaction-target.enum';
 import { Article } from '../entities/article.entity';
 import { Category } from '../entities/category.entity';
+import { Book } from 'src/entities/book.entity';
 
 @Injectable()
 export class UserInteractionService {
@@ -21,6 +22,8 @@ export class UserInteractionService {
     @InjectRepository(Category)
     private categoryRepository: Repository<Category>,
     private dataSource: DataSource,
+    @InjectRepository(Book)
+    private bookRepository: Repository<Book>,
   ) { }
 
   async createInteraction(userId: number, createDto: CreateUserInteractionDto): Promise<UserInteraction> {
@@ -215,7 +218,7 @@ export class UserInteractionService {
         exists = await this.articleRepository.findOne({ where: { id: targetId } }) !== null;
         break;
       case InteractionTarget.BOOK:
-        exists = await this.categoryRepository.findOne({ where: { id: targetId } }) !== null;
+        exists = await this.bookRepository.findOne({ where: { id: targetId } }) !== null;
         break;
       default:
         throw new Error(`Unsupported target type: ${targetType}`);

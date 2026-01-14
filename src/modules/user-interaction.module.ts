@@ -7,6 +7,7 @@ import { InteractionStats } from '../entities/interaction-stats.entity';
 import { Article } from '../entities/article.entity';
 import { Category } from '../entities/category.entity';
 import { AuthModule } from './auth.module';
+import { Book } from 'src/entities/book.entity';
 @Module({
   imports: [
     AuthModule,
@@ -15,6 +16,7 @@ import { AuthModule } from './auth.module';
       InteractionStats,
       Article,
       Category,
+      Book,
     ]),
   ],
   controllers: [UserInteractionController],

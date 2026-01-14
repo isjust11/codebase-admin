@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, ILike } from 'typeorm';
+import { Repository, FindOptionsWhere, ILike, In } from 'typeorm';
 import { Notification } from '../entities/notification.entity';
 import { PaginationParams } from 'src/dtos/filter.dto';
 import { NotificationStatus } from 'src/enums/notification.enum';
@@ -13,14 +13,28 @@ export class NotificationRecordService {
   ) { }
 
   async findPagination(filter: PaginationParams, userId: number) {
-    const { page, size, search } = filter;
+    const { page, size, search, isRead } = filter;
     const [items, total] = await this.notificationRepo.findAndCount({
-      where: this.buildSearchWhere(search || '', userId),
+      where: [
+        {
+        title: search ? ILike(`%${search}%`) : undefined,
+        content: search ? ILike(`%${search}%`) : undefined,
+        userId: userId,
+        ...(isRead === 2 ? { status: In([NotificationStatus.READ, NotificationStatus.UNREAD]) } : 
+         isRead === 1 ? { status: NotificationStatus.READ } : { status: NotificationStatus.UNREAD }),
+      } ],
       order: { createdAt: 'DESC' },
-      skip: (page || 1 - 1) * (size || 10),
+      skip: ((page || 1) - 1) * (size || 10),
       take: (size || 10),
     });
-    return { items, total, page, size, totalPages: Math.ceil(total / (size || 10)) };
+    return {
+      items,
+      total,
+      page,
+      size,
+      totalPages: Math.ceil(total / (size || 10)),
+      isRead: isRead || 0,
+    };
   }
 
   async readAll(userId: number) {
@@ -28,13 +42,17 @@ export class NotificationRecordService {
     return { message: 'All notifications marked as read' };
   }
 
-  private buildSearchWhere(search: string, userId: number): 
-  FindOptionsWhere<Notification> | FindOptionsWhere<Notification>[] {
+  private buildSearchWhere(search: string, userId: number, isRead: number):
+    FindOptionsWhere<Notification> | FindOptionsWhere<Notification>[] {
     if (!search) return { userId: userId };
     return [
       { title: ILike(search) },
       { content: ILike(search) },
       { userId: userId },
+      isRead ? {
+        status: isRead === 1 ?
+          NotificationStatus.READ : NotificationStatus.UNREAD
+      } : {},
     ];
   }
 

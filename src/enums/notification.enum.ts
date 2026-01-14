@@ -4,6 +4,7 @@ export enum NotificationStatus {
 }
 
 export enum NotificationType {
+  NEW_ARTICLE = 'NEW_ARTICLE',
   EBOOK = 'EBOOK', 
   FEEDBACK = 'FEEDBACK',
   SYSTEM = 'SYSTEM',
