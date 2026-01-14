@@ -28,6 +28,7 @@ import { FcmService } from '../services/fcm.service';
 import { TopicSubscriptionService } from '../services/topic-subscription.service';
 import { NotificationConfigController } from '../controllers/notification/notification-config.controller';
 import { FcmTokenController } from '../controllers/notification/fcm-token.controller';
+import { NotificationController } from '../controllers/notification/notification.controller';
 
 @Module({
   imports:[
@@ -60,6 +61,7 @@ import { FcmTokenController } from '../controllers/notification/fcm-token.contro
   controllers: [
     NotificationConfigController,
     FcmTokenController,
+    NotificationController,
   ],
   exports: [NotificationService, FcmService, FcmTokenService, TopicSubscriptionService],
 })
