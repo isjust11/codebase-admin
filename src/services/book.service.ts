@@ -6,45 +6,76 @@ import { CreateBookDto, UpdateBookDto } from 'src/dtos/book.dto';
 import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
 import { FilterType } from 'src/enums/filter-type.enum';
 import { UserInteraction } from 'src/entities/user-interaction.entity';
-import { InteractionType } from 'src/enums/interaction-type.enum';
 import { InteractionTarget } from 'src/enums/interaction-target.enum';
-import { UserInteractionService } from './user-interaction.service';
 
 @Injectable()
 export class BookService {
   constructor(
     @InjectRepository(Book)
     private bookRepository: Repository<Book>,
+    @InjectRepository(UserInteraction)
+    private userInteractionRepository: Repository<UserInteraction>,
   ) {}
 
   async getAllBooks(): Promise<Book[]> {
     return this.bookRepository.find({ relations: ['category'] });
   }
 
-  async getPublicBooks(filter: PaginationParams, filterType?: FilterType, categoryId?: number): Promise<PaginatedResponse<Book>> {
+  async getPublicBooks(filter: PaginationParams, filterType?: FilterType, categoryId?: number, userId?: number): Promise<PaginatedResponse<Book>> {
     const { page, size, search } = filter;
     const skip = ((page || 1) - 1) * (size || 10);
     const take = size;
+    
     const query = this.bookRepository.createQueryBuilder('book')
-    .leftJoinAndSelect('book.category', 'category')
-    // .leftJoin(UserInteraction, 'user_interaction', 'user_interaction.targetId = book.id AND user_interaction.targetType = :targetType', { targetType: InteractionTarget.BOOK })
-    .where('book.isPublic = true');
+      .leftJoinAndSelect('book.category', 'category')
+      .where('book.isPublic = true');
+
+    // Apply filter types
     if (filterType) {
-      if (filterType === FilterType.FAVORITE) {
-        query.andWhere('user_interaction.interactionType = :interactionType', { interactionType: InteractionType.FAVORITE });
-      } else if (filterType === FilterType.ARCHIVED) {
-        query.andWhere('user_interaction.interactionType = :interactionType', { interactionType: InteractionType.ARCHIVE });
-      } else {
-        // query.andWhere('user_interaction.interactionType = :interactionType', { interactionType: InteractionType.PUBLIC });
+        // Join với interaction_stats để lấy favorite books
+        if(filterType === FilterType.FAVORITE) {
+        query.innerJoin(
+          'interaction_stats', 
+          'stats', 
+          'stats.targetId = book.id AND stats.targetType = :targetType AND stats.favoriteStatus = true',
+          { targetType: InteractionTarget.BOOK }
+        );
+      } else if(filterType === FilterType.ARCHIVED) {
+        query.innerJoin(
+          'interaction_stats', 
+          'stats', 
+          'stats.targetId = book.id AND stats.targetType = :targetType AND stats.archiveStatus = true',
+          { targetType: InteractionTarget.BOOK }
+        );
       }
+        
+        // Nếu cần filter theo userId cụ thể (optional)
+        // Có thể thêm join với user_interaction nếu cần check theo user
+        if (userId && filterType !== FilterType.ALL) {
+          query.innerJoin(
+            'user_interaction',
+            'interaction',
+            'interaction.targetId = book.id AND interaction.targetType = :targetType AND interaction.userId = :userId AND interaction.interactionType = :favoriteType',
+            { 
+              targetType: InteractionTarget.BOOK,
+              userId: userId,
+              favoriteType: filterType
+            }
+          );
+        }
+        
     }
+    
     if (categoryId) {
       query.andWhere('book.categoryId = :categoryId', { categoryId });
     }
+    
     if (search) {
-      query.andWhere('book.title LIKE :search OR book.author LIKE :search', { search: `%${search}%` });
+      query.andWhere('(book.title LIKE :search OR book.author LIKE :search)', { search: `%${search}%` });
     }
+    
     const [data, total] = await query.skip(skip).take(take).getManyAndCount();
+    
     return {
       data,
       total,

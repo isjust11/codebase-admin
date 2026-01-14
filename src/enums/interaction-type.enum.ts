@@ -9,8 +9,8 @@ export enum InteractionType {
   FOLLOW = 'follow',
   UNFOLLOW = 'unfollow',
   FAVORITE = 'favorite',
-  ARCHIVE = 'archive',
+  ARCHIVED = 'archived',
   PUBLIC = 'public',
   DOWNLOAD = 'download',
-  READ = 'read',
+  READ = 'read'
 }

@@ -33,23 +33,24 @@ export class BookController extends BaseController{
     super();
   }
 
-  @Public()
   @Get('public')
   @ApiOperation({ summary: 'Lấy tất cả sách công khai (không cần đăng nhập)' })
   async getPublicBooks( @Query('page') page: number,
   @Query('size') size: number,
   @Query('search') search: string,
-  @Request() req,
+  @Request() req: any,
   @Res() res: Response,
   @Query('filterType') filterType?: FilterType,
   @Query('categoryId') categoryId?: number,) {
+    const userId = req?.user?.id;
     try {
     const filter: PaginationParams = {
       page: page || 1,
       size: size || 10,
       search: search || '',
     };
-    const data = await this.bookService.getPublicBooks(filter, filterType, categoryId);
+    
+    const data = await this.bookService.getPublicBooks(filter, filterType, categoryId, userId);
     return this.success(res, data);
     } catch (error) {
       return this.error(res, error);

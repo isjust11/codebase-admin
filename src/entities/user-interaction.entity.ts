@@ -25,13 +25,6 @@ export class UserInteraction {
   @Column()
   targetType: string;
 
-  // Optional foreign key relationships based on target type
-  @Column({ nullable: true })
-  articleId?: number;
-
-  @ManyToOne(() => Article, article => article.id, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'articleId' })
-  article?: Article;
 
   @Column({ nullable: true })
   bookId?: number;

@@ -37,11 +37,12 @@ export class UserInteractionService {
     });
 
     if (existingInteraction) {
-      if(createDto.interactionType === InteractionType.VIEW
+      if (createDto.interactionType === InteractionType.VIEW
         || createDto.interactionType === InteractionType.READ
         || createDto.interactionType === InteractionType.DOWNLOAD
         || createDto.interactionType === InteractionType.FAVORITE
-      ){
+        || createDto.interactionType === InteractionType.ARCHIVED
+      ) {
         await this.updateInteractionStats(createDto.targetType, createDto.targetId, createDto.interactionType, 1);
         return existingInteraction;
       }
@@ -231,9 +232,6 @@ export class UserInteractionService {
     targetId: number,
   ): void {
     switch (targetType) {
-      case InteractionTarget.ARTICLE:
-        interaction.articleId = targetId;
-        break;
       case InteractionTarget.BOOK:
         interaction.bookId = targetId;
         break;
@@ -285,6 +283,11 @@ export class UserInteractionService {
           break;
         case InteractionType.FOLLOW:
           stats.followCount += increment;
+        case InteractionType.FAVORITE:
+          stats.favoriteStatus = !stats.favoriteStatus;
+          break;
+        case InteractionType.ARCHIVED:
+          stats.archiveStatus = !stats.archiveStatus;
           break;
       }
 

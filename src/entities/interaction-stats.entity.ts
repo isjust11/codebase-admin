@@ -15,14 +15,6 @@ export class InteractionStats {
   @Column()
   targetType: string;
 
-  // Optional foreign key relationships based on target type
-  @Column({ nullable: true })
-  articleId?: number;
-
-  @ManyToOne(() => Article, article => article.id, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'articleId' })
-  article?: Article;
-
   // Statistics counters
   @Column({ default: 0 })
   likeCount: number;
@@ -47,6 +39,12 @@ export class InteractionStats {
 
   @Column({ default: 0 })
   followCount: number;
+
+  @Column({ default: false })
+  favoriteStatus: boolean;
+
+  @Column({ default: false })
+  archiveStatus: boolean;
 
   // Average rating (for rate interactions)
   @Column({ type: 'decimal', precision: 3, scale: 2, default: 0 })
