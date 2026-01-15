@@ -52,8 +52,8 @@ export class FcmTokenService {
     return this.fcmRepo.findOne({ where: { id } });
   }
 
-  findByUserId(userId: number) {
-    return this.fcmRepo.find({ where: { userId }, order: { createdAt: 'DESC' } });
+  async findByUserId(userId: number) {
+    return this.fcmRepo.findOne({ where: { userId }, order: { createdAt: 'DESC' } });
   }
 
   registerMany(tokens: FcmTokenDto[], userId: number) {

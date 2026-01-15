@@ -150,6 +150,7 @@ export class ArticleService {
     const sendResult = await this.fcmService.sendToTopic(topicName, { 
       title: 'Có bài viết mới', 
       body: article.title, 
+      type: 'new_article',
       data: { articleId: article.id.toString() }
     });
     

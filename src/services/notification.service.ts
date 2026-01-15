@@ -52,11 +52,9 @@ export class NotificationService {
   }
   
   newNotification(type: NotificationType, data: any, title?: string, content?: string, userId?: number){
-    const template = this.buildTemplateNotification(type.toString());
-    if (template) {
       var notification = this.notificationRepository.create({
-        title: title ?? template.title,
-        content: content ?? template.content,
+        title: title,
+        content: content,
         type: type,
         status: NotificationStatus.UNREAD,
         priority: NotificationPriority.MEDIUM,
@@ -64,8 +62,6 @@ export class NotificationService {
         userId: userId, // Add userId to track which user this notification is for
       });
       return this.notificationRepository.save(notification);
-    }
-    return null;
   }
 
   /**
@@ -87,15 +83,10 @@ export class NotificationService {
       return [];
     }
 
-    const template = this.buildTemplateNotification(type);
-    if (!template) {
-      return [];
-    }
-
     const notifications = userIds.map(userId => 
       this.notificationRepository.create({
-        title: title ?? template.title as string,
-        content: content ?? template.content as string,
+        title: title,
+        content: content,
         type: type,
         status: NotificationStatus.UNREAD,
         priority: NotificationPriority.MEDIUM,
@@ -105,25 +96,5 @@ export class NotificationService {
     );
 
     return this.notificationRepository.save(notifications);
-  }
-  // build template notification by type
-  buildTemplateNotification(type: string) {
-    switch (type) {
-      case 'NEW_ARTICLE':
-        return {
-          title: 'New article created',
-          content: 'New article created'
-        };
-      case 'FEEDBACK':
-        return {
-          title: 'New feedback created',
-          content: 'New feedback created'
-        };
-      case 'SYSTEM':
-        return {
-          title: 'System error',
-          content: 'System error'
-        };
-    }
   }
 }

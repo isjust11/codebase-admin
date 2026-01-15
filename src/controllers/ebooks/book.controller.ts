@@ -10,8 +10,6 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
-  NotFoundException,
-  BadRequestException,
   Request,
   Res,
 } from '@nestjs/common';
@@ -59,101 +57,141 @@ export class BookController extends BaseController{
 
   @Get()
   @ApiOperation({ summary: 'Lấy tất cả sách (cần đăng nhập)' })
-  async getAllBooks() {
-    return this.bookService.getAllBooks();
+  async getAllBooks(@Res() res: Response) {
+    try {
+      const data = await this.bookService.getAllBooks();
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 
   @Public()
   @Get('public/:id')
   @ApiOperation({ summary: 'Lấy sách công khai theo ID' })
-  async getPublicBookById(@Param('id') id: number) {
-    const book = await this.bookService.getBookById(id);
-    if (!book || !book.isPublic) {
-      throw new NotFoundException('Sách không tồn tại');
+  async getPublicBookById(@Param('id') id: number, @Res() res: Response) {
+    try {
+      const data = await this.bookService.getBookById(id);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
     }
-    return book;
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Lấy sách theo ID' })
-  async getBookById(@Param('id') id: number) {
-    const book = await this.bookService.getBookById(id);
-    if (!book) {
-      throw new NotFoundException('Sách không tồn tại');
+  async getBookById(@Param('id') id: number, @Res() res: Response) {
+    try {
+      const data = await this.bookService.getBookById(id);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
     }
-    return book;
   }
 
   @Post()
   @ApiOperation({ summary: 'Tạo sách mới' })
   @HttpCode(HttpStatus.CREATED)
-  async createBook(@Body() createBookDto: CreateBookDto, @Request() req) {
-    try {
-      return await this.bookService.createBook({ ...createBookDto, createById: req?.user?.id });
+  async createBook(@Body() createBookDto: CreateBookDto, @Request() req, @Res() res: Response) {
+    try { 
+      const data = await this.bookService.createBook({ ...createBookDto, createById: req?.user?.id });
+      return this.success(res, data);
     } catch (error) {
-      throw new BadRequestException('Lỗi: ' + error.message);
+      return this.error(res, error);
     }
   }
 
   @Put(':id')
   @ApiOperation({ summary: 'Cập nhật sách' })
-  async updateBook(@Param('id') id: number, @Body() updateBookDto: UpdateBookDto, @Request() req) {
-    const book = await this.bookService.updateBook(id, { ...updateBookDto, createById: req?.user?.id });
-    if (!book) {
-      throw new NotFoundException('Sách không tồn tại');
+  async updateBook(@Param('id') id: number, @Body() updateBookDto: UpdateBookDto, @Request() req, @Res() res: Response) {
+    try {
+      const data = await this.bookService.updateBook(id, { ...updateBookDto, createById: req?.user?.id });
+    return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
     }
-    return book;
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Xóa sách' })
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteBook(@Param('id') id: number) {
-    const deleted = await this.bookService.deleteBook(id);
-    if (!deleted) {
-      throw new NotFoundException('Sách không tồn tại');
+  async deleteBook(@Param('id') id: number, @Res() res: Response) {
+    try {
+      const data = await this.bookService.deleteBook(id);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
     }
   }
 
   @Public()
   @Get('public/search')
   @ApiOperation({ summary: 'Tìm kiếm sách công khai' })
-  async searchPublicBooks(@Query('keyword') keyword: string) {
-    return this.bookService.searchBooks(keyword);
+  async searchPublicBooks(@Query('keyword') keyword: string, @Res() res: Response) {
+    try {
+      const data = await this.bookService.searchBooks(keyword);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 
   @Get('search')
   @ApiOperation({ summary: 'Tìm kiếm tất cả sách' })
-  async searchAllBooks(@Query('keyword') keyword: string) {
-    return this.bookService.searchBooks(keyword);
+  async searchAllBooks(@Query('keyword') keyword: string, @Res() res: Response) {
+    try {
+      const data = await this.bookService.searchBooks(keyword);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 
   @Get('category/:categoryId')
   @ApiOperation({ summary: 'Lấy sách theo category' })
-  async getBooksByCategory(@Param('categoryId') categoryId: number) {
-    return this.bookService.getBooksByCategory(categoryId);
+  async getBooksByCategory(@Param('categoryId') categoryId: number, @Res() res: Response) {
+    try {
+      const data = await this.bookService.getBooksByCategory(categoryId);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 
   @Public()
   @Get('public/category/:categoryId')
   @ApiOperation({ summary: 'Lấy sách công khai theo category' })
-  async getPublicBooksByCategory(@Param('categoryId') categoryId: number) {
-    const books = await this.bookService.getBooksByCategory(categoryId);
-    return books.filter((book) => book.isPublic);
+    async getPublicBooksByCategory(@Param('categoryId') categoryId: number, @Res() res: Response) {
+    try {
+      const data = await this.bookService.getBooksByCategory(categoryId);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 
   @Public()
   @Get('public/title')
   @ApiOperation({ summary: 'Tìm kiếm theo tiêu đề (công khai)' })
-  async searchPublicBooksByTitle(@Query('q') q: string) {
-    return this.bookService.searchByTitle(q);
+  async searchPublicBooksByTitle(@Query('q') q: string, @Res() res: Response) {
+    try {
+      const data = await this.bookService.searchByTitle(q);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 
   @Public()
   @Get('public/author')
   @ApiOperation({ summary: 'Tìm kiếm theo tác giả (công khai)' })
-  async searchPublicBooksByAuthor(@Query('q') q: string) {
-    return this.bookService.searchByAuthor(q);
+  async searchPublicBooksByAuthor(@Query('q') q: string, @Res() res: Response) {
+    try {
+      const data = await this.bookService.searchByAuthor(q);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 }
 

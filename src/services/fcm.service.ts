@@ -4,6 +4,7 @@ import { FirebaseService } from './firebase.service';
 type SendPayload = {
   title: string;
   body: string;
+  type: string;
   data?: Record<string, string>;
 };
 

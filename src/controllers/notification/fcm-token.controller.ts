@@ -385,14 +385,14 @@ export class FcmTokenController extends BaseController {
    @Post('fcm/send-token')
   @RequirePermission('CREATE', 'notification')
   async sendFcmToToken(@Body() body: { token: string; title: string; body: string; data?: Record<string, string> }) {
-    const result = await this.fcmService.sendToToken(body.token, { title: body.title, body: body.body, data: body.data });
+    const result = await this.fcmService.sendToToken(body.token, { title: body.title, body: body.body, data: body.data, type: 'system' });
     return { success: true, messageId: result };
   }
 
   @Post('fcm/send-tokens')
   @RequirePermission('CREATE', 'notification')
   async sendFcmToTokens(@Body() body: { tokens: string[]; title: string; body: string; data?: Record<string, string> }) {
-    const result = await this.fcmService.sendToTokens(body.tokens, { title: body.title, body: body.body, data: body.data });
+    const result = await this.fcmService.sendToTokens(body.tokens, { title: body.title, body: body.body, data: body.data, type: 'system' });
     return { success: true, ...result };
   }
 
@@ -400,7 +400,7 @@ export class FcmTokenController extends BaseController {
   @RequirePermission('CREATE', 'notification')
   async sendFcmToTopic(@Body() body: { topic: string; title: string; body: string; data?: Record<string, string> }) {
     try {
-      const result = await this.fcmService.sendToTopic(body.topic, { title: body.title, body: body.body, data: body.data });
+      const result = await this.fcmService.sendToTopic(body.topic, { title: body.title, body: body.body, data: body.data, type: 'system' });
       return { success: true, messageId: result };
     } catch (error) {
       return { success: false, message: 'Error sending FCM to topic', error: error.message };

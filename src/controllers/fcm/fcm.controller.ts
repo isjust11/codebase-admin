@@ -87,7 +87,8 @@ export class FcmController {
       title: body.title,
       body: body.body,
       data: body.data,
-    });
+      type: 'system',
+      });
     
     return { 
       success: true, 
@@ -108,6 +109,7 @@ export class FcmController {
       title: body.title,
       body: body.body,
       data: body.data,
+      type: 'system',
     });
     
     return { 
@@ -129,6 +131,7 @@ export class FcmController {
       title: body.title,
       body: body.body,
       data: body.data,
+      type: 'system',
     });
     
     return { 

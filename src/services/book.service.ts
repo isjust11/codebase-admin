@@ -7,6 +7,11 @@ import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
 import { FilterType } from 'src/enums/filter-type.enum';
 import { UserInteraction } from 'src/entities/user-interaction.entity';
 import { InteractionTarget } from 'src/enums/interaction-target.enum';
+import { FcmService } from './fcm.service';
+import { FcmTokenService } from './fcm-token.service';
+import { EbookTemplate } from 'src/templates/notification/ebook-template';
+import { NotificationService } from './notification.service';
+import { NotificationType } from 'src/enums/notification.enum';
 
 @Injectable()
 export class BookService {
@@ -15,6 +20,9 @@ export class BookService {
     private bookRepository: Repository<Book>,
     @InjectRepository(UserInteraction)
     private userInteractionRepository: Repository<UserInteraction>,
+    private fcmService: FcmService,
+    private fcmTokenService: FcmTokenService,
+    private notificationService: NotificationService,
   ) {}
 
   async getAllBooks(): Promise<Book[]> {
@@ -94,7 +102,32 @@ export class BookService {
 
   async createBook(createBookDto: CreateBookDto): Promise<Book> {
     const book = this.bookRepository.create(createBookDto);
-    return this.bookRepository.save(book);
+    const savedBook = await this.bookRepository.save(book);
+    if(savedBook){
+      // Send FCM notification to topic
+      // get user tokeninfor 
+      const userTokens = await this.fcmTokenService.findByUserId(savedBook.createById);
+      if(userTokens){
+        const ebookTemplate = EbookTemplate.newEbook(savedBook);
+        const sendResult = await this.fcmService.sendToToken(userTokens.token, {
+          title: ebookTemplate.title,
+          body: ebookTemplate.body,
+          type: 'ebook',
+          data: ebookTemplate.data
+        });
+        if(sendResult){
+          await this.notificationService.newNotification(
+            NotificationType.EBOOK,
+            ebookTemplate.data,
+            ebookTemplate.title,
+            ebookTemplate.body,
+            userTokens.userId
+          );
+          return savedBook;
+        }
+      }
+    }
+    return savedBook; 
   }
 
   async updateBook(id: number, updateBookDto: UpdateBookDto): Promise<Book | null> {

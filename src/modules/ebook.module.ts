@@ -10,10 +10,12 @@ import { InteractionStats } from 'src/entities/interaction-stats.entity';
 import { BookController } from 'src/controllers/ebooks/book.controller';
 import { ReadingProgressController } from 'src/controllers/ebooks/reading-progress.controller';
 import { CategoryModule } from './category.module';
+import { NotificationModule } from './notification.module';
 
 @Module({
   imports: [
     AuthModule,
+    NotificationModule,
     TypeOrmModule.forFeature([Book, ReadingProgress, UserInteraction, InteractionStats]),
     CategoryModule,
   ],
