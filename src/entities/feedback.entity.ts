@@ -9,10 +9,10 @@ export enum FeedbackStatus {
 }
 
 export enum FeedbackType {
-  BUG_REPORT = 'bug_report',
-  FEATURE_REQUEST = 'feature_request',
-  COMPLAINT = 'complaint',
-  SUGGESTION = 'suggestion',
+  BUG_REPORT = 'bug',
+  FEATURE_REQUEST = 'feature',
+  IMPROVEMENT = 'improvement',
+  OTHER = 'other',
   GENERAL = 'general'
 }
 
@@ -37,21 +37,24 @@ export class Feedback {
   @Column({
     type: 'enum',
     enum: FeedbackType,
-    default: FeedbackType.GENERAL
+    default: FeedbackType.GENERAL,
+    nullable: true,
   })
   type: FeedbackType;
 
   @Column({
     type: 'enum',
     enum: FeedbackStatus,
-    default: FeedbackStatus.PENDING
+    default: FeedbackStatus.PENDING,
+    nullable: true,
   })
   status: FeedbackStatus;
 
   @Column({
     type: 'enum',
     enum: FeedbackPriority,
-    default: FeedbackPriority.MEDIUM
+    default: FeedbackPriority.MEDIUM,
+    nullable: true,
   })
   priority: FeedbackPriority;
 

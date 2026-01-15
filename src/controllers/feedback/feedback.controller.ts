@@ -16,13 +16,12 @@ import { CreateFeedbackDto } from '../../dtos/create-feedback.dto';
 import { UpdateFeedbackDto } from '../../dtos/update-feedback.dto';
 import { BaseController } from '../base/base.controller';
 import { RequirePermission } from '../../decorators/require-permissions.decorator';
-import { PermissionGuard } from '../../guards/permission.guard';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { Response } from 'express';
 import { FeedbackStatus } from '../../entities/feedback.entity';
 
 @Controller('feedback')
-@UseGuards(JwtAuthGuard, PermissionGuard)
+@UseGuards(JwtAuthGuard)
 export class FeedbackController extends BaseController {
   constructor(private readonly feedbackService: FeedbackService) {
     super();

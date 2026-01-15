@@ -42,18 +42,8 @@ export class NotificationRecordService {
     return { message: 'All notifications marked as read' };
   }
 
-  private buildSearchWhere(search: string, userId: number, isRead: number):
-    FindOptionsWhere<Notification> | FindOptionsWhere<Notification>[] {
-    if (!search) return { userId: userId };
-    return [
-      { title: ILike(search) },
-      { content: ILike(search) },
-      { userId: userId },
-      isRead ? {
-        status: isRead === 1 ?
-          NotificationStatus.READ : NotificationStatus.UNREAD
-      } : {},
-    ];
+  async deleteAll(userId: number) {
+    await this.notificationRepo.delete({ userId: userId });
   }
 
   create(data: Partial<Notification>) {

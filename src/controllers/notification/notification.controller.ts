@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, HttpCode, HttpStatus, Res, Req, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, HttpCode, HttpStatus, Res, Req, Request, Put } from '@nestjs/common';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { RequirePermission } from '../../decorators/require-permissions.decorator';
 import { BaseController } from '../base/base.controller';
 import { NotificationRecordService } from '../../services/notification-record.service';
 import { PaginationParams } from 'src/dtos/filter.dto';
 import { Response } from 'express';
+import { NotificationStatus } from 'src/enums/notification.enum';
 @Controller('notifications')
 @UseGuards(JwtAuthGuard)
 export class NotificationController extends BaseController {
@@ -17,14 +18,14 @@ export class NotificationController extends BaseController {
   async findByPage(@Query('page') page: number,
    @Query('size') size: number,
    @Query('search') search: string,
-   @Query('isRead') isRead: number  ,
+   @Query('isRead') isRead: string  ,
    @Request() req : any ,
    @Res() res: Response) {
     const filter: PaginationParams = {
       page: parseInt(page.toString()) || 1,
       size: parseInt(size.toString()) || 10,
       search: search || '',
-      isRead: isRead || 2,
+      isRead: parseInt(isRead),
     };
     try {
       const userId = req.user.id;
@@ -42,6 +43,28 @@ export class NotificationController extends BaseController {
     try {
       await this.service.readAll(req.user.id);
       return this.success(res, null);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Post('delete-all')
+  @RequirePermission('DELETE', 'notification')
+  async deleteAll(@Request() req : any , @Res() res: Response) {
+    try {
+      await this.service.deleteAll(req.user.id);
+      return this.success(res, null);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Put('mark-read/:id')
+  @RequirePermission('UPDATE', 'notification')
+  async markRead(@Param('id') id: string, @Res() res: Response) {
+    try {
+      const data = await this.service.update(this.decode(id), { status: NotificationStatus.READ });
+      return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
     }
