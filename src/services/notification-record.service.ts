@@ -27,9 +27,11 @@ export class NotificationRecordService {
       skip: ((page || 1) - 1) * (size || 10),
       take: (size || 10),
     });
+    const unreadCount = await this.notificationRepo.count({ where: { userId: userId, status: NotificationStatus.UNREAD } });
     return {
       items,
       total,
+      unreadCount,
       page,
       size,
       totalPages: Math.ceil(total / (size || 10)),
@@ -44,6 +46,10 @@ export class NotificationRecordService {
 
   async deleteAll(userId: number) {
     await this.notificationRepo.delete({ userId: userId });
+  }
+
+  async unreadCount(userId: number) {
+    return await this.notificationRepo.count({ where: { userId: userId, status: NotificationStatus.UNREAD } });
   }
 
   create(data: Partial<Notification>) {

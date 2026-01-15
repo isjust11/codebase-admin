@@ -59,6 +59,17 @@ export class NotificationController extends BaseController {
     }
   }
 
+  @Get('unread-count')
+  @RequirePermission('READ', 'notification')
+  async unreadCount(@Request() req : any , @Res() res: Response) {
+    try {
+      const data = await this.service.unreadCount(req.user.id);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
   @Put('mark-read/:id')
   @RequirePermission('UPDATE', 'notification')
   async markRead(@Param('id') id: string, @Res() res: Response) {
