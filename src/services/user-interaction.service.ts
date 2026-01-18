@@ -41,12 +41,17 @@ export class UserInteractionService {
 
     if (existingInteraction) {
       if (createDto.interactionType === InteractionType.VIEW
-        || createDto.interactionType === InteractionType.READ
         || createDto.interactionType === InteractionType.DOWNLOAD
         || createDto.interactionType === InteractionType.FAVORITE
         || createDto.interactionType === InteractionType.ARCHIVED
       ) {
         await this.updateInteractionStats(createDto.targetType, createDto.targetId, createDto.interactionType, 1);
+        return existingInteraction;
+      }
+      // for reading progress, update the reading progress
+      if (createDto.interactionType === InteractionType.READING) {
+        existingInteraction.metadata = createDto.metadata;
+        await this.userInteractionRepository.save(existingInteraction);
         return existingInteraction;
       }
       throw new ConflictException('Interaction already exists');
@@ -66,6 +71,16 @@ export class UserInteractionService {
     await this.updateInteractionStats(createDto.targetType, createDto.targetId, createDto.interactionType, 1);
 
     return savedInteraction;
+  }
+
+  async getInteractionAction(targetType: InteractionTarget, actionType: InteractionType, targetId: number, userId: number) {
+    const interaction = await this.userInteractionRepository.findOne({
+      where: { targetType: targetType.toString(), interactionType: actionType, targetId: targetId, userId: userId },
+    });
+    if (!interaction) {
+      return null;
+    }
+    return interaction;
   }
 
   async updateInteraction(

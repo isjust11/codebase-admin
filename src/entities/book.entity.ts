@@ -6,11 +6,9 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
-  OneToMany,
 } from 'typeorm';
 
 import { Category } from './category.entity';
-import { ReadingProgress } from './reading-progress.entity';
 import { User } from './user.entity';
 
 @Entity('books')
@@ -69,9 +67,7 @@ export class Book {
   createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;ß
+  updatedAt: Date;
 
-  @OneToMany(() => ReadingProgress, (progress) => progress.book)
-  readingProgress: ReadingProgress[];
 }
 

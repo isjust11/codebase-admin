@@ -69,9 +69,10 @@ export class BookController extends BaseController{
   @Public()
   @Get('public/:id')
   @ApiOperation({ summary: 'Lấy sách công khai theo ID' })
-  async getPublicBookById(@Param('id') id: number, @Res() res: Response) {
+  async getPublicBookById(@Param('id') id: string, @Res() res: Response) {
     try {
-      const data = await this.bookService.getBookById(id);
+      const bookId = this.decode(id);
+      const data = await this.bookService.getBookById(bookId);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -80,9 +81,10 @@ export class BookController extends BaseController{
 
   @Get(':id')
   @ApiOperation({ summary: 'Lấy sách theo ID' })
-  async getBookById(@Param('id') id: number, @Res() res: Response) {
+  async getBookById(@Param('id') id: string, @Res() res: Response) {
     try {
-      const data = await this.bookService.getBookById(id);
+      const bookId = this.decode(id);
+      const data = await this.bookService.getBookById(bookId);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -103,9 +105,10 @@ export class BookController extends BaseController{
 
   @Put(':id')
   @ApiOperation({ summary: 'Cập nhật sách' })
-  async updateBook(@Param('id') id: number, @Body() updateBookDto: UpdateBookDto, @Request() req, @Res() res: Response) {
+  async updateBook(@Param('id') id: string, @Body() updateBookDto: UpdateBookDto, @Request() req, @Res() res: Response) {
     try {
-      const data = await this.bookService.updateBook(id, { ...updateBookDto, createById: req?.user?.id });
+      const bookId = this.decode(id);
+      const data = await this.bookService.updateBook(bookId, { ...updateBookDto, createById: req?.user?.id });
     return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -115,9 +118,10 @@ export class BookController extends BaseController{
   @Delete(':id')
   @ApiOperation({ summary: 'Xóa sách' })
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteBook(@Param('id') id: number, @Res() res: Response) {
+  async deleteBook(@Param('id') id: string, @Res() res: Response) {
     try {
-      const data = await this.bookService.deleteBook(id);
+      const bookId = this.decode(id);
+      const data = await this.bookService.deleteBook(bookId);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);

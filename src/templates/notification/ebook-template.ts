@@ -7,7 +7,8 @@ export class EbookTemplate {
             title: 'Bạn vừa đăng tải thành công',
             body: 'Bạn vừa đăng tải thành công sách ' +  `<b>${book.title}</b> - <i>${book.author}</i>`, 
             data: {
-                id: book.id.toString(),
+                "id": book.id.toString(),
+                "type": "ebook"
             }
         }
     }

@@ -114,7 +114,6 @@ export class UserInteractionController extends BaseController {
     } catch (error) {
       return this.error(res, error);
     }
-
   }
 
   @Get('stats/:targetType/:targetId')
@@ -279,6 +278,7 @@ export class UserInteractionController extends BaseController {
     @Param('targetType') targetType: InteractionTarget,
     @Param('actionType') actionType: InteractionType,
     @Param('targetId') targetId: string,
+    @Body() body: { metadata?: any },
     @Res() res: Response,
   ) {
     try {
@@ -288,7 +288,26 @@ export class UserInteractionController extends BaseController {
         interactionType: actionType,
         targetType: targetType,
         targetId: targetIdNumber,
+        metadata: body.metadata,
       });
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Get('action/:actionType/:targetType/:targetId')
+  async getInteractionAction(
+    @Param('targetType') targetType: InteractionTarget,
+    @Param('actionType') actionType: InteractionType,
+    @Param('targetId') targetId: string,
+    @Request() req: any,
+    @Res() res: Response,
+  ) {
+    try {
+      const userId = req.user.id;
+      const targetIdNumber = this.decode(targetId);
+      const data = await this.userInteractionService.getInteractionAction(targetType, actionType, targetIdNumber, userId);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);

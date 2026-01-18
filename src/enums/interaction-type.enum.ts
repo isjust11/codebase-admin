@@ -12,5 +12,7 @@ export enum InteractionType {
   ARCHIVED = 'archived',
   PUBLIC = 'public',
   DOWNLOAD = 'download',
-  READ = 'read'
+  READ = 'read',
+  // for reading progress
+  READING = 'reading'
 }

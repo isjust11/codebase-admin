@@ -33,7 +33,6 @@ import { ConfigModule } from '@nestjs/config';
 import { FcmController } from './controllers/fcm/fcm.controller';
 import { TopicSubscription } from './entities/topic-subscription.entity';
 import { Book } from './entities/book.entity';
-import { ReadingProgress } from './entities/reading-progress.entity';
 import { EbookModule } from './modules/ebook.module';
 import { UserInteraction } from './entities/user-interaction.entity';
 @Module({
@@ -69,7 +68,6 @@ import { UserInteraction } from './entities/user-interaction.entity';
         Page,
         Feedback,
         TopicSubscription,
-        ReadingProgress,
         Book,
         UserInteraction,
         InteractionStats,
