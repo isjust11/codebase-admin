@@ -39,7 +39,9 @@ export class BookController extends BaseController{
   @Request() req: any,
   @Res() res: Response,
   @Query('filterType') filterType?: FilterType,
-  @Query('categoryId') categoryId?: number,) {
+  @Query('categoryId') categoryId?: number,
+  @Query('fromMe') fromMe?: boolean,
+) {
     const userId = req?.user?.id;
     try {
     const filter: PaginationParams = {
@@ -48,7 +50,7 @@ export class BookController extends BaseController{
       search: search || '',
     };
     
-    const data = await this.bookService.getPublicBooks(filter, filterType, categoryId, userId);
+    const data = await this.bookService.getPublicBooks(filter, filterType, categoryId, userId, fromMe);
     return this.success(res, data);
     } catch (error) {
       return this.error(res, error);

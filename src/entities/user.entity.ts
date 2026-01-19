@@ -2,7 +2,6 @@ import { Entity, Column, PrimaryGeneratedColumn, BeforeInsert, ManyToMany, JoinT
 import * as bcrypt from 'bcrypt';
 import { Role } from './role.entity';
 import { Exclude } from 'class-transformer';
-import { ReadingProgress } from './reading-progress.entity';
 import { Book } from './book.entity';
 
 @Entity()
@@ -102,9 +101,6 @@ export class User {
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
   updatedAt: Date;
-
-  @OneToMany(() => ReadingProgress, progress => progress.user)
-  readingProgress: ReadingProgress[];
 
   @Column({ type: 'json', nullable: true })
   permissions: string[];
