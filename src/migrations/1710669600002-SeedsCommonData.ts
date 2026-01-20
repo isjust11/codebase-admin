@@ -20,18 +20,53 @@ export class SeedsCommonData1710669600002 implements MigrationInterface {
             INSERT INTO category_type (name, code, description, isActive) VALUES
             ('Menu chức năng', '${CategoryTypeEnum.FEATURE_TYPE}', 'Danh mục các chức năng trong hệ thống', true)
         `);
+        await queryRunner.query(`
+            INSERT INTO category_type (name, code, description, isActive) VALUES
+            ('Loại sách', '${CategoryTypeEnum.BOOK_TYPE}', 'Danh mục các loại sách', true)
+        `);
+        await queryRunner.query(`
+            INSERT INTO category_type (name, code, description, isActive) VALUES
+            ('Danh mục sách', '${CategoryTypeEnum.BOOK_CATEGORY}', 'Danh mục các danh mục sách', true)
+        `);
 
         // Lấy category type ID cho FEATURE_TYPE
         const featureTypeResult = await queryRunner.query(`
             SELECT id FROM category_type WHERE code = '${CategoryTypeEnum.FEATURE_TYPE}'
         `);
         const featureTypeId = featureTypeResult[0].id;
+        
+        const bookTypeResult = await queryRunner.query(`
+            SELECT id FROM category_type WHERE code = '${CategoryTypeEnum.BOOK_TYPE}'
+        `);
+        const bookTypeId = bookTypeResult[0].id;
 
+        const bookCategoryTypeResult = await queryRunner.query(`
+            SELECT id FROM category_type WHERE code = '${CategoryTypeEnum.BOOK_CATEGORY}'
+        `);
+        const bookCategoryTypeId = bookCategoryTypeResult[0].id;
         // Insert categories cho FEATURE_TYPE
         await queryRunner.query(`
             INSERT INTO category (name, code, description, categoryTypeId,sortOrder , isActive) VALUES
             ('Menu', '${CategoryCodeEnum.FEATURE_MENU}', 'Menu chức năng chính', '${featureTypeId}',1, true),
             ('Khác', '${CategoryCodeEnum.FEATURE_OTHERS}', 'Các chức năng khác', '${featureTypeId}',2,true)
+        `);
+
+        // Insert categories cho BOOK_TYPE
+        await queryRunner.query(`
+            INSERT INTO category (name, code, description, categoryTypeId,sortOrder , isActive) VALUES
+            ('Ebook', '${CategoryCodeEnum.EBOOK}', 'Danh mục các loại sách', '${bookTypeId}',1, true),
+            ('ePub Book', '${CategoryCodeEnum.EPUB_BOOK}', 'Danh mục các loại sách', '${bookTypeId}',2, true),
+            ('PDF Book', '${CategoryCodeEnum.PDF_BOOK}', 'Danh mục các loại sách', '${bookTypeId}',3, true)
+        `);
+
+        // Insert categories cho BOOK_CATEGORY
+        await queryRunner.query(`
+            INSERT INTO category (name, code, description, categoryTypeId,sortOrder , isActive) VALUES
+            ('Fiction', '${CategoryCodeEnum.BOOK_CATEGORY_FICTION}', 'Danh mục các loại sách', '${bookCategoryTypeId}',1, true),
+            ('Non-Fiction', '${CategoryCodeEnum.BOOK_CATEGORY_NON_FICTION}', 'Danh mục các loại sách', '${bookCategoryTypeId}',2, true),
+            ('Children', '${CategoryCodeEnum.BOOK_CATEGORY_CHILDREN}', 'Danh mục các loại sách', '${bookCategoryTypeId}',3, true),
+            ('Teen', '${CategoryCodeEnum.BOOK_CATEGORY_TEEN}', 'Danh mục các loại sách', '${bookCategoryTypeId}',4, true),
+            ('Adult', '${CategoryCodeEnum.BOOK_CATEGORY_ADULT}', 'Danh mục các loại sách', '${bookCategoryTypeId}',5, true)
         `);
 
         // Lấy category ID cho Menu
