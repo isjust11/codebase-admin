@@ -167,7 +167,7 @@ export class AuthService {
    */
   async mobileSocialLogin(mobileSocialLoginDto: MobileSocialLoginDto) {
     try {
-      const { platformId, email, fullName, picture, platform, accessToken, fcmToken } = mobileSocialLoginDto;
+      const { platformId, email, fullName, picture, platform, accessToken, fcmToken, deviceId } = mobileSocialLoginDto;
 
       // Bước 1: Verify token với Google/Facebook servers
       const verifiedData = await this.socialTokenVerificationService.verifyToken(platform, accessToken);
@@ -207,7 +207,7 @@ export class AuthService {
         await this.fcmTokenService.registerOrUpdate({
           token: fcmToken,
           platform: platform,
-          deviceId: '',
+          deviceId: deviceId ?? '',
         }, user.id);
       }
       return this.generateToken(user);

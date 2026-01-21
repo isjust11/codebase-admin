@@ -28,4 +28,8 @@ export class MobileSocialLoginDto {
   @IsString()
   @IsOptional()
   fcmToken?: string;
+
+  @IsString()
+  @IsOptional()
+  deviceId?: string;
 }

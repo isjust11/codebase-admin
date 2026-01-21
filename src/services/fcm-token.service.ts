@@ -28,7 +28,7 @@ export class FcmTokenService {
   }
 
   async registerOrUpdate(data: FcmTokenDto, userId: number) {
-    const existing = await this.fcmRepo.findOne({ where: { token: data.token, platform: data.platform } });
+    const existing = await this.fcmRepo.findOne({ where: { token: data.token, platform: data.platform, deviceId: data.deviceId } });
     if (existing) {
       existing.deviceId = data.deviceId ?? existing.deviceId ?? '';
       existing.userId = userId;
