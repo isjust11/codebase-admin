@@ -167,7 +167,7 @@ export class AuthService {
    */
   async mobileSocialLogin(mobileSocialLoginDto: MobileSocialLoginDto) {
     try {
-      const { platformId, email, fullName, picture, platform, accessToken } = mobileSocialLoginDto;
+      const { platformId, email, fullName, picture, platform, accessToken, fcmToken } = mobileSocialLoginDto;
 
       // Bước 1: Verify token với Google/Facebook servers
       const verifiedData = await this.socialTokenVerificationService.verifyToken(platform, accessToken);
@@ -203,7 +203,13 @@ export class AuthService {
 
         await this.userService.update(user.id, user);
       }
-
+      if (fcmToken) {
+        await this.fcmTokenService.registerOrUpdate({
+          token: fcmToken,
+          platform: platform,
+          deviceId: '',
+        }, user.id);
+      }
       return this.generateToken(user);
     } catch (error) {
       console.error('Error in mobileSocialLogin:', error);

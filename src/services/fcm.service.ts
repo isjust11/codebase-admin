@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { FirebaseService } from './firebase.service';
+import { NotificationService } from './notification.service';
+import { NotificationType } from 'src/enums/notification.enum';
 
 type SendPayload = {
   title: string;
@@ -12,9 +14,12 @@ type SendPayload = {
 export class FcmService {
   private readonly logger = new Logger(FcmService.name);
 
-  constructor(private readonly firebase: FirebaseService) {}
+  constructor(private readonly firebase: FirebaseService, 
+    private readonly notificationService: NotificationService
 
-  async sendToToken(token: string, payload: SendPayload) {
+  ) {}
+
+  async sendToToken(token: string, payload: SendPayload, userId?: number) {
     const messaging = this.firebase.messaging;
     if (!messaging) {
       this.logger.warn('FCM messaging not initialized. Skipping sendToToken');
@@ -41,7 +46,18 @@ export class FcmService {
         },
       },
     } as const;
-    return await messaging.send(message);
+    const messageId = await messaging.send(message);
+    if(messageId){
+      if(userId){
+        await this.notificationService.newNotification(
+          NotificationType.SYSTEM,
+          payload.data,
+          payload.title,
+          payload.body,
+          userId);
+      }
+    }
+    return messageId;
   }
 
   async sendToTokens(tokens: string[], payload: SendPayload) {

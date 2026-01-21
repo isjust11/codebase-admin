@@ -26,32 +26,32 @@ import { FilterType } from 'src/enums/filter-type.enum';
 @ApiTags('Books')
 @Controller('books')
 @UseGuards(JwtAuthGuard, PermissionGuard)
-export class BookController extends BaseController{
+export class BookController extends BaseController {
   constructor(private bookService: BookService) {
     super();
   }
 
   @Get('public')
   @ApiOperation({ summary: 'Lấy tất cả sách công khai (không cần đăng nhập)' })
-  async getPublicBooks( @Query('page') page: number,
-  @Query('size') size: number,
-  @Query('search') search: string,
-  @Request() req: any,
-  @Res() res: Response,
-  @Query('filterType') filterType?: FilterType,
-  @Query('categoryId') categoryId?: number,
-  @Query('fromMe') fromMe?: boolean,
-) {
+  async getPublicBooks(@Query('page') page: number,
+    @Query('size') size: number,
+    @Query('search') search: string,
+    @Request() req: any,
+    @Res() res: Response,
+    @Query('filterType') filterType?: FilterType,
+    @Query('categoryId') categoryId?: number,
+    @Query('fromMe') fromMe?: boolean,
+  ) {
     const userId = req?.user?.id;
     try {
-    const filter: PaginationParams = {
-      page: page || 1,
-      size: size || 10,
-      search: search || '',
-    };
-    
-    const data = await this.bookService.getPublicBooks(filter, filterType, categoryId, userId, fromMe);
-    return this.success(res, data);
+      const filter: PaginationParams = {
+        page: page || 1,
+        size: size || 10,
+        search: search || '',
+      };
+
+      const data = await this.bookService.getPublicBooks(filter, filterType, categoryId, userId, fromMe);
+      return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
     }
@@ -82,10 +82,19 @@ export class BookController extends BaseController{
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Lấy sách theo ID' })
+  @ApiOperation({ summary: 'Lấy sách theo ID từ thông báo ' })
   async getBookById(@Param('id') id: string, @Res() res: Response) {
     try {
-      const bookId = this.decode(id);
+      let bookId = 0;
+      // id từ thông báo không có mã hóa
+      const isNumber = !isNaN(Number(id));
+      if (isNumber) {
+        bookId = Number(id);
+      } else {
+        bookId = this.decode(id);
+      }
+
+      // const bookId = this.decode(id);
       const data = await this.bookService.getBookById(bookId);
       return this.success(res, data);
     } catch (error) {
@@ -97,7 +106,7 @@ export class BookController extends BaseController{
   @ApiOperation({ summary: 'Tạo sách mới' })
   @HttpCode(HttpStatus.CREATED)
   async createBook(@Body() createBookDto: CreateBookDto, @Request() req, @Res() res: Response) {
-    try { 
+    try {
       const data = await this.bookService.createBook({ ...createBookDto, createById: req?.user?.id });
       return this.success(res, data);
     } catch (error) {
@@ -111,7 +120,7 @@ export class BookController extends BaseController{
     try {
       const bookId = this.decode(id);
       const data = await this.bookService.updateBook(bookId, { ...updateBookDto, createById: req?.user?.id });
-    return this.success(res, data);
+      return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
     }
@@ -167,7 +176,7 @@ export class BookController extends BaseController{
   @Public()
   @Get('public/category/:categoryId')
   @ApiOperation({ summary: 'Lấy sách công khai theo category' })
-    async getPublicBooksByCategory(@Param('categoryId') categoryId: number, @Res() res: Response) {
+  async getPublicBooksByCategory(@Param('categoryId') categoryId: number, @Res() res: Response) {
     try {
       const data = await this.bookService.getBooksByCategory(categoryId);
       return this.success(res, data);

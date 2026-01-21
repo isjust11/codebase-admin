@@ -24,4 +24,8 @@ export class MobileSocialLoginDto {
   @IsString()
   @IsNotEmpty()
   accessToken: string; // Access token từ platform (required for verification)
+
+  @IsString()
+  @IsOptional()
+  fcmToken?: string;
 }
