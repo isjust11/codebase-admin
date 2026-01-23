@@ -94,6 +94,10 @@ export class UpdateBookDto {
   @IsOptional()
   fileUrl?: string;
 
+  @IsString()
+  @IsOptional()
+  category?: string;
+
   @ApiProperty({ required: false })
   @IsNumber()
   @IsOptional()

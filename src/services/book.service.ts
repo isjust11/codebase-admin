@@ -12,6 +12,7 @@ import { FcmTokenService } from './fcm-token.service';
 import { EbookTemplate } from 'src/templates/notification/ebook-template';
 import { NotificationService } from './notification.service';
 import { NotificationType } from 'src/enums/notification.enum';
+import { Category } from 'src/entities/category.entity';
 
 @Injectable()
 export class BookService {
@@ -23,6 +24,8 @@ export class BookService {
     private fcmService: FcmService,
     private fcmTokenService: FcmTokenService,
     private notificationService: NotificationService,
+    @InjectRepository(Category)
+    private categoryRepository: Repository<Category>,
   ) {}
 
   async getAllBooks(): Promise<Book[]> {
@@ -144,7 +147,16 @@ export class BookService {
     if (!book) {
       return null;
     }
+    // update book
     Object.assign(book, updateBookDto);
+    if(updateBookDto.categoryId) {
+      const category = await this.categoryRepository.findOne({ where: { id: updateBookDto.categoryId } });
+      if(!category) {
+        return null;
+      }
+      book.category = category;
+      book.categoryId = category.id;
+    }
     return this.bookRepository.save(book);
   }
 

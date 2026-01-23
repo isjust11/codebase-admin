@@ -8,13 +8,13 @@ import { InteractionStats } from 'src/entities/interaction-stats.entity';
 import { BookController } from 'src/controllers/ebooks/book.controller';
 import { CategoryModule } from './category.module';
 import { NotificationModule } from './notification.module';
+import { Category } from 'src/entities/category.entity';
 
 @Module({
   imports: [
     AuthModule,
     NotificationModule,
-    TypeOrmModule.forFeature([Book, UserInteraction, InteractionStats]),
-    CategoryModule,
+    TypeOrmModule.forFeature([Book, UserInteraction, InteractionStats, Category]),
   ],
   controllers: [BookController],
   providers: [BookService],

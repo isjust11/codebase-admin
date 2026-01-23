@@ -119,6 +119,9 @@ export class BookController extends BaseController {
   async updateBook(@Param('id') id: string, @Body() updateBookDto: UpdateBookDto, @Request() req, @Res() res: Response) {
     try {
       const bookId = this.decode(id);
+      if(updateBookDto.category) {
+        updateBookDto.categoryId = this.decode(updateBookDto.category);
+      }
       const data = await this.bookService.updateBook(bookId, { ...updateBookDto, createById: req?.user?.id });
       return this.success(res, data);
     } catch (error) {
