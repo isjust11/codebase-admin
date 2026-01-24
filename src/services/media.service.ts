@@ -139,7 +139,7 @@ export class MediaService {
     try {
       if (filename) {
         try {
-          await axios.delete(`${this.storageServiceUrl}/storage/file/${filename}`, {
+          await axios.delete(`${this.storageServiceUrl}/storage/file/${filename}/${userId}`, {
             headers: { [this.storageClientHeaderName]: this.storageClientKey },
           });
         } catch (_err) {

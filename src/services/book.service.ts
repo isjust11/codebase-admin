@@ -13,6 +13,7 @@ import { EbookTemplate } from 'src/templates/notification/ebook-template';
 import { NotificationService } from './notification.service';
 import { NotificationType } from 'src/enums/notification.enum';
 import { Category } from 'src/entities/category.entity';
+import { MediaService } from './media.service';
 
 @Injectable()
 export class BookService {
@@ -26,7 +27,8 @@ export class BookService {
     private notificationService: NotificationService,
     @InjectRepository(Category)
     private categoryRepository: Repository<Category>,
-  ) {}
+    private mediaService: MediaService,
+  ) { }
 
   async getAllBooks(): Promise<Book[]> {
     return this.bookRepository.find({ relations: ['category'] });
@@ -36,66 +38,66 @@ export class BookService {
     const { page, size, search } = filter;
     const skip = ((page || 1) - 1) * (size || 10);
     const take = size;
-    
+
     const query = this.bookRepository.createQueryBuilder('book')
       .leftJoinAndSelect('book.category', 'category')
       .where('book.isPublic = true');
 
     // Apply filter types
     if (filterType) {
-        // Join với interaction_stats để lấy favorite books
-        if(filterType === FilterType.FAVORITE) {
+      // Join với interaction_stats để lấy favorite books
+      if (filterType === FilterType.FAVORITE) {
         query.innerJoin(
-          'interaction_stats', 
-          'stats', 
+          'interaction_stats',
+          'stats',
           'stats.targetId = book.id AND stats.targetType = :targetType AND stats.favoriteStatus = true',
           { targetType: InteractionTarget.BOOK }
         );
-      } else if(filterType === FilterType.ARCHIVED) {
+      } else if (filterType === FilterType.ARCHIVED) {
         query.innerJoin(
-          'interaction_stats', 
-          'stats', 
+          'interaction_stats',
+          'stats',
           'stats.targetId = book.id AND stats.targetType = :targetType AND stats.archiveStatus = true',
           { targetType: InteractionTarget.BOOK }
         );
       }
-        
-        // Nếu cần filter theo userId cụ thể (optional)
-        if (fromMe && filterType !== FilterType.ALL) {
-          query.innerJoin(
-            'user_interaction',
-            'interaction',
-            'interaction.targetId = book.id AND interaction.targetType = :targetType AND interaction.userId = :userId AND interaction.interactionType = :favoriteType',
-            { 
-              targetType: InteractionTarget.BOOK,
-              userId: userId,
-              favoriteType: filterType
-            }
-          );
-        }else if(!fromMe && filterType !== FilterType.ALL) {
-          query.innerJoin(
-            'user_interaction',
-            'interaction',
-            'interaction.targetId = book.id AND interaction.targetType = :targetType AND interaction.userId != :userId AND interaction.interactionType = :favoriteType',
-            { 
-              targetType: InteractionTarget.BOOK,
-              userId: userId,
-              favoriteType: filterType
-            }
-          );
-        }
+
+      // Nếu cần filter theo userId cụ thể (optional)
+      if (fromMe && filterType !== FilterType.ALL) {
+        query.innerJoin(
+          'user_interaction',
+          'interaction',
+          'interaction.targetId = book.id AND interaction.targetType = :targetType AND interaction.userId = :userId AND interaction.interactionType = :favoriteType',
+          {
+            targetType: InteractionTarget.BOOK,
+            userId: userId,
+            favoriteType: filterType
+          }
+        );
+      } else if (!fromMe && filterType !== FilterType.ALL) {
+        query.innerJoin(
+          'user_interaction',
+          'interaction',
+          'interaction.targetId = book.id AND interaction.targetType = :targetType AND interaction.userId != :userId AND interaction.interactionType = :favoriteType',
+          {
+            targetType: InteractionTarget.BOOK,
+            userId: userId,
+            favoriteType: filterType
+          }
+        );
+      }
     }
-    
+
     if (categoryId) {
       query.andWhere('book.categoryId = :categoryId', { categoryId });
     }
-    
+
     if (search) {
       query.andWhere('(book.title LIKE :search OR book.author LIKE :search)', { search: `%${search}%` });
     }
-    
+
     const [data, total] = await query.skip(skip).take(take).getManyAndCount();
-    
+
     return {
       data,
       total,
@@ -113,13 +115,16 @@ export class BookService {
   }
 
   async createBook(createBookDto: CreateBookDto): Promise<Book> {
-    const book = this.bookRepository.create(createBookDto);
+    const book = this.bookRepository.create({
+      ...createBookDto,
+      category: createBookDto.category ? { id: createBookDto.categoryId } : undefined,
+    });
     const savedBook = await this.bookRepository.save(book);
-    if(savedBook){
+    if (savedBook) {
       // Send FCM notification to topic
       // get user tokeninfor 
       const userTokens = await this.fcmTokenService.findByUserId(savedBook.createById);
-      if(userTokens){
+      if (userTokens) {
         const ebookTemplate = EbookTemplate.newEbook(savedBook);
         const sendResult = await this.fcmService.sendToToken(userTokens.token, {
           title: ebookTemplate.title,
@@ -127,7 +132,7 @@ export class BookService {
           type: 'ebook',
           data: ebookTemplate.data
         });
-        if(sendResult){
+        if (sendResult) {
           await this.notificationService.newNotification(
             NotificationType.EBOOK,
             ebookTemplate.data,
@@ -139,7 +144,7 @@ export class BookService {
         }
       }
     }
-    return savedBook; 
+    return savedBook;
   }
 
   async updateBook(id: number, updateBookDto: UpdateBookDto): Promise<Book | null> {
@@ -149,9 +154,9 @@ export class BookService {
     }
     // update book
     Object.assign(book, updateBookDto);
-    if(updateBookDto.categoryId) {
+    if (updateBookDto.categoryId) {
       const category = await this.categoryRepository.findOne({ where: { id: updateBookDto.categoryId } });
-      if(!category) {
+      if (!category) {
         return null;
       }
       book.category = category;
@@ -161,6 +166,19 @@ export class BookService {
   }
 
   async deleteBook(id: number): Promise<boolean> {
+    const book = await this.bookRepository.findOne({ where: { id } });
+    if (!book) {
+      return false;
+    }
+    //delete file from storage
+    const fileUrl = book.fileUrl.split('/').pop();
+    if (fileUrl) {
+      await this.mediaService.deleteFile(fileUrl, book.createById);
+    }
+    const coverImageUrl = book.coverImageUrl.split('/').pop();
+    if (coverImageUrl) {
+      await this.mediaService.deleteFile(coverImageUrl, book.createById);
+    }
     const result = await this.bookRepository.delete(id);
     return result.affected ? result.affected > 0 : false;
   }

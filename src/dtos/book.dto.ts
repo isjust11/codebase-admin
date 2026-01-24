@@ -58,6 +58,11 @@ export class CreateBookDto {
   isPublic?: boolean;
 
   @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  category?: string;
+
+  @ApiProperty({ required: false })
   @IsNumber()
   @IsOptional()
   categoryId?: number;

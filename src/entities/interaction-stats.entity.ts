@@ -1,6 +1,4 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
-import { Article } from './article.entity';
-import { Category } from './category.entity';
 import { Transform } from 'class-transformer';
 
 @Entity()

@@ -22,12 +22,13 @@ import { PermissionGuard } from 'src/guards/permission.guard';
 import { PaginationParams } from 'src/dtos/filter.dto';
 import { Response } from 'express';
 import { FilterType } from 'src/enums/filter-type.enum';
+import { MediaService } from 'src/services/media.service';
 
 @ApiTags('Books')
 @Controller('books')
 @UseGuards(JwtAuthGuard, PermissionGuard)
 export class BookController extends BaseController {
-  constructor(private bookService: BookService) {
+  constructor(private bookService: BookService, private mediaService: MediaService) {
     super();
   }
 
@@ -107,9 +108,22 @@ export class BookController extends BaseController {
   @HttpCode(HttpStatus.CREATED)
   async createBook(@Body() createBookDto: CreateBookDto, @Request() req, @Res() res: Response) {
     try {
+
+      if(createBookDto.category) {
+        createBookDto.categoryId = this.decode(createBookDto.category);
+      }
       const data = await this.bookService.createBook({ ...createBookDto, createById: req?.user?.id });
       return this.success(res, data);
     } catch (error) {
+      const fileUrl = createBookDto.fileUrl.split('/').pop();
+      const coverImageUrl = createBookDto.coverImageUrl?.split('/').pop();
+      // remove file from storage
+      if(fileUrl) {
+        await this.mediaService.deleteFile(fileUrl, req?.user?.id);
+      }
+      if(coverImageUrl) {
+        await this.mediaService.deleteFile(coverImageUrl, req?.user?.id);
+      }
       return this.error(res, error);
     }
   }
