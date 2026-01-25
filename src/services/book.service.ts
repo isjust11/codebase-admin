@@ -175,7 +175,7 @@ export class BookService {
     if (fileUrl) {
       await this.mediaService.deleteFile(fileUrl, book.createById);
     }
-    const coverImageUrl = book.coverImageUrl.split('/').pop();
+    const coverImageUrl = book.coverImageUrl?.split('/').pop();
     if (coverImageUrl) {
       await this.mediaService.deleteFile(coverImageUrl, book.createById);
     }

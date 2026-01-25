@@ -56,7 +56,16 @@ export abstract class BaseController {
   }
 
   protected decode(id: string) {
-    return Base64EncryptionUtil.decrypt(id);
+    try {
+      const isNumber = !isNaN(Number(id));
+      if (isNumber) {
+        return Number(id);
+      }else { 
+        return Base64EncryptionUtil.decrypt(id);
+      }
+    } catch (error) {
+      return 0;
+    }
   }
 
   protected decodeStr(id: string) {

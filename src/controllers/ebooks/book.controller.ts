@@ -86,15 +86,8 @@ export class BookController extends BaseController {
   @ApiOperation({ summary: 'Lấy sách theo ID từ thông báo ' })
   async getBookById(@Param('id') id: string, @Res() res: Response) {
     try {
-      let bookId = 0;
       // id từ thông báo không có mã hóa
-      const isNumber = !isNaN(Number(id));
-      if (isNumber) {
-        bookId = Number(id);
-      } else {
-        bookId = this.decode(id);
-      }
-
+      const bookId = this.decode(id);
       // const bookId = this.decode(id);
       const data = await this.bookService.getBookById(bookId);
       return this.success(res, data);
