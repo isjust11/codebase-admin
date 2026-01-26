@@ -131,7 +131,6 @@ export class UserInteractionController extends BaseController {
     }
   }
 
-
   @Post('view/:targetType/:targetId')
   async view(
     @Request() req: any,
