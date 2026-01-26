@@ -51,6 +51,7 @@ export class UserInteractionService {
       // for reading progress, update the reading progress
       if (createDto.interactionType === InteractionType.READING) {
         existingInteraction.metadata = createDto.metadata;
+        existingInteraction.updatedAt = new Date();
         await this.userInteractionRepository.save(existingInteraction);
         return existingInteraction;
       }
@@ -116,7 +117,7 @@ export class UserInteractionService {
     if (updateDto.metadata !== undefined) {
       interaction.metadata = updateDto.metadata;
     }
-
+    interaction.updatedAt = new Date();
     return await this.userInteractionRepository.save(interaction);
   }
 
@@ -175,11 +176,12 @@ export class UserInteractionService {
     const [interactions, total] = await queryBuilder
       .skip(skip)
       .take(limit)
-      .orderBy('interaction.createdAt', 'DESC')
+      .orderBy('interaction.updatedAt', 'DESC')
+      .leftJoinAndSelect('interaction.book', 'book')
       .getManyAndCount();
 
     return {
-      data: interactions,
+      data: interactions ,
       total,
       page,
       limit,

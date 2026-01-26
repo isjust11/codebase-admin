@@ -72,9 +72,7 @@ export class UserInteractionController extends BaseController {
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
-
     }
-
   }
 
   @Delete(':targetType/:targetId/:interactionType')
