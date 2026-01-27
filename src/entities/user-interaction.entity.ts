@@ -53,6 +53,10 @@ export class UserInteraction {
   @Column({ length: 255, nullable: true })
   sharePlatform?: string;
 
+  // 0: unread, 1: read, 2: completed
+  @Column({ type: 'int', default: 0 })
+  status?: number;
+
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   @Transform(({ value }) => value ? new Date(value) : value)
   createdAt: Date;

@@ -52,6 +52,11 @@ export class UserInteractionService {
       if (createDto.interactionType === InteractionType.READING) {
         existingInteraction.metadata = createDto.metadata;
         existingInteraction.updatedAt = new Date();
+        existingInteraction.status = 1;
+        const processReading = createDto.metadata?.progress;
+        if(processReading && processReading >= 1) {
+          existingInteraction.status = 2;
+        }
         await this.userInteractionRepository.save(existingInteraction);
         return existingInteraction;
       }
@@ -61,6 +66,7 @@ export class UserInteractionService {
     const interaction = this.userInteractionRepository.create({
       userId,
       ...createDto,
+      status: 1,
     });
 
     // Set target-specific foreign keys
@@ -149,7 +155,8 @@ export class UserInteractionService {
   async getUserInteractions(userId: number, query: UserInteractionQueryDto) {
     const queryBuilder = this.userInteractionRepository
       .createQueryBuilder('interaction')
-      .where('interaction.userId = :userId', { userId });
+      .where('interaction.userId = :userId', { userId } )
+      .andWhere('interaction.status = 1');
 
     if (query.interactionType) {
       queryBuilder.andWhere('interaction.interactionType = :interactionType', {
