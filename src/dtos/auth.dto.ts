@@ -20,6 +20,10 @@ export class LoginDto {
   @IsString()
   @IsOptional()
   deviceId?: string;
+
+  @IsString()
+  @IsOptional()
+  appVersion?: string;
 }
 export enum RegisterCode{
   AccountValidated = 'account_validated',

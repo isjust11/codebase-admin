@@ -221,7 +221,7 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto) {
-    const { username, password, fcmToken } = loginDto;
+    const { username, password, fcmToken, platform, deviceId, appVersion } = loginDto;
     const user = await this.validateUser(username, password);
 
     if (!user) {
@@ -234,8 +234,9 @@ export class AuthService {
     if (fcmToken) {
       await this.fcmTokenService.registerOrUpdate({
         token: fcmToken,
-        platform: 'web',
-        deviceId: '',
+        platform: platform ?? '',
+        deviceId: deviceId,
+        app_version: appVersion,
       }, user.id);
     }
     return this.generateToken(user);
