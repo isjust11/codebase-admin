@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word to PDF Converter - Test Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f9f9ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: #f0f0ff;
+        }
+
+        .upload-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .upload-hint {
+            font-size: 14px;
+            color: #999;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-info {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .file-info.show {
+            display: block;
+        }
+
+        .file-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .file-size {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .config-section {
+            margin-bottom: 20px;
+        }
+
+        .config-section label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .config-section input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .config-section input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .config-section input[type="checkbox"] {
+            margin-right: 8px;
+        }
+
+        .convert-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .convert-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .convert-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress-container {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .progress-container.show {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .status-message {
+            text-align: center;
+            color: #666;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .download-btn {
+            margin-top: 15px;
+            padding: 12px 24px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .download-btn:hover {
+            background: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📄 Word to PDF</h1>
+        <p class="subtitle">Chuyển đổi file Word sang PDF nhanh chóng</p>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">Kéo thả file vào đây hoặc click để chọn</div>
+            <div class="upload-hint">Hỗ trợ .doc và .docx (tối đa 50MB)</div>
+            <input type="file" id="fileInput" accept=".doc,.docx">
+        </div>
+
+        <div class="file-info" id="fileInfo">
+            <div class="file-name" id="fileName"></div>
+            <div class="file-size" id="fileSize"></div>
+        </div>
+
+        <div class="config-section">
+            <label for="apiUrl">API URL:</label>
+            <input 
+                type="text" 
+                id="apiUrl" 
+                value="http://localhost:3000/converter/word-to-pdf-public"
+                placeholder="http://localhost:3000/converter/word-to-pdf-public"
+            >
+        </div>
+
+        <div class="config-section">
+            <label>
+                <input type="checkbox" id="useAuth">
+                Sử dụng Authentication (JWT Token)
+            </label>
+        </div>
+
+        <div class="config-section" id="tokenSection" style="display: none;">
+            <label for="token">JWT Token:</label>
+            <input 
+                type="text" 
+                id="token" 
+                placeholder="Nhập JWT token của bạn"
+            >
+        </div>
+
+        <button class="convert-btn" id="convertBtn" disabled>
+            Chọn file để bắt đầu
+        </button>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill">0%</div>
+            </div>
+            <div class="status-message" id="statusMessage">Đang xử lý...</div>
+        </div>
+
+        <div class="result" id="result">
+            <div id="resultMessage"></div>
+            <button class="download-btn" id="downloadBtn" style="display: none;">
+                Tải xuống PDF
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const convertBtn = document.getElementById('convertBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const statusMessage = document.getElementById('statusMessage');
+        const result = document.getElementById('result');
+        const resultMessage = document.getElementById('resultMessage');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const apiUrl = document.getElementById('apiUrl');
+        const useAuth = document.getElementById('useAuth');
+        const tokenSection = document.getElementById('tokenSection');
+        const token = document.getElementById('token');
+
+        let selectedFile = null;
+        let pdfBlob = null;
+
+        // Toggle token section
+        useAuth.addEventListener('change', () => {
+            tokenSection.style.display = useAuth.checked ? 'block' : 'none';
+            if (useAuth.checked) {
+                apiUrl.value = 'http://localhost:3000/converter/word-to-pdf';
+            } else {
+                apiUrl.value = 'http://localhost:3000/converter/word-to-pdf-public';
+            }
+        });
+
+        // Upload area click
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelect(files[0]);
+            }
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            // Validate file type
+            const validTypes = [
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'application/msword'
+            ];
+            
+            if (!validTypes.includes(file.type) && 
+                !file.name.endsWith('.doc') && 
+                !file.name.endsWith('.docx')) {
+                alert('Chỉ chấp nhận file Word (.doc, .docx)');
+                return;
+            }
+
+            // Validate file size (50MB)
+            if (file.size > 50 * 1024 * 1024) {
+                alert('File quá lớn! Kích thước tối đa là 50MB');
+                return;
+            }
+
+            selectedFile = file;
+            
+            // Display file info
+            fileName.textContent = `📄 ${file.name}`;
+            fileSize.textContent = `Kích thước: ${formatFileSize(file.size)}`;
+            fileInfo.classList.add('show');
+            
+            // Enable convert button
+            convertBtn.textContent = 'Chuyển đổi ngay';
+            convertBtn.disabled = false;
+            
+            // Hide previous results
+            result.classList.remove('show');
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+        }
+
+        convertBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            // Reset
+            result.classList.remove('show');
+            progressContainer.classList.add('show');
+            progressFill.style.width = '0%';
+            progressFill.textContent = '0%';
+            convertBtn.disabled = true;
+
+            try {
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+
+                const headers = {};
+                if (useAuth.checked && token.value) {
+                    headers['Authorization'] = `Bearer ${token.value}`;
+                }
+
+                const xhr = new XMLHttpRequest();
+
+                // Progress event
+                xhr.upload.addEventListener('progress', (e) => {
+                    if (e.lengthComputable) {
+                        const percent = Math.round((e.loaded / e.total) * 100);
+                        progressFill.style.width = percent + '%';
+                        progressFill.textContent = percent + '%';
+                        statusMessage.textContent = 'Đang upload...';
+                    }
+                });
+
+                // Load event
+                xhr.addEventListener('load', () => {
+                    if (xhr.status === 200) {
+                        pdfBlob = xhr.response;
+                        showSuccess('Chuyển đổi thành công! 🎉');
+                        downloadBtn.style.display = 'block';
+                    } else {
+                        let errorMsg = 'Lỗi không xác định';
+                        try {
+                            const errorData = JSON.parse(xhr.responseText);
+                            errorMsg = errorData.message || errorMsg;
+                        } catch (e) {
+                            errorMsg = xhr.statusText;
+                        }
+                        showError(`Lỗi: ${errorMsg}`);
+                    }
+                    progressContainer.classList.remove('show');
+                    convertBtn.disabled = false;
+                });
+
+                // Error event
+                xhr.addEventListener('error', () => {
+                    showError('Lỗi kết nối! Kiểm tra xem server có đang chạy không.');
+                    progressContainer.classList.remove('show');
+                    convertBtn.disabled = false;
+                });
+
+                xhr.open('POST', apiUrl.value);
+                Object.keys(headers).forEach(key => {
+                    xhr.setRequestHeader(key, headers[key]);
+                });
+                xhr.responseType = 'blob';
+                xhr.send(formData);
+
+            } catch (error) {
+                showError(`Lỗi: ${error.message}`);
+                progressContainer.classList.remove('show');
+                convertBtn.disabled = false;
+            }
+        });
+
+        downloadBtn.addEventListener('click', () => {
+            if (!pdfBlob) return;
+
+            const url = URL.createObjectURL(pdfBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = selectedFile.name.replace(/\.(docx?|DOCX?)$/, '.pdf');
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        function showSuccess(message) {
+            result.className = 'result show success';
+            resultMessage.textContent = message;
+        }
+
+        function showError(message) {
+            result.className = 'result show error';
+            resultMessage.textContent = message;
+            downloadBtn.style.display = 'none';
+        }
+    </script>
+</body>
+</html>

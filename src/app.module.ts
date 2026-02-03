@@ -35,6 +35,7 @@ import { TopicSubscription } from './entities/topic-subscription.entity';
 import { Book } from './entities/book.entity';
 import { EbookModule } from './modules/ebook.module';
 import { UserInteraction } from './entities/user-interaction.entity';
+import { ConverterModule } from './modules/converter.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -103,6 +104,7 @@ import { UserInteraction } from './entities/user-interaction.entity';
     PageModule,
     FeedbackModule,
     EbookModule,
+    ConverterModule,
   ],
   controllers: [FcmController],
 })
