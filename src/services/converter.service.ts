@@ -36,12 +36,28 @@ export class ConverterService {
   
       if (ext === '.doc') {
         // Dùng LibreOffice để convert trực tiếp .doc -> .pdf
-        const pdfBuf = await this.convertWithLibreOffice(buffer, '.pdf');
-        return pdfBuf;
+        try {
+          const pdfBuf = await this.convertWithLibreOffice(buffer, '.pdf');
+          return pdfBuf;
+        } catch (libreError: any) {
+          const msg = libreError?.message ?? '';
+          // LibreOffice chưa cài đúng hoặc Python cấu hình sai (thường gặp trên Windows)
+          if (
+            msg.includes('soffice') ||
+            msg.includes('platform independent libraries') ||
+            msg.includes('Document is empty')
+          ) {
+            throw new BadRequestException(
+              'Chuyển đổi file .doc cần cài LibreOffice. Vui lòng cài LibreOffice (https://www.libreoffice.org) hoặc gửi file .docx thay vì .doc.',
+            );
+          }
+          throw libreError;
+        }
       }
-  
+
       throw new BadRequestException('Chỉ hỗ trợ file .docx hoặc .doc');
     } catch (error: any) {
+      if (error instanceof BadRequestException) throw error;
       console.error('Error converting Word to PDF:', error);
       throw new BadRequestException(
         `Lỗi khi chuyển đổi file: ${error.message || 'Unknown error'}`,

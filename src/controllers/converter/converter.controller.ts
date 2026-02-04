@@ -32,7 +32,7 @@ export class ConverterController {
         // Kiểm tra định dạng file
         const allowedMimeTypes = [
           'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
-          'application/msword', // .doc
+          // 'application/msword', // .doc tạm thời không hỗ trợ
         ];
 
         if (allowedMimeTypes.includes(file.mimetype)) {
@@ -40,7 +40,7 @@ export class ConverterController {
         } else {
           callback(
             new BadRequestException(
-              'Chỉ chấp nhận file Word (.doc, .docx)',
+              'Chỉ chấp nhận file Word (.docx)',
             ),
             false,
           );
