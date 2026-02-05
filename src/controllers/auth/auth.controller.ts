@@ -9,7 +9,7 @@ import { BaseController } from '../base/base.controller';
 import { UpdateProfileDto } from '../../dtos/update-profile-dto';
 
 @Controller('auth')
-export class AuthController extends BaseController{
+export class AuthController extends BaseController {
   constructor(private authService: AuthService) {
     super();
   }
@@ -19,7 +19,7 @@ export class AuthController extends BaseController{
   async login(@Body() loginDto: LoginDto, @Res() res: Response) {
     try {
       const result = await this.authService.login(loginDto);
-      return this.success(res,result);
+      return this.success(res, result);
     } catch (error) {
       return this.error(res, error);
     }
@@ -29,7 +29,7 @@ export class AuthController extends BaseController{
   @Post('register')
   async register(@Body() registerDto: RegisterDto, @Res() res: Response) {
     try {
-    const result = await this.authService.register(registerDto);
+      const result = await this.authService.register(registerDto);
       return this.success(res, result);
     } catch (error) {
       return this.error(res, error);
@@ -50,7 +50,7 @@ export class AuthController extends BaseController{
   @Public()
   @Get('verify-email')
   async verifyEmail(@Query('token') token: string, @Res() res: Response) {
-      try {
+    try {
       const result = await this.authService.verifyEmail(token);
       return this.success(res, result);
     } catch (error) {
@@ -62,7 +62,7 @@ export class AuthController extends BaseController{
   @Get('profile')
   async getProfile(@Request() req, @Res() res: Response) {
     try {
-        const result = await this.authService.getProfile(req.userß);
+      const result = await this.authService.getProfile(req.userß);
       return this.success(res, result);
     } catch (error) {
       return this.error(res, error);
@@ -125,7 +125,7 @@ export class AuthController extends BaseController{
   @Public()
   @Get('token-info')
   async getTokenInfo(@Query('token') token: string, @Res() res: Response) {
-      try {
+    try {
       const result = await this.authService.getTempTokenInfo(token);
       return this.success(res, result);
     } catch (error) {
@@ -167,7 +167,7 @@ export class AuthController extends BaseController{
   @Public()
   @Get('forgot-password')
   async forgotPassword(@Query('username') username: string, @Res() res: Response) {
-        try {
+    try {
       const result = await this.authService.forgotPassword(username);
       return this.success(res, result);
     } catch (error) {
@@ -178,7 +178,7 @@ export class AuthController extends BaseController{
   @Public()
   @Post('reset-password')
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto, @Res() res: Response) {
-      try {
+    try {
       const result = await this.authService.resetPassword(resetPasswordDto.token, resetPasswordDto.password);
       return this.success(res, result);
     } catch (error) {
@@ -189,7 +189,7 @@ export class AuthController extends BaseController{
   @Public()
   @Get('validate-token')
   async validateToken(@Query('token') token: string, @Res() res: Response) {
-      try {
+    try {
       const result = await this.authService.validateToken(token);
       return this.success(res, result);
     } catch (error) {
