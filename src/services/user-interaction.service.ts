@@ -40,27 +40,29 @@ export class UserInteractionService {
     });
 
     if (existingInteraction) {
-      if (createDto.interactionType === InteractionType.VIEW
-        || createDto.interactionType === InteractionType.DOWNLOAD
-        || createDto.interactionType === InteractionType.FAVORITE
-        || createDto.interactionType === InteractionType.ARCHIVED
-      ) {
-        await this.updateInteractionStats(createDto.targetType, createDto.targetId, createDto.interactionType, 1);
-        return existingInteraction;
-      }
+      
       // for reading progress, update the reading progress
       if (createDto.interactionType === InteractionType.READING) {
         existingInteraction.metadata = createDto.metadata;
         existingInteraction.updatedAt = new Date();
         existingInteraction.status = 1;
         const processReading = createDto.metadata?.progress;
-        if(processReading && processReading >= 1) {
+        if (processReading && processReading >= 1) {
           existingInteraction.status = 2;
         }
         await this.userInteractionRepository.save(existingInteraction);
-        return existingInteraction;
       }
-      throw new ConflictException('Interaction already exists');
+
+      if (createDto.interactionType === InteractionType.RATING) {
+        existingInteraction.rating = createDto.rating;
+        existingInteraction.comment = createDto.comment;
+        existingInteraction.updatedAt = new Date();
+        await this.userInteractionRepository.save(existingInteraction);
+      }
+      
+      await this.updateInteractionStats(createDto.targetType, createDto.targetId, createDto.interactionType, 1);
+
+      return existingInteraction;
     }
     // Create new interaction
     const interaction = this.userInteractionRepository.create({
@@ -78,6 +80,31 @@ export class UserInteractionService {
     await this.updateInteractionStats(createDto.targetType, createDto.targetId, createDto.interactionType, 1);
 
     return savedInteraction;
+  }
+
+  async loadInteraction(targetType: InteractionTarget, targetId: number, query: UserInteractionQueryDto) {
+    const queryBuilder = this.userInteractionRepository
+    .createQueryBuilder('interaction')
+    .where('interaction.targetType = :targetType', { targetType: targetType.toString() })
+      .andWhere('interaction.targetId = :targetId', { targetId: targetId });
+    if (query.interactionType) {
+      queryBuilder.andWhere('interaction.interactionType = :interactionType', { interactionType: query.interactionType });
+    }
+    const page = query.page || 1;
+    const limit = query.limit || 10;
+    const skip = (page - 1) * limit;
+    queryBuilder
+      .leftJoinAndSelect('interaction.book', 'book')
+      .leftJoinAndSelect('interaction.user', 'user');
+    const [interactions, total] = await queryBuilder.skip(skip)
+    .take(limit).orderBy('interaction.updatedAt', 'DESC').getManyAndCount();
+    return {
+      data: interactions,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async getInteractionAction(targetType: InteractionTarget, actionType: InteractionType, targetId: number, userId: number) {
@@ -155,7 +182,7 @@ export class UserInteractionService {
   async getUserInteractions(userId: number, query: UserInteractionQueryDto) {
     const queryBuilder = this.userInteractionRepository
       .createQueryBuilder('interaction')
-      .where('interaction.userId = :userId', { userId } )
+      .where('interaction.userId = :userId', { userId })
       .andWhere('interaction.status = 1');
 
     if (query.interactionType) {
@@ -188,7 +215,7 @@ export class UserInteractionService {
       .getManyAndCount();
 
     return {
-      data: interactions ,
+      data: interactions,
       total,
       page,
       limit,
@@ -304,9 +331,10 @@ export class UserInteractionService {
         case InteractionType.COMMENT:
           stats.commentCount += increment;
           break;
-        case InteractionType.RATE:
-          stats.rateCount += increment;
-          // Note: For rating, you might want to recalculate average rating
+        case InteractionType.RATING:
+          const { totalRating, averageRating } = await this.calculateAverageRating(targetId);
+          stats.totalRating = totalRating;
+          stats.averageRating = averageRating;
           break;
         case InteractionType.FOLLOW:
           stats.followCount += increment;
@@ -320,5 +348,21 @@ export class UserInteractionService {
 
       await manager.save(stats);
     });
+  }
+  private async calculateAverageRating(targetId: number): Promise<{ totalRating: number, averageRating: number }> {
+     // count total rating and average rating
+     const totalRating = await this.userInteractionRepository.count({
+      where: {
+        targetId: targetId,
+        interactionType: InteractionType.RATING,
+      },
+    });
+    const averageRatingResult = await this.userInteractionRepository.createQueryBuilder('UserInteraction')
+    .select('AVG(UserInteraction.rating)', 'avg') 
+    .where('UserInteraction.targetId = :targetId', { targetId: targetId })
+    .andWhere('UserInteraction.interactionType = :interactionType', { interactionType: InteractionType.RATING })
+    .getRawOne();
+    const averageRating = averageRatingResult ? parseFloat(averageRatingResult.avg) : 0;
+    return { totalRating, averageRating };
   }
 }

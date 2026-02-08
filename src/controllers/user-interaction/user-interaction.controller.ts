@@ -221,24 +221,41 @@ export class UserInteractionController extends BaseController {
 
   }
 
-  @Post('rate/:targetType/:targetId')
+  @Post('rating/:targetType/:targetId')
   @HttpCode(HttpStatus.CREATED)
-  async rate(
+  async rating(
     @Request() req: any,
     @Param('targetType') targetType: string,
     @Param('targetId') targetId: string,
-    @Body() body: { rating: number },
+    @Body() body: { rating: number, comment?: string },
     @Res() res: Response,
   ) {
     try {
       const userId = req.user.id;
       const targetIdNumber = this.decode(targetId);
       const data = await this.userInteractionService.createInteraction(userId, {
-        interactionType: InteractionType.RATE,
+        interactionType: InteractionType.RATING,
         targetType: targetType as InteractionTarget,
         targetId: targetIdNumber,
         rating: body.rating,
+        comment: body.comment,
       });
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Get('load-interaction/:targetType/:targetId')
+  async loadInteraction(
+    @Param('targetType') targetType: InteractionTarget,
+    @Param('targetId') targetId: string,
+    @Query() query: UserInteractionQueryDto,
+    @Res() res: Response,
+  ) {
+    try {
+      const targetIdNumber = this.decode(targetId);
+      const data = await this.userInteractionService.loadInteraction(targetType, targetIdNumber, query);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);

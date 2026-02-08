@@ -41,7 +41,7 @@ export class BookService {
 
     const query = this.bookRepository.createQueryBuilder('book')
       .leftJoinAndSelect('book.category', 'category')
-      .where('book.isPublic = true');
+      .where('book.isPublic = :isPublic', { isPublic: true });
 
     // Apply filter types
     if (filterType) {
@@ -95,7 +95,6 @@ export class BookService {
     if (search) {
       query.andWhere('(book.title LIKE :search OR book.author LIKE :search)', { search: `%${search}%` });
     }
-
     const [data, total] = await query.skip(skip).take(take).getManyAndCount();
 
     return {

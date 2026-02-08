@@ -5,7 +5,7 @@ export enum InteractionType {
   SHARE = 'share',
   VIEW = 'view',
   COMMENT = 'comment',
-  RATE = 'rate',
+  RATING = 'rating',
   FOLLOW = 'follow',
   UNFOLLOW = 'unfollow',
   FAVORITE = 'favorite',
