@@ -56,6 +56,14 @@ export class Book {
   @JoinColumn({ name: 'category_id' })
   category: Category;
 
+  // trạng thái đăng tải ebook (chờ duyệt | đã duyệt | từ chối)
+  @Column({ name: 'status_id', nullable: true })
+  statusId: number;
+
+  @ManyToOne(() => Category, (category) => category.books, { eager: true })
+  @JoinColumn({ name: 'status_id' })
+  status: Category;
+
   @Column({ name: 'create_by_id', nullable: true })
   createById: number;
 
