@@ -3,6 +3,7 @@ import * as bcrypt from 'bcrypt';
 import { Role } from './role.entity';
 import { Exclude } from 'class-transformer';
 import { Book } from './book.entity';
+import { UserSubscription } from './user-subscription.entity';
 
 @Entity()
 export class User {
@@ -107,6 +108,9 @@ export class User {
   
   @OneToMany(() => Book, book => book.createBy)
   books: Book[];
+
+  @OneToMany(() => UserSubscription, (sub) => sub.user)
+  subscriptions: UserSubscription[];
 
   @BeforeInsert()
   async hashPassword() {

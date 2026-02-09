@@ -41,7 +41,6 @@ export class BookController extends BaseController {
     @Res() res: Response,
     @Query('filterType') filterType?: FilterType,
     @Query('categoryId') categoryId?: string,
-    @Query('fromMe') fromMe?: boolean,
   ) {
     const userId = req?.user?.id;
     try {
@@ -51,7 +50,7 @@ export class BookController extends BaseController {
         search: search || '',
       };
       const categoryIdNumber = categoryId ? this.decode(categoryId) : undefined;
-      const data = await this.bookService.getPublicBooks(filter, filterType, categoryIdNumber, userId, fromMe);
+      const data = await this.bookService.getPublicBooks(filter, filterType, categoryIdNumber, userId);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);

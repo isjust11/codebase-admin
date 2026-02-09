@@ -34,7 +34,7 @@ export class BookService {
     return this.bookRepository.find({ relations: ['category'] });
   }
 
-  async getPublicBooks(filter: PaginationParams, filterType?: FilterType, categoryId?: number, userId?: number, fromMe?: boolean): Promise<PaginatedResponse<Book>> {
+  async getPublicBooks(filter: PaginationParams, filterType?: FilterType, categoryId?: number, userId?: number): Promise<PaginatedResponse<Book>> {
     const { page, size, search } = filter;
     const skip = ((page || 1) - 1) * (size || 10);
     const take = size;
@@ -62,29 +62,9 @@ export class BookService {
         );
       }
 
-      // Nếu cần filter theo userId cụ thể (optional)
-      if (fromMe && filterType !== FilterType.ALL) {
-        query.innerJoin(
-          'user_interaction',
-          'interaction',
-          'interaction.targetId = book.id AND interaction.targetType = :targetType AND interaction.userId = :userId AND interaction.interactionType = :favoriteType',
-          {
-            targetType: InteractionTarget.BOOK,
-            userId: userId,
-            favoriteType: filterType
-          }
-        );
-      } else if (!fromMe && filterType !== FilterType.ALL) {
-        query.innerJoin(
-          'user_interaction',
-          'interaction',
-          'interaction.targetId = book.id AND interaction.targetType = :targetType AND interaction.userId != :userId AND interaction.interactionType = :favoriteType',
-          {
-            targetType: InteractionTarget.BOOK,
-            userId: userId,
-            favoriteType: filterType
-          }
-        );
+      // uploaded books
+      if (filterType === FilterType.UPLOADED) {
+        query.andWhere('book.createById = :createById', { createById: userId });
       }
     }
 

@@ -1,5 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { User } from './user.entity';
+import { UserSubscription } from './user-subscription.entity';
+import { SubscriptionPlan } from './subscription-plan.entity';
 
 export enum PaymentStatus {
   PENDING = 'pending',
@@ -29,6 +31,13 @@ export class Payment {
   @Column()
   userId: number;
 
+  @ManyToOne(() => SubscriptionPlan, { nullable: true })
+  @JoinColumn({ name: 'planId' })
+  plan: SubscriptionPlan;
+
+  @Column({ nullable: true })
+  planId: number;
+
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   amount: number;
 
@@ -56,7 +65,19 @@ export class Payment {
   paymentIntentId: string; // Stripe Payment Intent ID
 
   @Column({ nullable: true })
+  gatewayTransactionId: string; // Transaction ID từ payment gateway (VNPay, MoMo, etc.)
+
+  @Column({ nullable: true, type: 'text' })
+  paymentUrl: string; // URL để redirect user đến trang thanh toán
+
+  @Column({ nullable: true })
+  ipAddress: string; // IP của user khi tạo payment
+
+  @Column({ nullable: true })
   gatewayResponse: string; // JSON response from payment gateway
+
+  @Column({ nullable: true })
+  paidAt: Date; // Thời điểm thanh toán thành công
 
   @Column({ nullable: true })
   description: string;
@@ -66,6 +87,14 @@ export class Payment {
 
   @Column({ nullable: true })
   failureReason: string;
+
+  /** Gắn với đăng ký gói (nếu thanh toán là mua gói) */
+  @ManyToOne(() => UserSubscription, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'userSubscriptionId' })
+  userSubscription: UserSubscription;
+
+  @Column({ nullable: true })
+  userSubscriptionId: number;
 
   @CreateDateColumn()
   createdAt: Date;

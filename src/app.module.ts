@@ -36,6 +36,10 @@ import { Book } from './entities/book.entity';
 import { EbookModule } from './modules/ebook.module';
 import { UserInteraction } from './entities/user-interaction.entity';
 import { ConverterModule } from './modules/converter.module';
+import { SubscriptionModule } from './modules/subscription.module';
+import { PaymentModule } from './modules/payment.module';
+import { SubscriptionPlan } from './entities/subscription-plan.entity';
+import { UserSubscription } from './entities/user-subscription.entity';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -72,6 +76,8 @@ import { ConverterModule } from './modules/converter.module';
         Book,
         UserInteraction,
         InteractionStats,
+        SubscriptionPlan,
+        UserSubscription,
       ],
       synchronize: true,
       migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
@@ -105,6 +111,8 @@ import { ConverterModule } from './modules/converter.module';
     FeedbackModule,
     EbookModule,
     ConverterModule,
+    SubscriptionModule,
+    PaymentModule,
   ],
   controllers: [FcmController],
 })
