@@ -26,13 +26,13 @@ export class VNPayService {
   private config: VNPayConfig;
 
   constructor() {
-    // Load từ .env
+    // Load từ .env và trim để loại bỏ khoảng trắng thừa
     this.config = {
-      tmnCode: process.env.VNPAY_TMN_CODE || 'DEMO_SANDBOX',
-      hashSecret: process.env.VNPAY_HASH_SECRET || 'SANDBOX_SECRET',
-      url: process.env.VNPAY_URL || 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html',
-      returnUrl: process.env.VNPAY_RETURN_URL || 'http://localhost:3000/payment/vnpay/callback',
-      ipnUrl: process.env.VNPAY_IPN_URL || 'http://localhost:4000/payment/vnpay/ipn',
+      tmnCode: (process.env.VNPAY_TMN_CODE || 'DEMO_SANDBOX').trim(),
+      hashSecret: (process.env.VNPAY_HASH_SECRET || 'SANDBOX_SECRET').trim(),
+      url: (process.env.VNPAY_URL || 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html').trim(),
+      returnUrl: (process.env.VNPAY_RETURN_URL || 'http://localhost:3000/payment/vnpay/callback').trim(),
+      ipnUrl: (process.env.VNPAY_IPN_URL || 'http://localhost:4000/payment/vnpay/ipn').trim(),
     };
   }
 
@@ -43,6 +43,7 @@ export class VNPayService {
     const createDate = moment().format('YYYYMMDDHHmmss');
     const expireDate = moment().add(15, 'minutes').format('YYYYMMDDHHmmss');
 
+    // Tạo object params với giá trị raw (KHÔNG encode trước)
     let vnpParams: any = {
       vnp_Version: '2.1.0',
       vnp_Command: 'pay',
@@ -66,16 +67,29 @@ export class VNPayService {
     // Sắp xếp params theo alphabet
     vnpParams = this.sortObject(vnpParams);
 
-    // Tạo query string
+    // Tạo chuỗi để ký: dùng encode: false
     const signData = qs.stringify(vnpParams, { encode: false });
 
+    // Debug: Log chuỗi ký và hash secret
+    console.log('=== VNPAY DEBUG ===');
+    console.log('Sign Data:', signData);
+    console.log('Hash Secret:', this.config.hashSecret);
+    const signDataEncoded = Object.keys(vnpParams)
+      .map((key) => `${key}=${encodeURIComponent(vnpParams[key].toString()).replace(/%20/g, '%20')}`)
+      .join('&');
+    // console.log('Sign Data2:', signDataEncoded);
     // Tạo secure hash
     const hmac = crypto.createHmac('sha512', this.config.hashSecret);
-    const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
+    const signed = hmac.update(Buffer.from(signDataEncoded, 'utf-8')).digest('hex');
+
+    console.log('Signature:', signed);
+    console.log('===================');
+
+    // Thêm vnp_SecureHash vào params
     vnpParams['vnp_SecureHash'] = signed;
 
-    // Tạo URL cuối cùng
-    const paymentUrl = this.config.url + '?' + qs.stringify(vnpParams, { encode: false });
+    // Build URL cuối cùng: dùng encode: true để encode đúng format URL
+    const paymentUrl = this.config.url + '?' + qs.stringify(vnpParams, { encode: true });
     return paymentUrl;
   }
 

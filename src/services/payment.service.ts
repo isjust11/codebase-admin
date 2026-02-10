@@ -47,7 +47,14 @@ export class PaymentService {
       ipAddress: params.ipAddress,
     });
 
-    return await this.paymentRepository.save(payment);
+    const savedPayment = await this.paymentRepository.save(payment);
+    
+    const queryBuilder = await this.paymentRepository.createQueryBuilder('payment')
+      .innerJoinAndSelect('payment.plan', 'plan')
+      .where('payment.id = :id', { id: savedPayment.id })
+      .getOne();
+
+    return queryBuilder as Payment;
   }
 
   /**

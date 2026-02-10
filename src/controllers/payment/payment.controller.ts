@@ -10,14 +10,14 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
+import { JwtAuthGuard, Public } from '../../guards/jwt-auth.guard';
 import { BaseController } from '../base/base.controller';
 import { PaymentService } from '../../services/payment.service';
 import { VNPayService } from '../../services/vnpay.service';
 import { PaymentMethod } from '../../entities/payment.entity';
 
 export class CreatePaymentDto {
-  planId: number;
+  planId: string;
   paymentMethod: 'vnpay' | 'momo' | 'zalopay'; // Mở rộng thêm các gateway khác
   bankCode?: string; // Optional: mã ngân hàng cho VNPay
 }
@@ -43,16 +43,16 @@ export class PaymentController extends BaseController {
     @Res() res: Response,
   ) {
     try {
-      const userId = req.user.userId;
+      const userId = req.user.id;
       const ipAddress =
         req.headers['x-forwarded-for']?.toString().split(',')[0] ||
         req.connection.remoteAddress ||
         '127.0.0.1';
-
+      const planId = this.decode(dto.planId);
       // Tạo payment record trong DB
       const payment = await this.paymentService.createPayment({
         userId,
-        planId: dto.planId,
+        planId: planId,
         paymentMethod: this.mapPaymentMethod(dto.paymentMethod),
         ipAddress,
       });
@@ -64,8 +64,8 @@ export class PaymentController extends BaseController {
         case 'vnpay':
           paymentUrl = this.vnpayService.createPaymentUrl({
             amount: payment.amount,
-            orderInfo: `Thanh toan goi ${payment.plan.name} - User ${userId}`,
-            orderType: 'billpayment',
+            orderInfo: `thanhtoan`,
+            orderType: 'other',
             orderId: payment.transactionId,
             ipAddress,
             bankCode: dto.bankCode,
@@ -109,13 +109,17 @@ export class PaymentController extends BaseController {
   }
 
   /**
-   * VNPay Return URL (callback từ VNPay về app)
-   * GET /payment/vnpay/callback?vnp_xxx=...
-   * 
-   * Lưu ý: Đây là callback cho app/web redirect, chỉ để hiển thị UI.
-   * Không nên dựa vào đây để activate subscription vì có thể bị fake.
-   * Dùng IPN (webhook) để xử lý chính thức.
+   * VNPay Return URL – xử lý trên SERVER (không phải mobile).
+   * Luồng: User thanh toán xong trên VNPay → VNPay redirect trình duyệt/WebView
+   * đến URL này (GET /payment/vnpay/callback?vnp_xxx=...) → request tới server →
+   * handler chạy trên server, verify, rồi response 302 redirect về readbox://payment/result.
+   *
+   * Bảo mật: Public (không JWT) là bắt buộc vì redirect không gửi được token.
+   * Mọi request đều được verify chữ ký HMAC (vnp_SecureHash) với VNPAY_HASH_SECRET
+   * trước khi xử lý. Không verify = redirect về status=error. Endpoint này chỉ redirect
+   * về app (UI), không cập nhật DB/kích hoạt gói – việc đó do IPN đảm nhiệm.
    */
+  @Public()
   @Get('vnpay/callback')
   async vnpayCallback(@Query() query: any, @Res() res: Response) {
     try {
@@ -150,11 +154,16 @@ export class PaymentController extends BaseController {
   }
 
   /**
-   * VNPay IPN (webhook từ VNPay về backend)
-   * GET /payment/vnpay/ipn?vnp_xxx=...
-   * 
-   * Đây là nơi xử lý chính thức: verify + activate subscription
+   * VNPay IPN – xử lý trên SERVER (server-to-server).
+   * VNPay gọi GET /payment/vnpay/ipn?vnp_xxx=... từ máy chủ VNPay tới server ta.
+   *
+   * Bảo mật: Public (không JWT) vì VNPay server không có token của ta.
+   * - Mọi request PHẢI verify chữ ký HMAC (vnp_SecureHash) với VNPAY_HASH_SECRET;
+   *   sai chữ ký → RspCode 97, không cập nhật gì.
+   * - Kiểm tra order tồn tại, số tiền khớp, status còn pending → tránh replay/giả mạo.
+   * - VNPAY_HASH_SECRET chỉ lưu server-side, không đưa ra client/app.
    */
+  @Public()
   @Get('vnpay/ipn')
   async vnpayIpn(@Query() query: any, @Res() res: Response) {
     try {
