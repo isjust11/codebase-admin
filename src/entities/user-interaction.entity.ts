@@ -6,7 +6,7 @@ import { Book } from './book.entity';
 import { InteractionType } from 'src/enums/interaction-type.enum';
 
 @Entity()
-@Index(['userId', 'targetType', 'targetId', 'interactionType'], { unique: true })
+@Index(['userId', 'targetType', 'targetId', 'interactionType'], { unique: false })
 export class UserInteraction {
   @PrimaryGeneratedColumn()
   id: number;
