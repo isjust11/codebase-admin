@@ -14,11 +14,14 @@ import { JwtAuthGuard, Public } from '../../guards/jwt-auth.guard';
 import { BaseController } from '../base/base.controller';
 import { PaymentService } from '../../services/payment.service';
 import { VNPayService } from '../../services/vnpay.service';
+import { MomoService } from '../../services/momo.service';
+import { ZaloPayService } from '../../services/zalopay.service';
+import { StripeService } from '../../services/stripe.service';
 import { PaymentMethod } from '../../entities/payment.entity';
 
 export class CreatePaymentDto {
   planId: string;
-  paymentMethod: 'vnpay' | 'momo' | 'zalopay'; // Mở rộng thêm các gateway khác
+  paymentMethod: 'stripe' | 'vnpay' | 'momo' | 'zalopay'; // Mở rộng thêm các gateway khác
   bankCode?: string; // Optional: mã ngân hàng cho VNPay
 }
 
@@ -27,6 +30,9 @@ export class PaymentController extends BaseController {
   constructor(
     private readonly paymentService: PaymentService,
     private readonly vnpayService: VNPayService,
+    private readonly momoService: MomoService,
+    private readonly zaloPayService: ZaloPayService,
+    private readonly stripeService: StripeService,
   ) {
     super();
   }
@@ -61,6 +67,14 @@ export class PaymentController extends BaseController {
 
       // Tạo payment URL theo gateway
       switch (dto.paymentMethod) {
+        case 'stripe':
+          const stripeSession = await this.stripeService.createCheckoutSession({
+            amount: payment.amount,
+            currency: 'vnd',
+            transactionId: payment.transactionId,
+          });
+          paymentUrl = stripeSession.url;
+          break;
         case 'vnpay':
           paymentUrl = this.vnpayService.createPaymentUrl({
             amount: payment.amount,
@@ -71,9 +85,21 @@ export class PaymentController extends BaseController {
             bankCode: dto.bankCode,
           });
           break;
-        // case 'momo':
-        //   paymentUrl = await this.momoService.createPaymentUrl(...);
-        //   break;
+        case 'momo':
+          paymentUrl = await this.momoService.createPaymentUrl({
+            amount: payment.amount,
+            orderInfo: `thanhtoan`,
+            orderId: payment.transactionId,
+          });
+          break;
+        case 'zalopay':
+          paymentUrl = await this.zaloPayService.createPaymentUrl({
+            amount: payment.amount,
+            description: 'thanhtoan',
+            orderId: payment.transactionId,
+            userId: userId,
+          });
+          break;
         default:
           return this.error(res, {
             status: 400,
@@ -97,6 +123,8 @@ export class PaymentController extends BaseController {
 
   private mapPaymentMethod(method: CreatePaymentDto['paymentMethod']): PaymentMethod {
     switch (method) {
+      case 'stripe':
+        return PaymentMethod.STRIPE;
       case 'vnpay':
         return PaymentMethod.VNPAY;
       case 'momo':
@@ -154,6 +182,47 @@ export class PaymentController extends BaseController {
   }
 
   /**
+   * MoMo callback – chỉ dùng để redirect về app, không cập nhật DB.
+   * MoMo sẽ redirect người dùng về URL này sau khi thanh toán xong.
+   */
+  @Public()
+  @Get('momo/callback')
+  async momoCallback(@Query() query: any, @Res() res: Response) {
+    try {
+      const isValid = this.momoService.verifySignature(query);
+
+      if (!isValid) {
+        return res.redirect(
+          `readbox://payment/result?status=error&message=${encodeURIComponent(
+            'Invalid MoMo signature',
+          )}`,
+        );
+      }
+
+      const { orderId, resultCode, message } = query;
+      const isSuccess = Number(resultCode) === 0;
+
+      if (isSuccess) {
+        return res.redirect(
+          `readbox://payment/result?status=success&transactionId=${orderId}`,
+        );
+      }
+
+      return res.redirect(
+        `readbox://payment/result?status=failed&transactionId=${orderId}&message=${encodeURIComponent(
+          message || 'Payment failed',
+        )}`,
+      );
+    } catch (error) {
+      return res.redirect(
+        `readbox://payment/result?status=error&message=${encodeURIComponent(
+          error.message,
+        )}`,
+      );
+    }
+  }
+
+  /**
    * VNPay IPN – xử lý trên SERVER (server-to-server).
    * VNPay gọi GET /payment/vnpay/ipn?vnp_xxx=... từ máy chủ VNPay tới server ta.
    *
@@ -206,6 +275,177 @@ export class PaymentController extends BaseController {
     } catch (error) {
       console.error('VNPay IPN Error:', error);
       return res.status(200).json({ RspCode: '99', Message: 'Unknown error' });
+    }
+  }
+
+  /**
+   * MoMo IPN – MoMo gọi POST JSON đến URL này từ server MoMo.
+   * Endpoint này mới là nơi cập nhật DB và kích hoạt gói.
+   */
+  @Public()
+  @Post('momo/ipn')
+  async momoIpn(@Body() body: any, @Res() res: Response) {
+    try {
+      const isValid = this.momoService.verifySignature(body);
+
+      if (!isValid) {
+        return res.status(200).json({
+          resultCode: -1,
+          message: 'Invalid signature',
+        });
+      }
+
+      const {
+        orderId,
+        amount,
+        resultCode,
+        transId,
+      }: { orderId: string; amount: number; resultCode: number; transId: string } =
+        body;
+
+      const payment = await this.paymentService.findByTransactionId(orderId);
+      if (!payment) {
+        return res.status(200).json({
+          resultCode: 1,
+          message: 'Order not found',
+        });
+      }
+
+      if (payment.status !== 'pending') {
+        return res.status(200).json({
+          resultCode: 2,
+          message: 'Order already confirmed',
+        });
+      }
+
+      if (Math.abs(payment.amount - Number(amount)) > 1) {
+        return res.status(200).json({
+          resultCode: 4,
+          message: 'Invalid amount',
+        });
+      }
+
+      if (Number(resultCode) === 0) {
+        await this.paymentService.handlePaymentSuccess(payment.id, transId);
+      } else {
+        await this.paymentService.handlePaymentFailed(payment.id);
+      }
+
+      return res.status(200).json({
+        resultCode: 0,
+        message: 'Success',
+      });
+    } catch (error) {
+      console.error('MoMo IPN Error:', error);
+      return res.status(200).json({
+        resultCode: 99,
+        message: 'Unknown error',
+      });
+    }
+  }
+
+  /**
+   * ZaloPay callback/IPN – ZaloPay gọi POST JSON với { data, mac }.
+   * Đây là nơi verify và cập nhật trạng thái payment.
+   */
+  @Public()
+  @Post('zalopay/callback')
+  async zaloPayCallback(@Body() body: any, @Res() res: Response) {
+    try {
+      const verifyResult = this.zaloPayService.verifyCallback(body);
+
+      if (!verifyResult.isValid || !verifyResult.data) {
+        return res.status(200).json({
+          returncode: -1,
+          returnmessage: 'Invalid signature',
+        });
+      }
+
+      const data = verifyResult.data;
+      const appTransId: string = data.app_trans_id;
+      const amount: number = data.amount;
+      const zpTransId: number = data.zp_trans_id;
+
+      // app_trans_id có dạng yymmdd_TXN..., ta tách transactionId phía sau '_'
+      const parts = appTransId.split('_');
+      const transactionId = parts.length > 1 ? parts.slice(1).join('_') : appTransId;
+
+      const payment = await this.paymentService.findByTransactionId(
+        transactionId,
+      );
+
+      if (!payment) {
+        return res.status(200).json({
+          returncode: 1,
+          returnmessage: 'Order not found',
+        });
+      }
+
+      if (payment.status !== 'pending') {
+        return res.status(200).json({
+          returncode: 2,
+          returnmessage: 'Order already confirmed',
+        });
+      }
+
+      if (Math.abs(payment.amount - Number(amount)) > 1) {
+        return res.status(200).json({
+          returncode: 4,
+          returnmessage: 'Invalid amount',
+        });
+      }
+
+      // ZaloPay callback thành công transaction
+      await this.paymentService.handlePaymentSuccess(
+        payment.id,
+        String(zpTransId),
+      );
+
+      return res.status(200).json({
+        returncode: 1,
+        returnmessage: 'Success',
+      });
+    } catch (error) {
+      console.error('ZaloPay callback error:', error);
+      return res.status(200).json({
+        returncode: 0,
+        returnmessage: 'Unknown error',
+      });
+    }
+  }
+
+  /**
+   * Stripe webhook – Stripe gọi POST JSON đến URL này.
+   * Ở đây demo dùng body đã parse sẵn (chưa verify chữ ký).
+   * Nếu đưa vào production, bạn nên cấu hình raw body và verify webhook signature.
+   */
+  @Public()
+  @Post('stripe/webhook')
+  async stripeWebhook(@Body() body: any, @Res() res: Response) {
+    try {
+      const event = body;
+
+      if (event.type === 'checkout.session.completed') {
+        const session: any = event.data?.object;
+        const transactionId: string | undefined = session?.metadata?.transactionId;
+
+        if (transactionId) {
+          const payment = await this.paymentService.findByTransactionId(
+            transactionId,
+          );
+          if (payment && payment.status === 'pending') {
+            await this.paymentService.handlePaymentSuccess(
+              payment.id,
+              session.id,
+            );
+          }
+        }
+      }
+
+      return res.status(200).json({ received: true });
+    } catch (error) {
+      console.error('Stripe webhook error:', error);
+      return res.status(400).json({ error: 'Webhook handler failed' });
     }
   }
 

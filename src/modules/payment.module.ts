@@ -5,6 +5,9 @@ import { SubscriptionPlan } from '../entities/subscription-plan.entity';
 import { UserSubscription } from '../entities/user-subscription.entity';
 import { PaymentService } from '../services/payment.service';
 import { VNPayService } from '../services/vnpay.service';
+import { MomoService } from '../services/momo.service';
+import { ZaloPayService } from '../services/zalopay.service';
+import { StripeService } from '../services/stripe.service';
 import { PaymentController } from '../controllers/payment/payment.controller';
 import { AuthModule } from './auth.module';
 
@@ -14,7 +17,7 @@ import { AuthModule } from './auth.module';
     TypeOrmModule.forFeature([Payment, SubscriptionPlan, UserSubscription]),
   ],
   controllers: [PaymentController],
-  providers: [PaymentService, VNPayService],
+  providers: [PaymentService, VNPayService, MomoService, ZaloPayService, StripeService],
   exports: [PaymentService],
 })
 export class PaymentModule {}
