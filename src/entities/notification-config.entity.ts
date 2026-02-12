@@ -17,7 +17,7 @@ export class NotificationConfig {
   @Column({ type: 'text', nullable: true })
   value: string;
 
-  @Column({ type: 'json', nullable: true })
+  @Column({ type: 'text', nullable: true })
   jsonValue: any;
 
   @Column({ default: true })

@@ -28,8 +28,8 @@ export class Notification {
   @Column({ type: 'timestamp', nullable: true })
   sentAt: Date;
 
-  @Column({ type: 'json', nullable: true })
-  metadata: any;
+  @Column({ type: 'text', nullable: true })
+  metadata?: string;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;

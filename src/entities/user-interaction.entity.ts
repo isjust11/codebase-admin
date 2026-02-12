@@ -38,7 +38,7 @@ export class UserInteraction {
   book: Book;
 
   // Additional data for specific interaction types
-  @Column({ type: 'json', nullable: true })
+  @Column({ type: 'text', nullable: true })
   metadata?: any;
 
   // For rating interactions

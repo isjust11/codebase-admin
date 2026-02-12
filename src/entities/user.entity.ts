@@ -103,7 +103,7 @@ export class User {
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
   updatedAt: Date;
 
-  @Column({ type: 'json', nullable: true })
+  // @Column({ type: 'json', nullable: true })
   permissions: string[];
   
   @OneToMany(() => Book, book => book.createBy)
