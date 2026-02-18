@@ -391,7 +391,7 @@ export class FcmTokenController extends BaseController {
   ) {
     try{
     const userId = req.user.id;
-      const result = await this.fcmService.sendToToken(body.token, { title: body.title, body: body.body, data: body.data ? JSON.stringify(body.data) : undefined, type: 'system' }, userId);
+      const result = await this.fcmService.sendToToken(body.token, { title: body.title, body: body.body, data: body.data, type: 'system' }, userId);
       return this.success(res, { success: true, messageId: result });
     } catch (error) {
       return this.error(res, error);
@@ -405,7 +405,7 @@ export class FcmTokenController extends BaseController {
     @Res() res: Response
   ) {
     try {
-      const result = await this.fcmService.sendToTopic(body.topic, { title: body.title, body: body.body, data: body.data ? JSON.stringify(body.data) : undefined, type: 'system' });
+      const result = await this.fcmService.sendToTopic(body.topic, { title: body.title, body: body.body, data: body.data, type: 'system' });
       return this.success(res, { success: true, messageId: result });
     } catch (error) {
       return this.error(res, error);

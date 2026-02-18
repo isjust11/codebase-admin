@@ -60,7 +60,7 @@ export class NotificationService {
         type: type,
         status: NotificationStatus.UNREAD,
         priority: NotificationPriority.MEDIUM,
-        metadata: data,
+        metadata: data ? JSON.stringify(data) : undefined,
         userId: userId, // Add userId to track which user this notification is for
       });
       this.logger.log(`[newNotification] notification: ${JSON.stringify(notification)}`);

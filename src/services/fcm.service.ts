@@ -7,7 +7,7 @@ type SendPayload = {
   title: string;
   body: string;
   type: string;
-  data?: string;
+  data?: Record<string, string>;
 };
 
 @Injectable()

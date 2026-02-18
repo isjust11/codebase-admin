@@ -124,7 +124,7 @@ export class BookService {
             userTokens.userId
           );
           } catch (error) {
-            this.logger.error(`[NotificationService] error: ${error}`);
+            this.logger.error(`[NOTIFICATION SERVICE] error: ${error}`);
           }
           return savedBook;
         }
