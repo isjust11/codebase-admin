@@ -115,6 +115,7 @@ export class BookService {
         });
         this.logger.log(`[createBook] sendResult: ${sendResult}`);
         if (sendResult) {
+          try {
           await this.notificationService.newNotification(
             NotificationType.EBOOK,
             ebookTemplate.data,
@@ -122,6 +123,9 @@ export class BookService {
             ebookTemplate.body,
             userTokens.userId
           );
+          } catch (error) {
+            this.logger.error(`[NotificationService] error: ${error}`);
+          }
           return savedBook;
         }
       }
