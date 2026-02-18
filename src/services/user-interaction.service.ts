@@ -43,7 +43,7 @@ export class UserInteractionService {
       
       // for reading progress, update the reading progress
       if (createDto.interactionType === InteractionType.READING) {
-        existingInteraction.metadata = createDto.metadata;
+        existingInteraction.metadata = createDto.metadata ? JSON.stringify(createDto.metadata) : null;
         existingInteraction.updatedAt = new Date();
         existingInteraction.status = 1;
         const processReading = createDto.metadata?.progress;
@@ -68,6 +68,7 @@ export class UserInteractionService {
     const interaction = this.userInteractionRepository.create({
       userId,
       ...createDto,
+      metadata: createDto.metadata ? JSON.stringify(createDto.metadata) : null,
       status: 1,
     });
 
@@ -148,7 +149,7 @@ export class UserInteractionService {
       interaction.sharePlatform = updateDto.sharePlatform;
     }
     if (updateDto.metadata !== undefined) {
-      interaction.metadata = updateDto.metadata;
+      interaction.metadata = updateDto.metadata ? JSON.stringify(updateDto.metadata) : null;
     }
     interaction.updatedAt = new Date();
     return await this.userInteractionRepository.save(interaction);
