@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Notification } from 'src/entities/notification.entity';
@@ -6,6 +6,7 @@ import { NotificationPriority, NotificationStatus, NotificationType } from 'src/
 
 @Injectable()
 export class NotificationService {
+  private readonly logger = new Logger(NotificationService.name);
   constructor(
     @InjectRepository(Notification)
     private readonly notificationRepository: Repository<Notification>,
@@ -51,8 +52,9 @@ export class NotificationService {
     return this.notificationRepository.find({ where: { updatedAt } });
   }
   
-  newNotification(type: NotificationType, data: any, title?: string, content?: string, userId?: number){
-      var notification = this.notificationRepository.create({
+  async newNotification(type: NotificationType, data: any, title?: string, content?: string, userId?: number){
+    this.logger.log(`[newNotification] type: ${type}, data: ${JSON.stringify(data)}, title: ${title}, content: ${content}, userId: ${userId}`);
+    const notification = this.notificationRepository.create({
         title: title,
         content: content,
         type: type,
@@ -61,7 +63,10 @@ export class NotificationService {
         metadata: data,
         userId: userId, // Add userId to track which user this notification is for
       });
-      return this.notificationRepository.save(notification);
+      this.logger.log(`[newNotification] notification: ${JSON.stringify(notification)}`);
+      const savedNotification = await this.notificationRepository.save(notification);
+      this.logger.log(`[newNotification] savedNotification: ${JSON.stringify(savedNotification)}`);
+      return savedNotification;
   }
 
   /**

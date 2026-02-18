@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository } from 'typeorm';
 import { Book } from '../entities/book.entity';
@@ -17,6 +17,7 @@ import { MediaService } from './media.service';
 
 @Injectable()
 export class BookService {
+  private readonly logger = new Logger(BookService.name);
   constructor(
     @InjectRepository(Book)
     private bookRepository: Repository<Book>,
@@ -103,6 +104,7 @@ export class BookService {
       // Send FCM notification to topic
       // get user tokeninfor 
       const userTokens = await this.fcmTokenService.findByUserId(savedBook.createById);
+      this.logger.log(`[createBook] userTokens: ${JSON.stringify(userTokens)}`);
       if (userTokens) {
         const ebookTemplate = EbookTemplate.newEbook(savedBook);
         const sendResult = await this.fcmService.sendToToken(userTokens.token, {
@@ -111,6 +113,7 @@ export class BookService {
           type: 'ebook',
           data: ebookTemplate.data
         });
+        this.logger.log(`[createBook] sendResult: ${sendResult}`);
         if (sendResult) {
           await this.notificationService.newNotification(
             NotificationType.EBOOK,
