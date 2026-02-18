@@ -98,6 +98,8 @@ import { UserSubscription } from './entities/user-subscription.entity';
       },
       // Cấu hình SSL
       ssl: false,
+      logging: true,
+      logger: 'advanced-console',
     }),
     NotificationModule,
     CategoryModule,
