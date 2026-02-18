@@ -12,6 +12,7 @@ import {
   HttpStatus,
   Request,
   Res,
+  Logger,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { BookService } from 'src/services/book.service';
@@ -28,6 +29,8 @@ import { MediaService } from 'src/services/media.service';
 @Controller('books')
 @UseGuards(JwtAuthGuard, PermissionGuard)
 export class BookController extends BaseController {
+  private readonly logger = new Logger(BookController.name);
+
   constructor(private bookService: BookService, private mediaService: MediaService) {
     super();
   }
@@ -99,23 +102,48 @@ export class BookController extends BaseController {
   @ApiOperation({ summary: 'Tạo sách mới' })
   @HttpCode(HttpStatus.CREATED)
   async createBook(@Body() createBookDto: CreateBookDto, @Request() req, @Res() res: Response) {
-    try {
+    const userId = req?.user?.id;
+    this.logger.log(`[createBook] POST /books - userId=${userId}, body keys=${createBookDto ? Object.keys(createBookDto).join(',') : 'null'}`);
 
-      if(createBookDto.category) {
+    try {
+      if (createBookDto?.category) {
         createBookDto.categoryId = this.decode(createBookDto.category);
+        this.logger.debug(`[createBook] categoryId decoded`);
       }
-      const data = await this.bookService.createBook({ ...createBookDto, createById: req?.user?.id });
+
+      this.logger.debug(`[createBook] Calling bookService.createBook`);
+      const data = await this.bookService.createBook({ ...createBookDto, createById: userId });
+      this.logger.log(`[createBook] Success - bookId=${(data as any)?.id ?? (data as any)?.bookId ?? 'unknown'}`);
       return this.success(res, data);
     } catch (error) {
-      const fileUrl = createBookDto.fileUrl.split('/').pop();
-      const coverImageUrl = createBookDto.coverImageUrl?.split('/').pop();
-      // remove file from storage
-      if(fileUrl) {
-        await this.mediaService.deleteFile(fileUrl, req?.user?.id);
+      this.logger.error(
+        `[createBook] Failed - message=${error?.message ?? error}`,
+        error?.stack ?? undefined,
+      );
+      if (error?.response) {
+        this.logger.error(`[createBook] Error response: ${JSON.stringify(error.response)}`);
       }
-      if(coverImageUrl) {
-        await this.mediaService.deleteFile(coverImageUrl, req?.user?.id);
+
+      // Rollback: remove uploaded files (safe access - avoid throw in catch)
+      const fileUrl = createBookDto?.fileUrl ? createBookDto.fileUrl.split('/').pop() : null;
+      const coverImageUrl = createBookDto?.coverImageUrl ? createBookDto.coverImageUrl.split('/').pop() : null;
+      if (fileUrl) {
+        this.logger.warn(`[createBook] Rollback: deleting file ${fileUrl}`);
+        try {
+          await this.mediaService.deleteFile(fileUrl, userId);
+        } catch (deleteErr) {
+          this.logger.warn(`[createBook] Rollback deleteFile failed: ${deleteErr?.message}`);
+        }
       }
+      if (coverImageUrl) {
+        this.logger.warn(`[createBook] Rollback: deleting cover ${coverImageUrl}`);
+        try {
+          await this.mediaService.deleteFile(coverImageUrl, userId);
+        } catch (deleteErr) {
+          this.logger.warn(`[createBook] Rollback deleteFile failed: ${deleteErr?.message}`);
+        }
+      }
+
       return this.error(res, error);
     }
   }
