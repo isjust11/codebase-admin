@@ -151,7 +151,7 @@ export class ArticleService {
       title: 'Có bài viết mới', 
       body: article.title, 
       type: 'new_article',
-      data: { articleId: article.id.toString() }
+      data: 'id:' + article.id.toString() + ',type:new_article',
     });
     
     if (sendResult) {

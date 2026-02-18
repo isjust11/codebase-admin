@@ -86,7 +86,7 @@ export class FcmController {
     const result = await this.fcmService.sendToToken(body.token, {
       title: body.title,
       body: body.body,
-      data: body.data,
+      data: body.data ? JSON.stringify(body.data) : undefined,
       type: 'system',
       });
     
@@ -108,7 +108,7 @@ export class FcmController {
     const result = await this.fcmService.sendToTokens(body.tokens, {
       title: body.title,
       body: body.body,
-      data: body.data,
+      data: body.data ? JSON.stringify(body.data) : undefined,
       type: 'system',
     });
     
@@ -130,7 +130,7 @@ export class FcmController {
     const result = await this.fcmService.sendToTopic(body.topic, {
       title: body.title,
       body: body.body,
-      data: body.data,
+      data: body.data ? JSON.stringify(body.data) : undefined,
       type: 'system',
     });
     
