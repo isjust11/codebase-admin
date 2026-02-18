@@ -79,7 +79,7 @@ import { UserSubscription } from './entities/user-subscription.entity';
         SubscriptionPlan,
         UserSubscription,
       ],
-      synchronize: true,
+      synchronize: false,
       migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
       migrationsRun: true,
       // Cấu hình để hỗ trợ MySQL 8.0+ với caching_sha2_password
