@@ -113,6 +113,23 @@ export class UserInteractionController extends BaseController {
       return this.error(res, error);
     }
   }
+  // get user interaction status
+  @Get('status/:targetType/:targetId')
+  async getUserInteractionStatus(
+    @Request() req: any,
+    @Param('targetType') targetType: InteractionTarget,
+    @Param('targetId') targetId: string,
+    @Res() res: Response,
+    ) {
+      try {
+      const userId = req.user.id;
+      const targetIdNum = this.decode(targetId);
+      const data = await this.userInteractionService.getUserInteractionStatus(userId, targetType, targetIdNum);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
 
   @Get('stats/:targetType/:targetId')
   async getInteractionStats(

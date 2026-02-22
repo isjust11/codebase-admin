@@ -38,11 +38,11 @@ export class InteractionStats {
   @Column({ default: 0 })
   followCount: number;
 
-  @Column({ default: false })
-  favoriteStatus: boolean;
+  @Column({ default: 0 })
+  favoriteCount: number;
 
-  @Column({ default: false })
-  archiveStatus: boolean;
+  @Column({ default: 0 })
+  archiveCount: number;
 
   // Average rating (for rate interactions)
   @Column({ type: 'decimal', precision: 3, scale: 2, default: 0 })

@@ -40,7 +40,7 @@ export class UserInteractionService {
     });
 
     if (existingInteraction) {
-      
+
       // for reading progress, update the reading progress
       if (createDto.interactionType === InteractionType.READING) {
         existingInteraction.metadata = createDto.metadata ? JSON.stringify(createDto.metadata) : null;
@@ -51,16 +51,18 @@ export class UserInteractionService {
           existingInteraction.status = 2;
         }
         await this.userInteractionRepository.save(existingInteraction);
-      }
-
-      if (createDto.interactionType === InteractionType.RATING) {
+      } else if (createDto.interactionType === InteractionType.RATING) {
         existingInteraction.rating = createDto.rating;
         existingInteraction.comment = createDto.comment;
         existingInteraction.updatedAt = new Date();
         await this.userInteractionRepository.save(existingInteraction);
+      } else {
+        existingInteraction.updatedAt = new Date();
+        existingInteraction.status = existingInteraction.status === 1 ? 0 : 1;
+        await this.userInteractionRepository.save(existingInteraction);
       }
-      
-      await this.updateInteractionStats(createDto.targetType, createDto.targetId, createDto.interactionType, 1);
+      const valueIncrement = existingInteraction.status === 1 ? 1 : -1;
+      await this.updateInteractionStats(createDto.targetType, createDto.targetId, createDto.interactionType, valueIncrement);
 
       return existingInteraction;
     }
@@ -85,8 +87,8 @@ export class UserInteractionService {
 
   async loadInteraction(targetType: InteractionTarget, targetId: number, query: UserInteractionQueryDto) {
     const queryBuilder = this.userInteractionRepository
-    .createQueryBuilder('interaction')
-    .where('interaction.targetType = :targetType', { targetType: targetType.toString() })
+      .createQueryBuilder('interaction')
+      .where('interaction.targetType = :targetType', { targetType: targetType.toString() })
       .andWhere('interaction.targetId = :targetId', { targetId: targetId });
     if (query.interactionType) {
       queryBuilder.andWhere('interaction.interactionType = :interactionType', { interactionType: query.interactionType });
@@ -98,7 +100,7 @@ export class UserInteractionService {
       .leftJoinAndSelect('interaction.book', 'book')
       .leftJoinAndSelect('interaction.user', 'user');
     const [interactions, total] = await queryBuilder.skip(skip)
-    .take(limit).orderBy('interaction.updatedAt', 'DESC').getManyAndCount();
+      .take(limit).orderBy('interaction.updatedAt', 'DESC').getManyAndCount();
     return {
       data: interactions,
       total,
@@ -340,10 +342,10 @@ export class UserInteractionService {
         case InteractionType.FOLLOW:
           stats.followCount += increment;
         case InteractionType.FAVORITE:
-          stats.favoriteStatus = !stats.favoriteStatus;
+          stats.favoriteCount += increment;
           break;
         case InteractionType.ARCHIVED:
-          stats.archiveStatus = !stats.archiveStatus;
+          stats.archiveCount += increment;
           break;
       }
 
@@ -351,18 +353,18 @@ export class UserInteractionService {
     });
   }
   private async calculateAverageRating(targetId: number): Promise<{ totalRating: number, averageRating: number }> {
-     // count total rating and average rating
-     const totalRating = await this.userInteractionRepository.count({
+    // count total rating and average rating
+    const totalRating = await this.userInteractionRepository.count({
       where: {
         targetId: targetId,
         interactionType: InteractionType.RATING,
       },
     });
     const averageRatingResult = await this.userInteractionRepository.createQueryBuilder('UserInteraction')
-    .select('AVG(UserInteraction.rating)', 'avg') 
-    .where('UserInteraction.targetId = :targetId', { targetId: targetId })
-    .andWhere('UserInteraction.interactionType = :interactionType', { interactionType: InteractionType.RATING })
-    .getRawOne();
+      .select('AVG(UserInteraction.rating)', 'avg')
+      .where('UserInteraction.targetId = :targetId', { targetId: targetId })
+      .andWhere('UserInteraction.interactionType = :interactionType', { interactionType: InteractionType.RATING })
+      .getRawOne();
     const averageRating = averageRatingResult ? parseFloat(averageRatingResult.avg) : 0;
     return { totalRating, averageRating };
   }
