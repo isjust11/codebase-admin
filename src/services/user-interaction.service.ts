@@ -338,6 +338,8 @@ export class UserInteractionService {
           const { totalRating, averageRating } = await this.calculateAverageRating(targetId);
           stats.totalRating = totalRating;
           stats.averageRating = averageRating;
+          stats.rateCount += increment;
+          stats.commentCount += increment;
           break;
         case InteractionType.FOLLOW:
           stats.followCount += increment;

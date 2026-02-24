@@ -14,6 +14,7 @@ import { NotificationService } from './notification.service';
 import { NotificationType } from 'src/enums/notification.enum';
 import { Category } from 'src/entities/category.entity';
 import { MediaService } from './media.service';
+import { InteractionType } from 'src/enums/interaction-type.enum';
 
 @Injectable()
 export class BookService {
@@ -47,19 +48,14 @@ export class BookService {
     // Apply filter types
     if (filterType) {
       // Join với interaction_stats để lấy favorite books
-      if (filterType === FilterType.FAVORITE) {
+      if (filterType === FilterType.FAVORITE
+        || filterType === FilterType.ARCHIVED
+      ) {
         query.innerJoin(
-          'interaction_stats',
-          'stats',
-          'stats.targetId = book.id AND stats.targetType = :targetType AND stats.favoriteStatus = true',
-          { targetType: InteractionTarget.BOOK }
-        );
-      } else if (filterType === FilterType.ARCHIVED) {
-        query.innerJoin(
-          'interaction_stats',
-          'stats',
-          'stats.targetId = book.id AND stats.targetType = :targetType AND stats.archiveStatus = true',
-          { targetType: InteractionTarget.BOOK }
+          'user_interaction',
+          'interaction',
+          'interaction.targetId = book.id AND interaction.targetType = :targetType AND interaction.interactionType = :interactionType AND interaction.userId = :userId',
+          { targetType: InteractionTarget.BOOK, interactionType: filterType, userId: userId }
         );
       }
 
