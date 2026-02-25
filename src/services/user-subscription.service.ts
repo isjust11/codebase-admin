@@ -165,6 +165,34 @@ export class UserSubscriptionService {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   }
 
+  async findAllPaginated(
+    page: number,
+    size: number,
+    search?: string,
+    status?: SubscriptionStatus,
+  ): Promise<{ data: UserSubscription[]; total: number }> {
+    const qb = this.subscriptionRepository
+      .createQueryBuilder('s')
+      .leftJoinAndSelect('s.plan', 'plan')
+      .leftJoinAndSelect('s.user', 'user')
+      .leftJoinAndSelect('s.payment', 'payment')
+      .orderBy('s.createdAt', 'DESC');
+
+    if (status) {
+      qb.andWhere('s.status = :status', { status });
+    }
+    if (search) {
+      qb.andWhere(
+        '(user.fullName LIKE :search OR user.email LIKE :search OR user.username LIKE :search)',
+        { search: `%${search}%` },
+      );
+    }
+
+    qb.skip((page - 1) * size).take(size);
+    const [data, total] = await qb.getManyAndCount();
+    return { data, total };
+  }
+
   async findById(id: number): Promise<UserSubscription> {
     const sub = await this.subscriptionRepository.findOne({
       where: { id },

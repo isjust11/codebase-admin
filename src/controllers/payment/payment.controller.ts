@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Get,
+  Put,
   Body,
   Query,
   Param,
@@ -11,13 +12,15 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { JwtAuthGuard, Public } from '../../guards/jwt-auth.guard';
+import { PermissionGuard } from '../../guards/permission.guard';
+import { RequirePermission } from '../../decorators/require-permissions.decorator';
 import { BaseController } from '../base/base.controller';
 import { PaymentService } from '../../services/payment.service';
 import { VNPayService } from '../../services/vnpay.service';
 import { MomoService } from '../../services/momo.service';
 import { ZaloPayService } from '../../services/zalopay.service';
 import { StripeService } from '../../services/stripe.service';
-import { PaymentMethod } from '../../entities/payment.entity';
+import { PaymentMethod, PaymentStatus } from '../../entities/payment.entity';
 
 export class CreatePaymentDto {
   planId: string;
@@ -475,6 +478,77 @@ export class PaymentController extends BaseController {
         createdAt: payment.createdAt,
         paidAt: payment.paidAt,
       });
+    } catch (error) {
+      this.error(res, error);
+    }
+  }
+
+  /* ────────── Admin Endpoints ────────── */
+
+  @Get('admin/list')
+  @RequirePermission('READ', 'payment')
+  @UseGuards(JwtAuthGuard, PermissionGuard)
+  async adminList(
+    @Query('page') page: string,
+    @Query('size') size: string,
+    @Query('search') search: string,
+    @Query('status') status: string,
+    @Query('paymentMethod') paymentMethod: string,
+    @Res() res: Response,
+  ) {
+    try {
+      const p = Math.max(Number(page) || 1, 1);
+      const s = Math.min(Math.max(Number(size) || 10, 1), 100);
+      const statusEnum = Object.values(PaymentStatus).includes(status as any)
+        ? (status as PaymentStatus)
+        : undefined;
+      const methodEnum = Object.values(PaymentMethod).includes(paymentMethod as any)
+        ? (paymentMethod as PaymentMethod)
+        : undefined;
+      const result = await this.paymentService.findAllPaginated(p, s, search, statusEnum, methodEnum);
+      return this.paginate(res, result.data, result.total, p, s);
+    } catch (error) {
+      this.error(res, error);
+    }
+  }
+
+  @Get('admin/:id')
+  @RequirePermission('READ', 'payment')
+  @UseGuards(JwtAuthGuard, PermissionGuard)
+  async adminGetById(@Param('id') id: string, @Res() res: Response) {
+    try {
+      const numId = this.decode(id);
+      if (Number.isNaN(numId)) {
+        return this.error(res, { status: 400, message: 'Invalid id' });
+      }
+      const result = await this.paymentService.findById(numId);
+      if (!result) {
+        return this.error(res, { status: 404, message: 'Payment not found' });
+      }
+      return this.success(res, result);
+    } catch (error) {
+      this.error(res, error);
+    }
+  }
+
+  @Put('admin/:id/status')
+  @RequirePermission('UPDATE', 'payment')
+  @UseGuards(JwtAuthGuard, PermissionGuard)
+  async adminUpdateStatus(
+    @Param('id') id: string,
+    @Body('status') status: string,
+    @Res() res: Response,
+  ) {
+    try {
+      const numId = this.decode(id);
+      if (Number.isNaN(numId)) {
+        return this.error(res, { status: 400, message: 'Invalid id' });
+      }
+      if (!Object.values(PaymentStatus).includes(status as any)) {
+        return this.error(res, { status: 400, message: 'Invalid status' });
+      }
+      const result = await this.paymentService.adminUpdateStatus(numId, status as PaymentStatus);
+      return this.success(res, result);
     } catch (error) {
       this.error(res, error);
     }

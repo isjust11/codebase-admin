@@ -2,7 +2,10 @@ import {
   Controller,
   Get,
   Post,
+  Put,
   Body,
+  Param,
+  Query,
   Res,
   UseGuards,
   Request,
@@ -10,12 +13,15 @@ import {
 import { Response } from 'express';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { PermissionGuard } from '../../guards/permission.guard';
+import { RequirePermission } from '../../decorators/require-permissions.decorator';
 import { BaseController } from '../base/base.controller';
 import { UserSubscriptionService } from '../../services/user-subscription.service';
 import {
   CreateUserSubscriptionDto,
+  UpdateUserSubscriptionDto,
   IncrementUsageDto,
 } from '../../dtos/user-subscription.dto';
+import { SubscriptionStatus } from '../../entities/user-subscription.entity';
 
 @Controller('subscription')
 @UseGuards(JwtAuthGuard, PermissionGuard)
@@ -127,6 +133,89 @@ export class UserSubscriptionController extends BaseController {
       }
       const result = await this.subscriptionService.incrementUsage(userId, dto);
       return this.success(res, result ?? { message: 'No active subscription' });
+    } catch (error) {
+      this.error(res, error);
+    }
+  }
+
+  /* ────────── Admin Endpoints ────────── */
+
+  @Get('admin/list')
+  @RequirePermission('READ', 'user_subscription')
+  @UseGuards(JwtAuthGuard, PermissionGuard)
+  async adminList(
+    @Query('page') page: string,
+    @Query('size') size: string,
+    @Query('search') search: string,
+    @Query('status') status: string,
+    @Res() res: Response,
+  ) {
+    try {
+      const p = Math.max(Number(page) || 1, 1);
+      const s = Math.min(Math.max(Number(size) || 10, 1), 100);
+      const statusEnum = Object.values(SubscriptionStatus).includes(status as any)
+        ? (status as SubscriptionStatus)
+        : undefined;
+      const result = await this.subscriptionService.findAllPaginated(p, s, search, statusEnum);
+      return this.paginate(res, result.data, result.total, p, s);
+    } catch (error) {
+      this.error(res, error);
+    }
+  }
+
+  @Get('admin/:id')
+  @RequirePermission('READ', 'user_subscription')
+  @UseGuards(JwtAuthGuard, PermissionGuard)
+  async adminGetById(@Param('id') id: string, @Res() res: Response) {
+    try {
+      const numId = this.decode(id);
+      if (Number.isNaN(numId)) {
+        return this.error(res, { status: 400, message: 'Invalid id' });
+      }
+      const result = await this.subscriptionService.findById(numId);
+      return this.success(res, result);
+    } catch (error) {
+      this.error(res, error);
+    }
+  }
+
+  @Post('admin/assign')
+  @RequirePermission('CREATE', 'user_subscription')
+  @UseGuards(JwtAuthGuard, PermissionGuard)
+  async adminAssign(
+    @Body() body: { userId: number; planId: number; status?: SubscriptionStatus },
+    @Res() res: Response,
+  ) {
+    try {
+      const dto: CreateUserSubscriptionDto = {
+        planId: body.planId,
+        status: body.status,
+      };
+      const result = await this.subscriptionService.create(body.userId, dto);
+      return this.success(res, result, 201);
+    } catch (error) {
+      this.error(res, error);
+    }
+  }
+
+  @Put('admin/:id/status')
+  @RequirePermission('UPDATE', 'user_subscription')
+  @UseGuards(JwtAuthGuard, PermissionGuard)
+  async adminUpdateStatus(
+    @Param('id') id: string,
+    @Body() dto: UpdateUserSubscriptionDto,
+    @Res() res: Response,
+  ) {
+    try {
+      const numId = this.decode(id);
+      if (Number.isNaN(numId)) {
+        return this.error(res, { status: 400, message: 'Invalid id' });
+      }
+      if (!dto.status) {
+        return this.error(res, { status: 400, message: 'Status is required' });
+      }
+      const result = await this.subscriptionService.updateStatus(numId, dto.status);
+      return this.success(res, result);
     } catch (error) {
       this.error(res, error);
     }

@@ -31,7 +31,6 @@ export class FeatureController extends BaseController {
             this.error(res, error);
         }
     }
-    
     @Post()
     @RequirePermission('CREATE', 'feature')
     async create(@Body() createFeatureDto: FeatureDto, @Res() res: Response) {

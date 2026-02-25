@@ -64,6 +64,54 @@ export class PaymentService {
     await this.paymentRepository.update(paymentId, { paymentUrl });
   }
 
+  async findAllPaginated(
+    page: number,
+    size: number,
+    search?: string,
+    status?: PaymentStatus,
+    paymentMethod?: PaymentMethod,
+  ): Promise<{ data: Payment[]; total: number }> {
+    const qb = this.paymentRepository
+      .createQueryBuilder('p')
+      .leftJoinAndSelect('p.user', 'user')
+      .leftJoinAndSelect('p.plan', 'plan')
+      .orderBy('p.createdAt', 'DESC');
+
+    if (status) {
+      qb.andWhere('p.status = :status', { status });
+    }
+    if (paymentMethod) {
+      qb.andWhere('p.paymentMethod = :paymentMethod', { paymentMethod });
+    }
+    if (search) {
+      qb.andWhere(
+        '(p.transactionId LIKE :search OR p.gatewayTransactionId LIKE :search OR user.fullName LIKE :s2 OR user.email LIKE :s2)',
+        { search: `%${search}%`, s2: `%${search}%` },
+      );
+    }
+
+    qb.skip((page - 1) * size).take(size);
+    const [data, total] = await qb.getManyAndCount();
+    return { data, total };
+  }
+
+  async findById(id: number): Promise<Payment | null> {
+    return this.paymentRepository.findOne({
+      where: { id },
+      relations: ['user', 'plan', 'userSubscription'],
+    });
+  }
+
+  async adminUpdateStatus(id: number, status: PaymentStatus): Promise<Payment> {
+    const payment = await this.paymentRepository.findOne({ where: { id } });
+    if (!payment) throw new Error('Payment not found');
+    payment.status = status;
+    if (status === PaymentStatus.REFUNDED) {
+      payment.completedAt = new Date();
+    }
+    return this.paymentRepository.save(payment);
+  }
+
   /**
    * Tìm payment theo transactionId
    */
