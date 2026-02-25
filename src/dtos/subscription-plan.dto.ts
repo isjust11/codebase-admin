@@ -6,11 +6,11 @@ import {
   IsEnum,
   Min,
 } from 'class-validator';
-import { PlanCode } from '../entities/subscription-plan.entity';
+import { SubscriptionPlanEnum } from 'src/enums/subscription-plan.enum';
 
 export class CreateSubscriptionPlanDto {
-  @IsEnum(PlanCode)
-  code: PlanCode;
+  @IsEnum(SubscriptionPlanEnum)
+  code: SubscriptionPlanEnum;
 
   @IsString()
   name: string;

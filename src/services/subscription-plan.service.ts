@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { SubscriptionPlan, PlanCode } from '../entities/subscription-plan.entity';
+import { SubscriptionPlan } from '../entities/subscription-plan.entity';
+import { SubscriptionPlanEnum } from 'src/enums/subscription-plan.enum';
 import {
   CreateSubscriptionPlanDto,
   UpdateSubscriptionPlanDto,
@@ -30,7 +31,7 @@ export class SubscriptionPlanService {
     return plan;
   }
 
-  async findByCode(code: PlanCode): Promise<SubscriptionPlan> {
+  async findByCode(code: SubscriptionPlanEnum): Promise<SubscriptionPlan> {
     const plan = await this.planRepository.findOne({ where: { code } });
     if (!plan) {
       throw new NotFoundException(`Plan ${code} not found`);

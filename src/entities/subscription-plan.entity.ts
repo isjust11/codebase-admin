@@ -7,13 +7,8 @@ import {
   OneToMany,
 } from 'typeorm';
 import { UserSubscription } from './user-subscription.entity';
+import { SubscriptionPlanEnum } from 'src/enums/subscription-plan.enum';
 
-/** Mã gói: basic, advanced, ultra */
-export enum PlanCode {
-  BASIC = 'basic',
-  ADVANCED = 'advanced',
-  ULTRA = 'ultra',
-}
 
 @Entity('subscription_plans')
 export class SubscriptionPlan {
@@ -21,8 +16,8 @@ export class SubscriptionPlan {
   id: number;
 
   /** Mã gói (basic | advanced | ultra) */
-  @Column({ type: 'enum', enum: PlanCode, unique: true })
-  code: PlanCode;
+  @Column({ type: 'enum', enum: SubscriptionPlanEnum, unique: true })
+  code: SubscriptionPlanEnum;
 
   /** Tên hiển thị */
   @Column({ type: 'varchar', length: 128 })

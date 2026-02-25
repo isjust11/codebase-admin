@@ -17,7 +17,6 @@ import { PermissionService } from 'src/services/permission.service';
 import { AuthController } from 'src/controllers/auth/auth.controller';
 import { AuthService } from 'src/services/auth.service';
 import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
 import { EmailService } from 'src/services/email.service';
 import { FacebookStrategy } from 'src/guards/strategies/facebook.strategy';
@@ -27,6 +26,8 @@ import { GoogleStrategy } from 'src/guards/strategies/google.strategy';
 import { SocialTokenVerificationService } from 'src/services/social-token-verification.service';
 import { APP_GUARD } from '@nestjs/core';
 import { NotificationModule } from './notification.module';
+import { SubscriptionPlan } from 'src/entities/subscription-plan.entity';
+import { UserSubscription } from 'src/entities/user-subscription.entity';
 
 @Module({
   imports: [
@@ -43,6 +44,8 @@ import { NotificationModule } from './notification.module';
       Permission,
       Role,
       RefreshToken,
+      SubscriptionPlan,
+      UserSubscription,
     ]),
     forwardRef(() => NotificationModule),
   ],

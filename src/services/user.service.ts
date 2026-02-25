@@ -7,6 +7,9 @@ import { Role } from '../entities/role.entity';
 import { UpdateUserDto } from '../dtos/user.dto';
 import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
 import { RoleEnum } from 'src/enums/role.enum';
+import { SubscriptionPlan } from 'src/entities/subscription-plan.entity';
+import { SubscriptionPlanEnum } from 'src/enums/subscription-plan.enum';
+import { SubscriptionStatus, UserSubscription } from 'src/entities/user-subscription.entity';
 
 @Injectable()
 export class UserService {
@@ -15,6 +18,10 @@ export class UserService {
     private userRepository: Repository<User>,
     @InjectRepository(Role)
     private roleRepository: Repository<Role>,
+    @InjectRepository(SubscriptionPlan)
+    private subscriptionPlanRepository: Repository<SubscriptionPlan>,
+    @InjectRepository(UserSubscription)
+    private userSubscriptionRepository: Repository<UserSubscription>,
   ) { }
 
   async findAllWithPagination(params: PaginationParams): Promise<PaginatedResponse<User>> {
@@ -81,6 +88,28 @@ export class UserService {
     // Kiểm tra xem đây có phải là tài khoản đầu tiên không
     const userCount = await this.count();
     const isFirstUser = userCount === 0;
+
+    // Tìm subscription plan FREE
+    const freeSubscriptionPlan = await this.subscriptionPlanRepository.findOne({
+      where: {
+        code: SubscriptionPlanEnum.FREE,
+      },
+    });
+
+    if (!freeSubscriptionPlan) {
+      throw new NotFoundException('Subscription plan FREE not found');
+    }
+
+    // Tạo user subscription
+    const userSubscription = this.userSubscriptionRepository.create({
+      user: user,
+      planId: freeSubscriptionPlan.id,
+      plan: freeSubscriptionPlan,
+      startedAt: new Date(),
+      expiresAt: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+      status: SubscriptionStatus.ACTIVE,
+    });
+    await this.userSubscriptionRepository.save(userSubscription);
 
     // Tìm role ADMIN nếu là tài khoản đầu tiên
     let roleIds: number[] = [];

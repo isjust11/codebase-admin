@@ -4,6 +4,7 @@ import { RoleEnum } from 'src/enums/role.enum';
 import { CategoryTypeEnum } from 'src/enums/category-type.enum';
 import { RESOURCES } from 'src/constants/permission.constants';
 import { CategoryCodeEnum } from 'src/enums/category-code.enum';
+import { SubscriptionPlanEnum } from 'src/enums/subscription-plan.enum';
 
 export class SeedsCommonData1710669600002 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
@@ -218,6 +219,14 @@ export class SeedsCommonData1710669600002 implements MigrationInterface {
                 ('${superAdminRoleId}', '${permission.id}')
             `);
         }
+
+        // insert subscription plan
+        await queryRunner.query(`
+            INSERT INTO subscription_plan (name, code, description, isActive, createdAt, updatedAt) VALUES
+            ('Free', '${SubscriptionPlanEnum.FREE}', 'Free plan', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+            ('Readbox Pro', '${SubscriptionPlanEnum.PRO}', 'Readbox Pro plan', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+            ('Readbox Ultra', '${SubscriptionPlanEnum.ULTRA}', 'Readbox Ultra plan', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        `);
         
     }
 
