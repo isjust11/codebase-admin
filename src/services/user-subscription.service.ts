@@ -54,11 +54,16 @@ export class UserSubscriptionService {
 
     const status = dto.status ?? SubscriptionStatus.PENDING_PAYMENT;
     const isTrial = status === SubscriptionStatus.TRIAL;
-
+    const userSubscription = await this.subscriptionRepository.findOne({ where: { userId, planId: plan.id } });
+    if (userSubscription) {
+      throw new BadRequestException('User already has a subscription for this plan');
+    }
     const sub = this.subscriptionRepository.create({
       userId,
       planId: plan.id,
       status,
+      startedAt: new Date(),
+      expiresAt: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
       storageUsedBytes: '0',
       ttsUsedInPeriod: 0,
       convertUsedInPeriod: 0,

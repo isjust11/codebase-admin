@@ -61,6 +61,33 @@ export class UserSubscriptionController extends BaseController {
     }
   }
 
+  // đăng ký gói cho user 
+  @Post('subscription-plan')
+  async createSubscriptionPlan(
+    @Request() req: any,
+    @Body() body: { planId: string; },
+    @Res() res: Response,
+  ) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return this.error(res, { status: 400, message: 'Invalid user id' });
+      }
+      const planId = this.decode(body.planId);
+      if (Number.isNaN(planId)) {
+        return this.error(res, { status: 400, message: 'Invalid plan id' });
+      }
+      const dto: CreateUserSubscriptionDto = {
+        planId: planId,
+        status: SubscriptionStatus.ACTIVE,
+      };
+      const result = await this.subscriptionService.create(userId, dto);
+      return this.success(res, result, 201);
+    } catch (error) {
+      this.error(res, error);
+    }
+  }
+
   /** Lịch sử đăng ký của user */
   @Get('me/history')
   async getMyHistory(@Request() req: any, @Res() res: Response) {
@@ -179,24 +206,6 @@ export class UserSubscriptionController extends BaseController {
     }
   }
 
-  @Post('admin/assign')
-  @RequirePermission('CREATE', 'user_subscription')
-  @UseGuards(JwtAuthGuard, PermissionGuard)
-  async adminAssign(
-    @Body() body: { userId: number; planId: number; status?: SubscriptionStatus },
-    @Res() res: Response,
-  ) {
-    try {
-      const dto: CreateUserSubscriptionDto = {
-        planId: body.planId,
-        status: body.status,
-      };
-      const result = await this.subscriptionService.create(body.userId, dto);
-      return this.success(res, result, 201);
-    } catch (error) {
-      this.error(res, error);
-    }
-  }
 
   @Put('admin/:id/status')
   @RequirePermission('UPDATE', 'user_subscription')
