@@ -90,26 +90,24 @@ export class UserService {
     const isFirstUser = userCount === 0;
 
     // Tìm subscription plan FREE
-    const freeSubscriptionPlan = await this.subscriptionPlanRepository.findOne({
+    let freeSubscriptionPlan = await this.subscriptionPlanRepository.findOne({
       where: {
         code: SubscriptionPlanEnum.FREE,
       },
     });
 
     if (!freeSubscriptionPlan) {
-      throw new NotFoundException('Subscription plan FREE not found');
+      // create subscription plan FREE
+      freeSubscriptionPlan = await this.subscriptionPlanRepository.create({
+        code: SubscriptionPlanEnum.FREE,
+        name: 'Free',
+        description: 'Free subscription plan',
+        price: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      freeSubscriptionPlan = await this.subscriptionPlanRepository.save(freeSubscriptionPlan);
     }
-
-    // Tạo user subscription
-    const userSubscription = this.userSubscriptionRepository.create({
-      user: user,
-      planId: freeSubscriptionPlan.id,
-      plan: freeSubscriptionPlan,
-      startedAt: new Date(),
-      expiresAt: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
-      status: SubscriptionStatus.ACTIVE,
-    });
-    await this.userSubscriptionRepository.save(userSubscription);
 
     // Tìm role ADMIN nếu là tài khoản đầu tiên
     let roleIds: number[] = [];
@@ -136,7 +134,21 @@ export class UserService {
       user.roles = [adminRole!];
     }
 
-    return this.userRepository.save(user);
+    const savedUser = await this.userRepository.save(user);
+    if (savedUser) {
+      // Tạo user subscription
+      const userSubscription = this.userSubscriptionRepository.create({
+        user: savedUser,
+        userId: savedUser.id,
+        planId: freeSubscriptionPlan.id,
+        plan: freeSubscriptionPlan,
+        startedAt: new Date(),
+        expiresAt: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+        status: SubscriptionStatus.ACTIVE,
+      });
+      await this.userSubscriptionRepository.save(userSubscription);
+    }
+    return savedUser;
   }
 
   async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
