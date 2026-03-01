@@ -31,8 +31,11 @@ export class AuthService {
 
   async validateUser(username: string, password: string): Promise<any> {
     const user = await this.userService.findByUsername(username);
+    if(user?.isWebsiteUser && !user?.isEmailVerified) {
+      throw new BadRequestException('Email chưa được xác thực');
+    }
     if (user?.isBlocked) {
-      throw new UnauthorizedException('Tài khoản đã bị khóa');
+      throw new BadRequestException('Tài khoản đã bị khóa, vui lòng liên hệ admin để được hỗ trợ');
     }
     if (user && await user.validatePassword(password)) {
       user.lastLogin = new Date();
@@ -52,13 +55,13 @@ export class AuthService {
         if (existingUser.isEmailVerified) {
           return {
             code: RegisterCode.AccountValidated,
-            message: 'Tài khoản đã được xác thực',
+            message: 'Tài khoản đã được xác thực, hãy đăng nhập để tiếp tục',
             data: existingUser
           };
         } else {
           return {
             code: RegisterCode.ExistUsernameNotVerified,
-            message: 'Tài khoản chưa được xác thực',
+            message: 'Tài khoản chưa được xác thực, hãy xác thực tài khoản để tiếp tục',
             data: existingUser
           };
         }
@@ -524,7 +527,7 @@ export class AuthService {
   async generateAndSavePin(user: User): Promise<string> {
     const pin = this.generatePin();
     const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + 1); // PIN hết hạn sau 10 phút
+    expiresAt.setMinutes(expiresAt.getMinutes() + 1); // PIN hết hạn sau 1 phút
 
     user.pinCode = pin;
     user.pinExpiresAt = expiresAt;
@@ -541,19 +544,19 @@ export class AuthService {
 
     const user = await this.userService.findByEmail(email);
     if (!user) {
-      throw new UnauthorizedException('Email không tồn tại');
+      throw new BadRequestException('Email không tồn tại');
     }
 
     if (!user.pinCode || !user.pinExpiresAt) {
-      throw new UnauthorizedException('Mã PIN không tồn tại hoặc đã hết hạn');
+      throw new BadRequestException('Mã PIN không tồn tại hoặc đã hết hạn');
     }
 
     if (new Date() > user.pinExpiresAt) {
-      throw new UnauthorizedException('Mã PIN đã hết hạn');
+      throw new BadRequestException('Mã PIN đã hết hạn');
     }
 
     if (user.pinCode !== pin) {
-      throw new UnauthorizedException('Mã PIN không chính xác');
+      throw new BadRequestException('Mã PIN không chính xác');
     }
 
     // Xác thực thành công, cập nhật trạng thái user
@@ -577,11 +580,11 @@ export class AuthService {
 
     const user = await this.userService.findByEmail(email);
     if (!user) {
-      throw new UnauthorizedException('Email không tồn tại');
+      throw new BadRequestException('Email không tồn tại');
     }
 
     if (user.isEmailVerified) {
-      throw new UnauthorizedException('Tài khoản đã được xác thực');
+      throw new BadRequestException('Tài khoản đã được xác thực');
     }
 
     const pin = await this.generateAndSavePin(user);
@@ -596,7 +599,6 @@ export class AuthService {
     return {
       code: 'resend',
       message: 'Mã PIN mới đã được gửi đến email của bạn',
-      // pin: pin // Trả về PIN để test (trong production nên bỏ dòng này)
     };
   }
 

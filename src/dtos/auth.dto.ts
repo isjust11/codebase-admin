@@ -31,6 +31,8 @@ export enum RegisterCode{
   ExistUsernameVerified = 'exist_username_verified',
   ExistEmail = 'exist_email',
   AccountIsExist = 'account_is_exist',
+  AccountNotVerified = 'account_not_verified',
+  AccountBlocked = 'account_blocked',
   Ok = 'ok',
 }
 export class RegisterResultDto{

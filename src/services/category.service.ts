@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Category } from '../entities/category.entity';
 import { CategoryType } from '../entities/category-type.entity';
 import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
