@@ -31,13 +31,21 @@ export class SubscriptionPlan {
   @Column({ type: 'bigint', default: 0 })
   storageLimitBytes: string;
 
-  /** Số lần TTS cho phép mỗi kỳ (tháng hoặc theo chu kỳ gói) */
+  /** Số ký tự TTS cho phép mỗi kỳ (tháng hoặc theo chu kỳ gói) */
   @Column({ type: 'int', default: 0 })
   ttsLimitPerPeriod: number;
 
   /** Số lần convert (Word->PDF) cho phép mỗi kỳ */
   @Column({ type: 'int', default: 0 })
   convertLimitPerPeriod: number;
+
+  // số lượt chia sẻ cho phép mỗi kỳ
+  @Column({ type: 'int', default: 0 })
+  shareLimitPerPeriod: number;
+
+  // số lượt tải xuống cho phép mỗi kỳ
+  @Column({ type: 'int', default: 0 })
+  downloadLimitPerPeriod: number;
 
   /** Chu kỳ tính limit: 'month' | 'year' */
   @Column({ type: 'varchar', length: 16, default: 'month' })

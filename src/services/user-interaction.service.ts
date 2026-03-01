@@ -41,6 +41,44 @@ export class UserInteractionService {
 
     if (existingInteraction) {
 
+      // For countable actions, increment the counter on the interaction record
+      if (createDto.interactionType === InteractionType.TTS) {
+        existingInteraction.ttsCount = (existingInteraction.ttsCount || 0) + 1;
+        existingInteraction.updatedAt = new Date();
+        await this.userInteractionRepository.save(existingInteraction);
+        await this.updateInteractionStats(createDto.targetType, createDto.targetId, createDto.interactionType, 1);
+        return existingInteraction;
+      }
+      if (createDto.interactionType === InteractionType.CONVERT) {
+        existingInteraction.convertCount = (existingInteraction.convertCount || 0) + 1;
+        existingInteraction.updatedAt = new Date();
+        await this.userInteractionRepository.save(existingInteraction);
+        await this.updateInteractionStats(createDto.targetType, createDto.targetId, createDto.interactionType, 1);
+        return existingInteraction;
+      }
+      if (createDto.interactionType === InteractionType.DOWNLOAD) {
+        existingInteraction.downloadCount = (existingInteraction.downloadCount || 0) + 1;
+        existingInteraction.updatedAt = new Date();
+        await this.userInteractionRepository.save(existingInteraction);
+        await this.updateInteractionStats(createDto.targetType, createDto.targetId, createDto.interactionType, 1);
+        return existingInteraction;
+      }
+      if (createDto.interactionType === InteractionType.READ) {
+        existingInteraction.readCount = (existingInteraction.readCount || 0) + 1;
+        existingInteraction.updatedAt = new Date();
+        await this.userInteractionRepository.save(existingInteraction);
+        await this.updateInteractionStats(createDto.targetType, createDto.targetId, createDto.interactionType, 1);
+        return existingInteraction;
+      }
+      if (createDto.interactionType === InteractionType.SHARE) {
+        existingInteraction.shareCount = (existingInteraction.shareCount || 0) + 1;
+        existingInteraction.sharePlatform = createDto.sharePlatform;
+        existingInteraction.updatedAt = new Date();
+        await this.userInteractionRepository.save(existingInteraction);
+        await this.updateInteractionStats(createDto.targetType, createDto.targetId, createDto.interactionType, 1);
+        return existingInteraction;
+      }
+
       // for reading progress, update the reading progress
       if (createDto.interactionType === InteractionType.READING) {
         existingInteraction.metadata = createDto.metadata ? JSON.stringify(createDto.metadata) : null;
@@ -70,6 +108,11 @@ export class UserInteractionService {
     const interaction = this.userInteractionRepository.create({
       userId,
       ...createDto,
+      ttsCount: createDto.interactionType === InteractionType.TTS ? 1 : 0,
+      convertCount: createDto.interactionType === InteractionType.CONVERT ? 1 : 0,
+      downloadCount: createDto.interactionType === InteractionType.DOWNLOAD ? 1 : 0,
+      readCount: createDto.interactionType === InteractionType.READ ? 1 : 0,
+      shareCount: createDto.interactionType === InteractionType.SHARE ? 1 : 0,
       metadata: createDto.metadata ? JSON.stringify(createDto.metadata) : null,
       status: 1,
     });
@@ -226,6 +269,23 @@ export class UserInteractionService {
     };
   }
 
+  async getMyInteractionCounts(userId: number): Promise<{ [key: string]: number }> {
+    const results = await this.userInteractionRepository
+      .createQueryBuilder('interaction')
+      .select('interaction.interactionType', 'interactionType')
+      .addSelect('COUNT(*)', 'count')
+      .where('interaction.userId = :userId', { userId })
+      .andWhere('interaction.status = 1')
+      .groupBy('interaction.interactionType')
+      .getRawMany();
+
+    const counts: { [key: string]: number } = {};
+    for (const r of results) {
+      counts[r.interactionType] = parseInt(r.count, 10);
+    }
+    return counts;
+  }
+
   async getInteractionStats(targetType: InteractionTarget, targetId: number) {
     let stats = await this.interactionStatsRepository.findOne({
       where: { targetType, targetId },
@@ -348,6 +408,18 @@ export class UserInteractionService {
           break;
         case InteractionType.ARCHIVED:
           stats.archiveCount += increment;
+          break;
+        case InteractionType.TTS:
+          stats.ttsCount += increment;
+          break;
+        case InteractionType.CONVERT:
+          stats.convertCount += increment;
+          break;
+        case InteractionType.DOWNLOAD:
+          stats.downloadCount += increment;
+          break;
+        case InteractionType.READ:
+          stats.readCount += increment;
           break;
       }
 

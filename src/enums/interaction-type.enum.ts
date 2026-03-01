@@ -14,5 +14,7 @@ export enum InteractionType {
   DOWNLOAD = 'download',
   READ = 'read',
   // for reading progress
-  READING = 'reading'
+  READING = 'reading',
+  TTS = 'tts',
+  CONVERT = 'convert',
 }

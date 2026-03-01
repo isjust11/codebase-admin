@@ -1,6 +1,5 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { User } from './user.entity';
-import { Article } from './article.entity';
 import { Transform } from 'class-transformer';
 import { Book } from './book.entity';
 import { InteractionType } from 'src/enums/interaction-type.enum';
@@ -18,13 +17,11 @@ export class UserInteraction {
   @JoinColumn({ name: 'userId' })
   user: User;
 
-
   @Column()
   targetId: number;
 
   @Column()
   targetType: string;
-
 
   @Column({ nullable: true })
   bookId?: number;
@@ -56,6 +53,25 @@ export class UserInteraction {
   // 0: unread, 1: read, 2: completed
   @Column({ type: 'int', default: 0 })
   status?: number;
+
+  // cần có thêm các fields đếm cho các thao tác khác như tts, convert, download, read
+  @Column({ type: 'int', default: 0 })
+  ttsCount?: number;
+  
+  @Column({ type: 'int', default: 0 })
+  convertCount?: number;
+  
+  @Column({ type: 'int', default: 0 })
+  downloadCount?: number;
+
+  @Column({ type: 'int', default: 0 })
+  readCount?: number;
+
+  @Column({ type: 'int', default: 0 })
+  shareCount?: number;
+
+  @Column({ type: 'int', default: 0 })
+  storageUsedBytes?: number;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   @Transform(({ value }) => value ? new Date(value) : value)

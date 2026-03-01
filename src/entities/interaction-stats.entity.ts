@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { Transform } from 'class-transformer';
-
+//entity for interaction stats by targetId 
 @Entity()
 @Index(['targetType', 'targetId'], { unique: true })
 export class InteractionStats {
@@ -43,6 +43,18 @@ export class InteractionStats {
 
   @Column({ default: 0 })
   archiveCount: number;
+
+  @Column({ default: 0 })
+  ttsCount: number;
+
+  @Column({ default: 0 })
+  convertCount: number;
+
+  @Column({ default: 0 })
+  downloadCount: number;
+
+  @Column({ default: 0 })
+  readCount: number;
 
   // Average rating (for rate interactions)
   @Column({ type: 'decimal', precision: 3, scale: 2, default: 0 })

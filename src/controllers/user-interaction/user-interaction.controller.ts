@@ -99,6 +99,20 @@ export class UserInteractionController extends BaseController {
     }
   }
 
+  @Get('my-interaction-counts')
+  async getMyInteractionCounts(
+    @Request() req: any,
+    @Res() res: Response,
+  ) {
+    try {
+      const userId = req.user.id;
+      const data = await this.userInteractionService.getMyInteractionCounts(userId);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
   @Get('my-interactions')
   async getMyInteractions(
     @Request() req: any,
