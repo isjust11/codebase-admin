@@ -90,24 +90,7 @@ export class UserService {
     const isFirstUser = userCount === 0;
 
     // Tìm subscription plan FREE
-    let freeSubscriptionPlan = await this.subscriptionPlanRepository.findOne({
-      where: {
-        code: SubscriptionPlanEnum.FREE,
-      },
-    });
-
-    if (!freeSubscriptionPlan) {
-      // create subscription plan FREE
-      freeSubscriptionPlan = await this.subscriptionPlanRepository.create({
-        code: SubscriptionPlanEnum.FREE,
-        name: 'Free',
-        description: 'Free subscription plan',
-        price: 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-      freeSubscriptionPlan = await this.subscriptionPlanRepository.save(freeSubscriptionPlan);
-    }
+    const freeSubscriptionPlan = await this.createTrialSubscription(user.id);
 
     // Tìm role ADMIN nếu là tài khoản đầu tiên
     let roleIds: number[] = [];
@@ -149,6 +132,34 @@ export class UserService {
       await this.userSubscriptionRepository.save(userSubscription);
     }
     return savedUser;
+  }
+
+  async createTrialSubscription(userId: number): Promise<SubscriptionPlan> {
+    let freeSubscriptionPlan = await this.subscriptionPlanRepository.findOne({
+      where: {
+        code: SubscriptionPlanEnum.FREE,
+      },
+    });
+
+    if (!freeSubscriptionPlan) {
+      // create subscription plan FREE
+      freeSubscriptionPlan = await this.subscriptionPlanRepository.create({
+        code: SubscriptionPlanEnum.FREE,
+        name: 'Free',
+        description: 'Free subscription plan',
+        storageLimitBytes: '1073741824',
+        ttsLimitPerPeriod: 100000,
+        convertLimitPerPeriod: 10,
+        shareLimitPerPeriod: 10,
+        downloadLimitPerPeriod: 10,
+        periodType: 'month',
+        price: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      freeSubscriptionPlan = await this.subscriptionPlanRepository.save(freeSubscriptionPlan);
+    }
+    return freeSubscriptionPlan;
   }
 
   async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {

@@ -11,8 +11,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RefreshToken } from '../entities/refresh-token.entity';
 import { UpdateProfileDto } from 'src/dtos/update-profile-dto';
-import { FcmToken } from 'src/entities/fcm-token.entity';
 import { FcmTokenService } from './fcm-token.service';
+import { SubscriptionStatus, UserSubscription } from 'src/entities/user-subscription.entity';
 
 @Injectable()
 export class AuthService {
@@ -27,6 +27,8 @@ export class AuthService {
     private refreshTokenRepository: Repository<RefreshToken>,
     @Inject(forwardRef(() => FcmTokenService))
     private fcmTokenService: FcmTokenService,
+    @InjectRepository(UserSubscription)
+    private userSubscriptionRepository: Repository<UserSubscription>,
   ) { }
 
   async validateUser(username: string, password: string): Promise<any> {
@@ -37,6 +39,8 @@ export class AuthService {
     if (user?.isBlocked) {
       throw new BadRequestException('Tài khoản đã bị khóa, vui lòng liên hệ admin để được hỗ trợ');
     }
+    // check if user has active subscription
+    await this.validateSubscription(user!);
     if (user && await user.validatePassword(password)) {
       user.lastLogin = new Date();
       // await this.userService.update(user.id, user);
@@ -45,6 +49,26 @@ export class AuthService {
     }
 
     return null;
+  }
+
+  async validateSubscription(user: User): Promise<void> {
+    const subscription = await this.userSubscriptionRepository.findOne({
+      where: {
+        userId: user?.id ?? 0,
+      },
+    });
+    if (!subscription) {
+      // create a trial subscription
+      const freeSubscriptionPlan = await this.userService.createTrialSubscription(user?.id ?? 0);
+      const trialSubscription = await this.userSubscriptionRepository.create({
+        userId: user?.id ?? 0,
+        planId: freeSubscriptionPlan.id,
+        status: SubscriptionStatus.TRIAL,
+        startedAt: new Date(),
+        expiresAt: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+      });
+      await this.userSubscriptionRepository.save(trialSubscription);
+    }
   }
 
   async validateRegisterUser(registerDto: RegisterDto): Promise<RegisterResultDto> {
@@ -155,7 +179,8 @@ export class AuthService {
           }, user.id);
         }
       }
-
+      // validate subscription
+      await this.validateSubscription(user);
       return this.generateToken(user);
     } catch (_error) {
       console.error('Error in validateSocialUser:', _error);
@@ -213,6 +238,9 @@ export class AuthService {
           deviceId: deviceId ?? '',
         }, user.id);
       }
+      // validate subscription
+      await this.validateSubscription(user);
+
       return this.generateToken(user);
     } catch (error) {
       console.error('Error in mobileSocialLogin:', error);
