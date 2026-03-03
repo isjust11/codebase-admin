@@ -16,6 +16,7 @@ import { Category } from 'src/entities/category.entity';
 import { MediaService } from './media.service';
 import { InteractionType } from 'src/enums/interaction-type.enum';
 import { UserSubscriptionService } from './user-subscription.service';
+import { CategoryCodeEnum } from 'src/enums/category-code.enum';
 
 @Injectable()
 export class BookService {
@@ -114,11 +115,11 @@ export class BookService {
       }
     }
 
-    if (dto.categoryId) {
-      if (typeof dto.categoryId !== 'number' || dto.categoryId <= 0) {
-        throw new BadRequestException('Danh mục không hợp lệ');
-      }
-    }
+    // if (dto.categoryId) {
+    //   if (typeof dto.categoryId !== 'number' || dto.categoryId <= 0) {
+    //     throw new BadRequestException('Danh mục không hợp lệ');
+    //   }
+    // }
   }
 
   private async resolveFileSize(dto: CreateBookDto | UpdateBookDto, userId: number): Promise<number> {
@@ -131,8 +132,8 @@ export class BookService {
     if (!filename) return 0;
 
     try {
-      const info = await this.mediaService.getFileInfo(filename, userId);
-      return info?.size ?? 0;
+      const info = await this.mediaService.getUserSizeData(userId);
+      return info?.totalSize ?? 0;
     } catch {
       this.logger.warn(`[resolveFileSize] Could not get file info for ${filename}`);
       return 0;
@@ -160,7 +161,7 @@ export class BookService {
   private async trackStorageInteraction(
     userId: number,
     bookId: number,
-    fileSize: number,
+    totalDataStorage: number,
   ): Promise<void> {
     try {
       let interaction = await this.userInteractionRepository.findOne({
@@ -172,7 +173,7 @@ export class BookService {
         },
       });
       if (interaction) {
-        interaction.storageUsedBytes = fileSize;
+        interaction.storageUsedBytes = totalDataStorage;
         interaction.updatedAt = new Date();
       } else {
         interaction = this.userInteractionRepository.create({
@@ -181,16 +182,16 @@ export class BookService {
           targetType: InteractionTarget.BOOK,
           interactionType: InteractionType.UPLOAD,
           bookId: bookId,
-          storageUsedBytes: fileSize,
+          storageUsedBytes: totalDataStorage,
           status: 1,
         });
       }
       await this.userInteractionRepository.save(interaction);
 
       await this.userSubscriptionService.incrementUsage(userId, {
-        storageBytes: fileSize,
+        storageBytes: totalDataStorage,
       });
-      this.logger.log(`[trackStorage] userId=${userId} bookId=${bookId} fileSize=${fileSize}`);
+      this.logger.log(`[trackStorage] userId=${userId} bookId=${bookId} totalDataStorage=${totalDataStorage}`);
     } catch (err) {
       this.logger.warn(`[trackStorage] Failed: ${err?.message}`);
     }
@@ -208,18 +209,22 @@ export class BookService {
       }
     }
 
-    const fileSize = await this.resolveFileSize(createBookDto, userId);
-    await this.checkSubscriptionStorage(userId, fileSize);
-
+    let totalDataStorage = 0;
+  
+    totalDataStorage = await this.resolveFileSize(createBookDto, userId!);
+    
+    await this.checkSubscriptionStorage(userId!, totalDataStorage);
+    const bookStatus = await this.categoryRepository.findOne({ where: { code: CategoryCodeEnum.BOOK_STATUS_PENDING } });
+    
     const book = this.bookRepository.create({
       ...createBookDto,
-      fileSize,
+      statusId: bookStatus ? bookStatus.id : undefined,
       category: createBookDto.category ? { id: createBookDto.categoryId } : undefined,
     });
     const savedBook = await this.bookRepository.save(book);
 
-    if (savedBook && fileSize > 0) {
-      await this.trackStorageInteraction(userId, savedBook.id, fileSize);
+    if (savedBook && totalDataStorage > 0) {
+      await this.trackStorageInteraction(userId!, savedBook.id, totalDataStorage);
     }
 
     if (savedBook) {
@@ -269,27 +274,21 @@ export class BookService {
     }
 
     const fileChanged = updateBookDto.fileUrl && updateBookDto.fileUrl !== book.fileUrl;
-    let newFileSize = 0;
+    let storageUsedBytes = 0;
 
     if (fileChanged) {
-      newFileSize = await this.resolveFileSize(updateBookDto, userId);
-      const oldFileSize = book.fileSize ?? 0;
-      const additionalBytes = Math.max(0, newFileSize - oldFileSize);
-
-      if (additionalBytes > 0) {
-        await this.checkSubscriptionStorage(userId, additionalBytes);
-      }
+      storageUsedBytes = await this.resolveFileSize(updateBookDto, userId!);
+    }
+    if (updateBookDto.fileSize && updateBookDto.fileSize > 0) {
+      storageUsedBytes = updateBookDto.fileSize;
     }
 
     Object.assign(book, updateBookDto);
-    if (fileChanged && newFileSize > 0) {
-      book.fileSize = newFileSize;
-    }
-
+   
     const savedBook = await this.bookRepository.save(book);
 
-    if (fileChanged && newFileSize > 0) {
-      await this.trackStorageInteraction(userId, savedBook.id, newFileSize);
+    if (fileChanged && storageUsedBytes > 0) {
+      await this.trackStorageInteraction(userId!, savedBook.id, storageUsedBytes);
     }
 
     return savedBook;

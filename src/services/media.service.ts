@@ -205,6 +205,14 @@ export class MediaService {
     }
   }
 
+  async getUserSizeData(userId: number): Promise<{ totalSize: number } | null> {
+    try {
+      const res = await axios.get(`${this.storageServiceUrl}/storage/user-size-data/${userId}`, { headers: { [this.storageClientHeaderName]: this.storageClientKey } });
+      return res.data as { totalSize: number };
+    } catch {
+      return null;
+    }
+  }
   async findAllWithPagination(params: PaginationParams): Promise<PaginatedResponse<Media>> {
    const listRes = await axios.get(`${this.storageServiceUrl}/storage/list`,{
       headers: { [this.storageClientHeaderName]: this.storageClientKey },

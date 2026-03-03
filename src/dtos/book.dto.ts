@@ -152,5 +152,10 @@ export class UpdateBookDto {
   @IsNumber()
   @IsOptional()
   createById?: number;
+
+  @ApiProperty({ required: false })
+  @IsNumber()
+  @IsOptional()
+  statusId?: number;
 }
 

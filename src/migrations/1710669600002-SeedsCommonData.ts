@@ -30,6 +30,12 @@ export class SeedsCommonData1710669600002 implements MigrationInterface {
             ('Danh mục sách', '${CategoryTypeEnum.BOOK_CATEGORY}', 'Danh mục các danh mục sách', true)
         `);
 
+        // Insert category type cho BOOK_STATUS
+        await queryRunner.query(`
+            INSERT INTO category_type (name, code, description, isActive) VALUES
+            ('Trạng thái đăng tải sách', '${CategoryTypeEnum.BOOK_STATUS}', 'Trạng thái đăng tải sách', true)
+        `);
+
         // Lấy category type ID cho FEATURE_TYPE
         const featureTypeResult = await queryRunner.query(`
             SELECT id FROM category_type WHERE code = '${CategoryTypeEnum.FEATURE_TYPE}'
@@ -45,6 +51,19 @@ export class SeedsCommonData1710669600002 implements MigrationInterface {
             SELECT id FROM category_type WHERE code = '${CategoryTypeEnum.BOOK_CATEGORY}'
         `);
         const bookCategoryTypeId = bookCategoryTypeResult[0].id;
+
+        const bookStatusTypeResult = await queryRunner.query(`
+            SELECT id FROM category_type WHERE code = '${CategoryTypeEnum.BOOK_STATUS}'
+        `);
+        const bookStatusTypeId = bookStatusTypeResult[0].id;
+
+        // Insert categories cho BOOK_STATUS
+        await queryRunner.query(`
+            INSERT INTO category (name, code, description, categoryTypeId,sortOrder , isActive) VALUES
+            ('Chờ duyệt', '${CategoryCodeEnum.BOOK_STATUS_PENDING}', 'Chờ duyệt', '${bookStatusTypeId}',1, true),
+            ('Đã duyệt', '${CategoryCodeEnum.BOOK_STATUS_APPROVED}', 'Đã duyệt', '${bookStatusTypeId}',2, true),
+            ('Từ chối', '${CategoryCodeEnum.BOOK_STATUS_REJECTED}', 'Từ chối', '${bookStatusTypeId}',3, true)
+        `);
         // Insert categories cho FEATURE_TYPE
         await queryRunner.query(`
             INSERT INTO category (name, code, description, categoryTypeId,sortOrder , isActive) VALUES

@@ -40,7 +40,7 @@ export class AuthService {
       throw new BadRequestException('Tài khoản đã bị khóa, vui lòng liên hệ admin để được hỗ trợ');
     }
     // check if user has active subscription
-    await this.validateSubscription(user!);
+    await this.validateSubscription(user);
     if (user && await user.validatePassword(password)) {
       user.lastLogin = new Date();
       // await this.userService.update(user.id, user);
@@ -51,7 +51,10 @@ export class AuthService {
     return null;
   }
 
-  async validateSubscription(user: User): Promise<void> {
+  async validateSubscription(user: User | null): Promise<void> {
+    if(user == null) {
+      return;
+    }
     const subscription = await this.userSubscriptionRepository.findOne({
       where: {
         userId: user?.id ?? 0,

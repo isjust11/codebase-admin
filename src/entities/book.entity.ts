@@ -56,7 +56,7 @@ export class Book {
   @JoinColumn({ name: 'category_id' })
   category: Category;
 
-  // trạng thái đăng tải ebook (chờ duyệt | đã duyệt | từ chối)
+  // trạng thái đăng tải ebook (chờ duyệt 1| đã duyệt 2| từ chối 3)
   @Column({ name: 'status_id', nullable: true })
   statusId: number;
 
