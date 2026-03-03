@@ -193,6 +193,18 @@ export class MediaService {
     return newMedia;
   }
 
+  async getFileInfo(filename: string, userId: number): Promise<{ size: number; mimeType: string } | null> {
+    try {
+      const res = await axios.get(
+        `${this.storageServiceUrl}/storage/file-info/${filename}/${userId}`,
+        { headers: { [this.storageClientHeaderName]: this.storageClientKey } },
+      );
+      return res.data as { size: number; mimeType: string };
+    } catch {
+      return null;
+    }
+  }
+
   async findAllWithPagination(params: PaginationParams): Promise<PaginatedResponse<Media>> {
    const listRes = await axios.get(`${this.storageServiceUrl}/storage/list`,{
       headers: { [this.storageClientHeaderName]: this.storageClientKey },

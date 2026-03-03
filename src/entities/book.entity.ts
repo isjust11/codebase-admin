@@ -71,6 +71,9 @@ export class Book {
   @JoinColumn({ name: 'create_by_id' })
   createBy: User;
 
+  @Column({ name: 'file_size', type: 'bigint', nullable: true, default: 0 })
+  fileSize: number;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

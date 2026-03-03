@@ -70,6 +70,11 @@ export class CreateBookDto {
   @ApiProperty({ required: false })
   @IsNumber()
   @IsOptional()
+  fileSize?: number;
+
+  @ApiProperty({ required: false })
+  @IsNumber()
+  @IsOptional()
   createById?: number;
 }
 
@@ -137,6 +142,11 @@ export class UpdateBookDto {
   @IsNumber()
   @IsOptional()
   categoryId?: number;
+
+  @ApiProperty({ required: false })
+  @IsNumber()
+  @IsOptional()
+  fileSize?: number;
 
   @ApiProperty({ required: false })
   @IsNumber()

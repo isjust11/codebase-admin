@@ -9,12 +9,14 @@ import { BookController } from 'src/controllers/ebooks/book.controller';
 import { NotificationModule } from './notification.module';
 import { Category } from 'src/entities/category.entity';
 import { MediaModule } from './media.module';
+import { SubscriptionModule } from './subscription.module';
 
 @Module({
   imports: [
     AuthModule,
     MediaModule,
     NotificationModule,
+    SubscriptionModule,
     TypeOrmModule.forFeature([Book, UserInteraction, InteractionStats, Category]),
   ],
   controllers: [BookController],

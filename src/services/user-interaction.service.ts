@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, Not } from 'typeorm';
 import { UserInteraction } from '../entities/user-interaction.entity';
 import { InteractionStats } from '../entities/interaction-stats.entity';
 import { CreateUserInteractionDto, UpdateUserInteractionDto, UserInteractionQueryDto } from '../dtos/user-interaction.dto';
@@ -9,9 +9,28 @@ import { InteractionTarget } from '../enums/interaction-target.enum';
 import { Article } from '../entities/article.entity';
 import { Category } from '../entities/category.entity';
 import { Book } from 'src/entities/book.entity';
+import { User } from 'src/entities/user.entity';
+import { FcmService } from './fcm.service';
+import { FcmTokenService } from './fcm-token.service';
+import { NotificationService } from './notification.service';
+import { NotificationType } from 'src/enums/notification.enum';
+import { InteractionTemplate } from 'src/templates/notification/interaction-template';
+
+/** Các interaction sẽ gửi thông báo tới người đăng ebook */
+const NOTIFY_OWNER_TYPES: InteractionType[] = [
+  InteractionType.LIKE,
+  InteractionType.BOOKMARK,
+  InteractionType.FAVORITE,
+  InteractionType.SHARE,
+  InteractionType.DOWNLOAD,
+  InteractionType.RATING,
+  InteractionType.FOLLOW,
+];
 
 @Injectable()
 export class UserInteractionService {
+  private readonly logger = new Logger(UserInteractionService.name);
+
   constructor(
     @InjectRepository(UserInteraction)
     private userInteractionRepository: Repository<UserInteraction>,
@@ -24,6 +43,11 @@ export class UserInteractionService {
     private dataSource: DataSource,
     @InjectRepository(Book)
     private bookRepository: Repository<Book>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+    private fcmService: FcmService,
+    private fcmTokenService: FcmTokenService,
+    private notificationService: NotificationService,
   ) { }
 
   async createInteraction(userId: number, createDto: CreateUserInteractionDto): Promise<UserInteraction> {
@@ -94,6 +118,9 @@ export class UserInteractionService {
         existingInteraction.comment = createDto.comment;
         existingInteraction.updatedAt = new Date();
         await this.userInteractionRepository.save(existingInteraction);
+        if (createDto.comment) {
+          this.sendInteractionNotification(userId, createDto, false).catch(() => {});
+        }
       } else {
         existingInteraction.updatedAt = new Date();
         existingInteraction.status = existingInteraction.status === 1 ? 0 : 1;
@@ -117,13 +144,13 @@ export class UserInteractionService {
       status: 1,
     });
 
-    // Set target-specific foreign keys
     this.setTargetForeignKeys(interaction, createDto.targetType, createDto.targetId);
 
     const savedInteraction = await this.userInteractionRepository.save(interaction);
 
-    // Update statistics
     await this.updateInteractionStats(createDto.targetType, createDto.targetId, createDto.interactionType, 1);
+
+    this.sendInteractionNotification(userId, createDto, true).catch(() => {});
 
     return savedInteraction;
   }
@@ -307,7 +334,7 @@ export class UserInteractionService {
     userId: number,
     targetType: InteractionTarget,
     targetId: number,
-  ): Promise<{ [key in InteractionType]?: boolean }> {
+  ): Promise<{ [key in InteractionType]?: any }> {
     const interactions = await this.userInteractionRepository.find({
       where: {
         userId,
@@ -316,9 +343,13 @@ export class UserInteractionService {
       },
     });
 
-    const status: { [key in InteractionType]?: boolean } = {};
+    const status: { [key in InteractionType]?: any } = {};
     interactions.forEach((interaction) => {
-      status[interaction.interactionType as InteractionType] = true;
+      if (interaction.interactionType === InteractionType.READING) {
+        status[interaction.interactionType as InteractionType] = interaction.metadata ? JSON.parse(interaction.metadata) : null;
+      } else {
+        status[interaction.interactionType as InteractionType] = true;
+      }
     });
 
     return status;
@@ -427,7 +458,6 @@ export class UserInteractionService {
     });
   }
   private async calculateAverageRating(targetId: number): Promise<{ totalRating: number, averageRating: number }> {
-    // count total rating and average rating
     const totalRating = await this.userInteractionRepository.count({
       where: {
         targetId: targetId,
@@ -441,5 +471,124 @@ export class UserInteractionService {
       .getRawOne();
     const averageRating = averageRatingResult ? parseFloat(averageRatingResult.avg) : 0;
     return { totalRating, averageRating };
+  }
+
+  /**
+   * Gửi thông báo tới người đăng ebook khi có interaction mới.
+   * Với RATING có comment → thêm thông báo tới những người đã bình luận trước đó.
+   */
+  async sendInteractionNotification(
+    actorUserId: number,
+    dto: CreateUserInteractionDto,
+    isNewInteraction: boolean,
+  ): Promise<void> {
+    try {
+      if (dto.targetType !== InteractionTarget.BOOK) return;
+      if (!NOTIFY_OWNER_TYPES.includes(dto.interactionType)) return;
+
+      const book = await this.bookRepository.findOne({
+        where: { id: dto.targetId },
+        relations: ['createBy'],
+      });
+      if (!book) return;
+
+      const actor = await this.userRepository.findOne({ where: { id: actorUserId } });
+      const actorName = actor?.fullName || actor?.username || 'Người dùng';
+
+      const ownerUserId = book.createById;
+
+      if (ownerUserId && ownerUserId !== actorUserId) {
+        const notification = InteractionTemplate.forBookOwner(
+          dto.interactionType,
+          actorName,
+          book.title,
+          book.id,
+          { rating: dto.rating, comment: dto.comment },
+        );
+
+        if (notification) {
+          const ownerToken = await this.fcmTokenService.findByUserId(ownerUserId);
+          if (ownerToken) {
+            await this.fcmService.sendToToken(ownerToken.token, {
+              title: notification.title,
+              body: notification.body,
+              type: 'interaction',
+              data: notification.data,
+            });
+          }
+
+          await this.notificationService.newNotification(
+            NotificationType.INTERACTION,
+            notification.data,
+            notification.title,
+            notification.body,
+            ownerUserId,
+          );
+        }
+      }
+
+      if (dto.interactionType === InteractionType.RATING && dto.comment) {
+        await this.notifyOtherReviewers(actorUserId, book, actorName, dto.comment);
+      }
+    } catch (err) {
+      this.logger.warn(`[sendInteractionNotification] Failed: ${err?.message}`);
+    }
+  }
+
+  /**
+   * Gửi thông báo tới những người đã bình luận/đánh giá trước đó khi có bình luận mới.
+   */
+  private async notifyOtherReviewers(
+    actorUserId: number,
+    book: Book,
+    actorName: string,
+    comment: string,
+  ): Promise<void> {
+    const otherReviewers = await this.userInteractionRepository
+      .createQueryBuilder('i')
+      .select('DISTINCT i.userId', 'userId')
+      .where('i.targetId = :targetId', { targetId: book.id })
+      .andWhere('i.targetType = :targetType', { targetType: InteractionTarget.BOOK })
+      .andWhere('i.interactionType = :interactionType', { interactionType: InteractionType.RATING })
+      .andWhere('i.userId != :actorId', { actorId: actorUserId })
+      .andWhere('i.comment IS NOT NULL')
+      .getRawMany();
+
+    if (otherReviewers.length === 0) return;
+
+    const notification = InteractionTemplate.newCommentForOtherReviewers(
+      actorName,
+      book.title,
+      book.id,
+      comment,
+    );
+
+    const reviewerIds: number[] = otherReviewers
+      .map((r) => Number(r.userId))
+      .filter((id) => id !== book.createById);
+
+    for (const reviewerId of reviewerIds) {
+      try {
+        const token = await this.fcmTokenService.findByUserId(reviewerId);
+        if (token) {
+          await this.fcmService.sendToToken(token.token, {
+            title: notification.title,
+            body: notification.body,
+            type: 'interaction',
+            data: notification.data,
+          });
+        }
+
+        await this.notificationService.newNotification(
+          NotificationType.INTERACTION,
+          notification.data,
+          notification.title,
+          notification.body,
+          reviewerId,
+        );
+      } catch (err) {
+        this.logger.warn(`[notifyOtherReviewers] userId=${reviewerId} failed: ${err?.message}`);
+      }
+    }
   }
 }

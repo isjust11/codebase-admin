@@ -17,4 +17,5 @@ export enum InteractionType {
   READING = 'reading',
   TTS = 'tts',
   CONVERT = 'convert',
+  UPLOAD = 'upload',
 }

@@ -8,6 +8,7 @@ export enum NotificationType {
   EBOOK = 'EBOOK', 
   FEEDBACK = 'FEEDBACK',
   SYSTEM = 'SYSTEM',
+  INTERACTION = 'INTERACTION',
 }
 
 export enum NotificationPriority {
