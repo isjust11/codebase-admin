@@ -133,13 +133,17 @@ export class UserSubscriptionController extends BaseController {
       if (!userId) {
         return this.error(res, { status: 401, message: 'Unauthorized' });
       }
-      const [canTts, canConvert] = await Promise.all([
+      const [canTts, canConvert, canDownload, canShare] = await Promise.all([
         this.subscriptionService.canUseTts(userId),
         this.subscriptionService.canUseConvert(userId),
+        this.subscriptionService.canUseDownload(userId),
+        this.subscriptionService.canUseShare(userId),
       ]);
       return this.success(res, {
         canUseTts: canTts,
         canUseConvert: canConvert,
+        canUseDownload: canDownload,
+        canUseShare: canShare,
       });
     } catch (error) {
       this.error(res, error);

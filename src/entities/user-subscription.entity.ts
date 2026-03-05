@@ -84,6 +84,15 @@ export class UserSubscription {
   @Column({ type: 'int', default: 0 })
   convertUsedInPeriod: number;
 
+  /** Đã dùng bao nhiêu lần download trong kỳ */
+  @Column({ type: 'int', default: 0 })
+  downloadUsedInPeriod: number;
+
+  /** Đã dùng bao nhiêu lần share trong kỳ */
+  @Column({ type: 'int', default: 0 })
+  shareUsedInPeriod: number;
+
+
   /** Kỳ hiện tại (VD: '2025-02' cho tháng 2/2025) để reset usage */
   @Column({ type: 'varchar', length: 16, nullable: true })
   currentPeriodKey: string;

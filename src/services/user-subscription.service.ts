@@ -132,6 +132,12 @@ export class UserSubscriptionService {
     if (dto.convertCount) {
       sub.convertUsedInPeriod += dto.convertCount;
     }
+    if (dto.downloadCount) {
+      sub.downloadUsedInPeriod += dto.downloadCount;
+    }
+    if (dto.shareCount) {
+      sub.shareUsedInPeriod += dto.shareCount;
+    }
 
     await this.subscriptionRepository.save(sub);
     return sub;
@@ -153,6 +159,24 @@ export class UserSubscriptionService {
     const limit = sub.plan?.convertLimitPerPeriod ?? 0;
     if (limit <= 0) return true;
     return sub.convertUsedInPeriod < limit;
+  }
+
+  /** Kiểm tra user còn quota download không */
+  async canUseDownload(userId: number): Promise<boolean> {
+    const sub = await this.getActiveSubscription(userId);
+    if (!sub) return false;
+    const limit = sub.plan?.downloadLimitPerPeriod ?? 0;
+    if (limit <= 0) return true;
+    return sub.downloadUsedInPeriod < limit;
+  }
+
+  /** Kiểm tra user còn quota share không */
+  async canUseShare(userId: number): Promise<boolean> {
+    const sub = await this.getActiveSubscription(userId);
+    if (!sub) return false;
+    const limit = sub.plan?.shareLimitPerPeriod ?? 0;
+    if (limit <= 0) return true;
+    return sub.shareUsedInPeriod < limit;
   }
 
   /** Kiểm tra dung lượng storage còn đủ không (bytes) */

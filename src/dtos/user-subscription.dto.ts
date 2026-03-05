@@ -34,4 +34,12 @@ export class IncrementUsageDto {
   @IsOptional()
   @IsNumber()
   convertCount?: number;
+
+  @IsOptional()
+  @IsNumber()
+  downloadCount?: number;
+
+  @IsOptional()
+  @IsNumber()
+  shareCount?: number;
 }
