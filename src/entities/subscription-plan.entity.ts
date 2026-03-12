@@ -47,13 +47,21 @@ export class SubscriptionPlan {
   @Column({ type: 'int', default: 0 })
   downloadLimitPerPeriod: number;
 
-  /** Chu kỳ tính limit: 'month' | 'year' */
+  /** Chu kỳ tính limit: 'month' | 'year' | 'lifetime' */
   @Column({ type: 'varchar', length: 16, default: 'month' })
   periodType: string;
 
   /** Giá (VND) - nullable nếu gói free */
   @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
   price: number;
+
+  /** Giá khuyến mãi (VND) - nullable nếu không gắn khuyến mãi */
+  @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
+  discountPrice: number;
+
+  /** Đánh dấu đây có phải gói trả 1 lần, dùng trọn đời không */
+  @Column({ type: 'boolean', default: false })
+  isLifetime: boolean;
 
   /** Thứ tự hiển thị (số càng nhỏ càng cao cấp hoặc ngược lại tùy UI) */
   @Column({ type: 'int', default: 0 })

@@ -8,6 +8,7 @@ import { VNPayService } from '../services/vnpay.service';
 import { MomoService } from '../services/momo.service';
 import { ZaloPayService } from '../services/zalopay.service';
 import { StripeService } from '../services/stripe.service';
+import { PayosService } from '../services/payos.service';
 import { PaymentController } from '../controllers/payment/payment.controller';
 import { AuthModule } from './auth.module';
 
@@ -17,7 +18,7 @@ import { AuthModule } from './auth.module';
     TypeOrmModule.forFeature([Payment, SubscriptionPlan, UserSubscription]),
   ],
   controllers: [PaymentController],
-  providers: [PaymentService, VNPayService, MomoService, ZaloPayService, StripeService],
+  providers: [PaymentService, VNPayService, MomoService, ZaloPayService, StripeService, PayosService],
   exports: [PaymentService],
 })
 export class PaymentModule {}

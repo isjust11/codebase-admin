@@ -16,6 +16,7 @@ export enum PaymentMethod {
   VNPAY = 'vnpay',
   MOMO = 'momo',
   ZALOPAY = 'zalopay',
+  PAYOS = 'payos',
   CASH = 'cash'
 }
 

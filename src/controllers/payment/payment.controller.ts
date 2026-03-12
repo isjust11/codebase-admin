@@ -20,11 +20,12 @@ import { VNPayService } from '../../services/vnpay.service';
 import { MomoService } from '../../services/momo.service';
 import { ZaloPayService } from '../../services/zalopay.service';
 import { StripeService } from '../../services/stripe.service';
+import { PayosService } from '../../services/payos.service';
 import { PaymentMethod, PaymentStatus } from '../../entities/payment.entity';
 
 export class CreatePaymentDto {
   planId: string;
-  paymentMethod: 'stripe' | 'vnpay' | 'momo' | 'zalopay'; // Mở rộng thêm các gateway khác
+  paymentMethod: 'stripe' | 'vnpay' | 'momo' | 'zalopay' | 'payos'; // Mở rộng thêm các gateway khác
   bankCode?: string; // Optional: mã ngân hàng cho VNPay
 }
 
@@ -36,6 +37,7 @@ export class PaymentController extends BaseController {
     private readonly momoService: MomoService,
     private readonly zaloPayService: ZaloPayService,
     private readonly stripeService: StripeService,
+    private readonly payosService: PayosService,
   ) {
     super();
   }
@@ -103,6 +105,15 @@ export class PaymentController extends BaseController {
             userId: userId,
           });
           break;
+        case 'payos':
+          paymentUrl = await this.payosService.createPaymentLink({
+            orderCode: payment.id, // PayOS requires orderCode as number
+            amount: payment.amount,
+            description: `Thanh toan don hang ${payment.id}`,
+            returnUrl: `readbox://payment/result?status=success&transactionId=${payment.transactionId}`,
+            cancelUrl: `readbox://payment/result?status=cancelled&transactionId=${payment.transactionId}`,
+          });
+          break;
         default:
           return this.error(res, {
             status: 400,
@@ -134,6 +145,8 @@ export class PaymentController extends BaseController {
         return PaymentMethod.MOMO;
       case 'zalopay':
         return PaymentMethod.ZALOPAY;
+      case 'payos':
+        return PaymentMethod.PAYOS;
       default:
         return PaymentMethod.STRIPE;
     }
@@ -453,6 +466,65 @@ export class PaymentController extends BaseController {
   }
 
   /**
+   * PayOS IPN Webhook – PayOS sẽ gọi POST JSON đến URL này khi có giao dịch thành công.
+   */
+  @Public()
+  @Post('payos/webhook')
+  async payosWebhook(@Body() body: any, @Res() res: Response) {
+    try {
+      // 1. Verify chữ ký webhook
+      const webhookData = await this.payosService.verifyWebhookData(body);
+      if (!webhookData) {
+        return res.status(200).json({
+          success: false,
+          message: 'Invalid signature',
+        });
+      }
+
+      // webhookData từ verify chứa: orderCode, amount, description, accountNumber, reference, transactionDateTime, currency, paymentLinkId, code, desc...
+      const { orderCode, code, amount, transactionDateTime } = webhookData;
+
+      // Tìm giao dịch. Đối với PayOS chúng ta dùng id của bảng Payment làm orderCode.
+      const payment = await this.paymentService.findById(orderCode);
+      if (!payment) {
+        return res.status(200).json({
+          success: false,
+          message: 'Order not found',
+        });
+      }
+
+      if (payment.status !== PaymentStatus.PENDING) {
+        return res.status(200).json({
+          success: false,
+          message: 'Order already confirmed',
+        });
+      }
+
+      // code === '00' biểu thị giao dịch thành công
+      if (code === '00') {
+        const transactionRef = body.data?.reference || `${orderCode}`;
+        await this.paymentService.handlePaymentSuccess(
+          payment.id,
+          transactionRef,
+        );
+      } else {
+        await this.paymentService.handlePaymentFailed(payment.id);
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: 'Success',
+      });
+    } catch (error) {
+      console.error('PayOS webhook error:', error);
+      return res.status(200).json({
+        success: false,
+        message: 'Webhook handler failed',
+      });
+    }
+  }
+
+  /**
    * Kiểm tra trạng thái payment
    * GET /payment/:transactionId/status
    */
@@ -464,7 +536,7 @@ export class PaymentController extends BaseController {
     @Param('transactionId') transactionId: string,
   ) {
     try {
-      const userId = req.user.userId;
+      const userId = Number(req.user.id);
       const payment = await this.paymentService.findByTransactionId(transactionId);
 
       if (!payment || payment.userId !== userId) {
