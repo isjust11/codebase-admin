@@ -329,6 +329,10 @@ export class AuthService {
       return validateUser;
     }
   }
+  async verifyToken(token: string) {
+    const result = await this.validateToken(token);
+    return result;
+  }
 
   async resendEmail(resendEmailDto: ResendEmailDto) {
     const { email } = resendEmailDto;

@@ -36,6 +36,16 @@ export class AuthController extends BaseController {
     }
   }
 
+  @Get('verify-token')
+  async verifyToken(@Query('token') token: string, @Res() res: Response) {
+    try {
+      const result = await this.authService.verifyToken(token);
+      return this.success(res, result);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
   @Public()
   @Post('resend-email')
   async resendEmail(@Body() resendEmailDto: ResendEmailDto, @Res() res: Response) {

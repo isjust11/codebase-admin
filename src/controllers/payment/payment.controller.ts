@@ -109,7 +109,7 @@ export class PaymentController extends BaseController {
           paymentUrl = await this.payosService.createPaymentLink({
             orderCode: payment.id, // PayOS requires orderCode as number
             amount: payment.amount,
-            description: `Thanh toan don hang ${payment.id}`,
+            description: `${payment.plan?.name} `,
             returnUrl: `readbox://payment/result?status=success&transactionId=${payment.transactionId}`,
             cancelUrl: `readbox://payment/result?status=cancelled&transactionId=${payment.transactionId}`,
           });

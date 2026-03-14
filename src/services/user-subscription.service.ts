@@ -20,7 +20,7 @@ export class UserSubscriptionService {
   /** Lấy gói đăng ký đang active của user (hoặc trial), ưu tiên expiresAt mới nhất */
   async getActiveSubscription(userId: number): Promise<UserSubscription | null> {
     const now = new Date();
-    const sub = await this.subscriptionRepository
+    const subs = await this.subscriptionRepository
       .createQueryBuilder('s')
       .leftJoinAndSelect('s.plan', 'plan')
       .where('s.userId = :userId', { userId })
@@ -29,8 +29,17 @@ export class UserSubscriptionService {
       })
       .andWhere('s.expiresAt >= :now', { now })
       .orderBy('s.expiresAt', 'DESC')
-      .getOne();
-    return sub ?? null;
+      .getMany();
+    // get current active subscription
+    const currentActiveSubscription = subs.find(s => s.status === SubscriptionStatus.ACTIVE 
+      && s.paymentId !== null
+      && new Date(s.expiresAt).getTime() > now.getTime());
+    if (!currentActiveSubscription) {
+      // get next trial subscription
+      const nextSubscription = subs.find(s => s.status === SubscriptionStatus.TRIAL);
+      return nextSubscription ?? null;
+    }
+    return currentActiveSubscription;
   }
 
   /** Lấy tất cả đăng ký của user (để admin hoặc lịch sử) */
