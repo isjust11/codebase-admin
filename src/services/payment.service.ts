@@ -21,7 +21,7 @@ export class PaymentService {
     private userSubscriptionRepository: Repository<UserSubscription>,
     @InjectRepository(SubscriptionPlan)
     private planRepository: Repository<SubscriptionPlan>,
-  ) {}
+  ) { }
 
   /**
    * Tạo payment record mới
@@ -48,7 +48,7 @@ export class PaymentService {
     });
 
     const savedPayment = await this.paymentRepository.save(payment);
-    
+
     const queryBuilder = await this.paymentRepository.createQueryBuilder('payment')
       .innerJoinAndSelect('payment.plan', 'plan')
       .where('payment.id = :id', { id: savedPayment.id })
@@ -242,5 +242,15 @@ export class PaymentService {
     const year = now.getFullYear();
     const month = (now.getMonth() + 1).toString().padStart(2, '0');
     return `${year}-${month}`;
+  }
+
+  async findByUserId(userId: number): Promise<Payment[]> {
+    return await this.paymentRepository.find({
+      where: { userId },
+      relations: ['plan'],
+      order: {
+        createdAt: 'DESC',
+      },
+    });
   }
 }

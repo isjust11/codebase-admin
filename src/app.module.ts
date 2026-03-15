@@ -15,7 +15,7 @@ import { InteractionStats } from './entities/interaction-stats.entity';
 import { Category } from './entities/category.entity';
 import { CategoryType } from './entities/category-type.entity';
 import { FeatureModule } from './modules/feature.module';
-import { Article } from './entities/article.entity';  
+import { Article } from './entities/article.entity';
 import { ArticleModule } from './modules/article.module';
 import { Payment } from './entities/payment.entity';
 import { MultiImage } from './entities/multi-image.entity';

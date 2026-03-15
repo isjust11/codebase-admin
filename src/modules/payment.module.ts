@@ -21,5 +21,5 @@ import { AuthModule } from './auth.module';
   providers: [PaymentService, VNPayService, MomoService, ZaloPayService, StripeService, PayosService],
   exports: [PaymentService],
 })
-export class PaymentModule {}
+export class PaymentModule { }
 

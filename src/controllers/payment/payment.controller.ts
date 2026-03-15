@@ -555,6 +555,19 @@ export class PaymentController extends BaseController {
     }
   }
 
+  // payment history
+  @Get('history')
+  @UseGuards(JwtAuthGuard)
+  async getPaymentHistory(@Req() req: any, @Res() res: Response) {
+    try {
+      const userId = Number(req.user.id);
+      const payments = await this.paymentService.findByUserId(userId);
+      return this.success(res, payments);
+    } catch (error) {
+      this.error(res, error);
+    }
+  }
+
   /* ────────── Admin Endpoints ────────── */
 
   @Get('admin/list')
