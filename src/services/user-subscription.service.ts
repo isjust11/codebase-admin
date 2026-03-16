@@ -7,6 +7,7 @@ import {
   CreateUserSubscriptionDto,
   IncrementUsageDto,
 } from '../dtos/user-subscription.dto';
+import { SubscriptionPlanEnum } from 'src/enums/subscription-plan.enum';
 
 @Injectable()
 export class UserSubscriptionService {
@@ -15,7 +16,7 @@ export class UserSubscriptionService {
     private readonly subscriptionRepository: Repository<UserSubscription>,
     @InjectRepository(SubscriptionPlan)
     private readonly planRepository: Repository<SubscriptionPlan>,
-  ) {}
+  ) { }
 
   /** Lấy gói đăng ký đang active của user (hoặc trial), ưu tiên expiresAt mới nhất */
   async getActiveSubscription(userId: number): Promise<UserSubscription | null> {
@@ -31,12 +32,12 @@ export class UserSubscriptionService {
       .orderBy('s.expiresAt', 'DESC')
       .getMany();
     // get current active subscription
-    const currentActiveSubscription = subs.find(s => s.status === SubscriptionStatus.ACTIVE 
+    const currentActiveSubscription = subs.find(s => s.status === SubscriptionStatus.ACTIVE
       && s.paymentId !== null
       && new Date(s.expiresAt).getTime() > now.getTime());
     if (!currentActiveSubscription) {
       // get next trial subscription
-      const nextSubscription = subs.find(s => s.status === SubscriptionStatus.TRIAL);
+      const nextSubscription = subs.find(s => s.plan?.code === SubscriptionPlanEnum.FREE);
       return nextSubscription ?? null;
     }
     return currentActiveSubscription;
