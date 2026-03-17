@@ -27,6 +27,8 @@ export class CreatePaymentDto {
   planId: string;
   paymentMethod: 'stripe' | 'vnpay' | 'momo' | 'zalopay' | 'payos'; // Mở rộng thêm các gateway khác
   bankCode?: string; // Optional: mã ngân hàng cho VNPay
+  periodMonths?: number;
+  discountPercentage?: number;
 }
 
 @Controller('payment')
@@ -66,6 +68,8 @@ export class PaymentController extends BaseController {
         planId: planId,
         paymentMethod: this.mapPaymentMethod(dto.paymentMethod),
         ipAddress,
+        periodMonths: Number(dto.periodMonths),
+        discountPercentage: Number(dto.discountPercentage),
       });
 
       let paymentUrl: string;

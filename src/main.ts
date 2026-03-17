@@ -6,6 +6,7 @@ import * as dotenv from 'dotenv';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import * as compression from 'compression';
 //config env
 dotenv.config();
 
@@ -42,28 +43,32 @@ async function bootstrap() {
   
   app.enableCors(corsOptions);
 
-  // Enable validation pipe globally
-  // app.useGlobalPipes(new ValidationPipe({
-  //   whitelist: true, // Loại bỏ các thuộc tính không có trong DTO
-  //   forbidNonWhitelisted: true, // Từ chối request nếu có thuộc tính không được phép
-  //   transform: true, // Tự động transform dữ liệu
-  //   validateCustomDecorators: true, // Validate custom decorators
-  // }));
+  // Nén response (giảm bandwidth 60-80%)
+  app.use(compression());
+
+  // Validate và filter DTO, loại bỏ các field không hợp lệ
+  app.useGlobalPipes(new ValidationPipe({
+    whitelist: true,              // Loại bỏ các thuộc tính không có trong DTO
+    forbidNonWhitelisted: false,  // Không reject, chỉ strip (an toàn hơn)
+    transform: true,              // Tự động transform dữ liệu
+  }));
 
   // Cấu hình phục vụ file tĩnh
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
     prefix: '/uploads/',
   });
 
-  // Swagger configuration
-  const config = new DocumentBuilder()
-    .setTitle('Codebase Admin API')
-    .setDescription('Codebase Admin API Documentation')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('swagger-ui', app, document);
+  // Swagger - chỉ bật khi development (tránh lộ API trên production)
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('Codebase Admin API')
+      .setDescription('Codebase Admin API Documentation')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('swagger-ui', app, document);
+  }
   
   app.useWebSocketAdapter(new IoAdapter(app));
 

@@ -75,11 +75,10 @@ import { UserSubscription } from './entities/user-subscription.entity';
         TopicSubscription,
         Book,
         UserInteraction,
-        InteractionStats,
         SubscriptionPlan,
         UserSubscription,
       ],
-      synchronize: true, // TẮT synchronize để tránh xung đột với migrations
+      synchronize: false, // Chỉ bật khi development
       migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
       migrationsRun: true,
       // Cấu hình để hỗ trợ MySQL 8.0+ với caching_sha2_password
@@ -98,8 +97,8 @@ import { UserSubscription } from './entities/user-subscription.entity';
       },
       // Cấu hình SSL
       ssl: false,
-      logging: true,
-      logger: 'advanced-console',
+      logging: process.env.NODE_ENV === 'development' ? false : false,
+      logger: process.env.NODE_ENV === 'development' ? 'advanced-console' : undefined,
     }),
     NotificationModule,
     CategoryModule,

@@ -89,6 +89,12 @@ export class Payment {
     @Column({ nullable: true })
     failureReason: string;
 
+    @Column({ nullable: true })
+    periodMonths: number;
+
+    @Column({ nullable: true })
+    discountPercentage: number;
+
     /** Gắn với đăng ký gói (nếu thanh toán là mua gói) */
     @ManyToOne(() => UserSubscription, { nullable: true, onDelete: 'SET NULL' })
     @JoinColumn({ name: 'userSubscriptionId' })

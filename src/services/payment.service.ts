@@ -10,6 +10,8 @@ export interface CreatePaymentParams {
   planId: number;
   paymentMethod: PaymentMethod;
   ipAddress: string;
+  periodMonths?: number;
+  discountPercentage?: number;
 }
 
 @Injectable()
@@ -36,15 +38,24 @@ export class PaymentService {
     }
 
     // Tạo payment
+    let amount = plan.price || 0;
+    if (params.periodMonths) {
+      amount = amount * params.periodMonths;
+    }
+    if (params.discountPercentage) {
+      amount = amount * (1 - params.discountPercentage / 100);
+    }
     const payment = this.paymentRepository.create({
       userId: params.userId,
       planId: params.planId,
-      amount: plan.price || 0,
+      amount: amount,
       currency: 'VND',
       paymentMethod: params.paymentMethod,
       status: PaymentStatus.PENDING,
       transactionId: this.generateTransactionId(),
       ipAddress: params.ipAddress,
+      periodMonths: params.periodMonths,
+      discountPercentage: params.discountPercentage,
     });
 
     const savedPayment = await this.paymentRepository.save(payment);

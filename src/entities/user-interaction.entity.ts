@@ -17,6 +17,7 @@ export class UserInteraction {
   @JoinColumn({ name: 'userId' })
   user: User;
 
+  @Index()
   @Column()
   targetId: number;
 
@@ -27,7 +28,6 @@ export class UserInteraction {
   bookId?: number;
 
   @Column({ type: 'enum', enum: InteractionType, default: InteractionType.VIEW })
-  @Column({ nullable: true })
   interactionType: InteractionType;
 
   @ManyToOne(() => Book, book => book.id, { onDelete: 'CASCADE' })
@@ -57,10 +57,10 @@ export class UserInteraction {
   // cần có thêm các fields đếm cho các thao tác khác như tts, convert, download, read
   @Column({ type: 'int', default: 0 })
   ttsCount?: number;
-  
+
   @Column({ type: 'int', default: 0 })
   convertCount?: number;
-  
+
   @Column({ type: 'int', default: 0 })
   downloadCount?: number;
 
