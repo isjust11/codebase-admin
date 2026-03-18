@@ -40,6 +40,7 @@ import { SubscriptionModule } from './modules/subscription.module';
 import { PaymentModule } from './modules/payment.module';
 import { SubscriptionPlan } from './entities/subscription-plan.entity';
 import { UserSubscription } from './entities/user-subscription.entity';
+import { GeminiModule } from './modules/gemini.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -114,6 +115,7 @@ import { UserSubscription } from './entities/user-subscription.entity';
     ConverterModule,
     SubscriptionModule,
     PaymentModule,
+    GeminiModule,
   ],
   controllers: [FcmController],
 })
