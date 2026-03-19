@@ -255,6 +255,10 @@ export class UserService {
     return this.userRepository.findOne({ where: { email }, relations: ['roles', 'roles.permissions'] });
   }
 
+  async findByPinCode(pinCode: string): Promise<User | null> {
+    return this.userRepository.findOne({ where: { pinCode } });
+  }
+
   async findByEmailSocial(email: string, platformId: string): Promise<User | null> {
     return this.userRepository.findOne({ where: { email, platformId }, relations: ['roles', 'roles.permissions'] });
   }

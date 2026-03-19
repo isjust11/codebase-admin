@@ -79,7 +79,7 @@ import { GeminiModule } from './modules/gemini.module';
         SubscriptionPlan,
         UserSubscription,
       ],
-      synchronize: false, // Chỉ bật khi development
+      synchronize: true, // Chỉ bật khi development
       migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
       migrationsRun: true,
       // Cấu hình để hỗ trợ MySQL 8.0+ với caching_sha2_password

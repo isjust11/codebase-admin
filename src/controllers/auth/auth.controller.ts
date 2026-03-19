@@ -175,8 +175,8 @@ export class AuthController extends BaseController {
   }
 
   @Public()
-  @Get('forgot-password')
-  async forgotPassword(@Query('username') username: string, @Res() res: Response) {
+  @Post('forgot-password')
+  async forgotPassword(@Body('username') username: string, @Res() res: Response) {
     try {
       const result = await this.authService.forgotPassword(username);
       return this.success(res, result);
@@ -189,7 +189,7 @@ export class AuthController extends BaseController {
   @Post('reset-password')
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto, @Res() res: Response) {
     try {
-      const result = await this.authService.resetPassword(resetPasswordDto.token, resetPasswordDto.password);
+      const result = await this.authService.resetPassword(resetPasswordDto.username, resetPasswordDto.newPassword);
       return this.success(res, result);
     } catch (error) {
       return this.error(res, error);

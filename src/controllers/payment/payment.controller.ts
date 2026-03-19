@@ -22,14 +22,8 @@ import { ZaloPayService } from '../../services/zalopay.service';
 import { StripeService } from '../../services/stripe.service';
 import { PayosService } from '../../services/payos.service';
 import { PaymentMethod, PaymentStatus } from '../../entities/payment.entity';
+import { CreatePaymentDto } from 'src/dtos/payment.dto';
 
-export class CreatePaymentDto {
-  planId: string;
-  paymentMethod: 'stripe' | 'vnpay' | 'momo' | 'zalopay' | 'payos'; // Mở rộng thêm các gateway khác
-  bankCode?: string; // Optional: mã ngân hàng cho VNPay
-  periodMonths?: number;
-  discountPercentage?: number;
-}
 
 @Controller('payment')
 export class PaymentController extends BaseController {
@@ -66,7 +60,7 @@ export class PaymentController extends BaseController {
       const payment = await this.paymentService.createPayment({
         userId,
         planId: planId,
-        paymentMethod: this.mapPaymentMethod(dto.paymentMethod),
+        paymentMethod: this.mapPaymentMethod(dto),
         ipAddress,
         periodMonths: Number(dto.periodMonths),
         discountPercentage: Number(dto.discountPercentage),
@@ -139,8 +133,8 @@ export class PaymentController extends BaseController {
     }
   }
 
-  private mapPaymentMethod(method: CreatePaymentDto['paymentMethod']): PaymentMethod {
-    switch (method) {
+  private mapPaymentMethod(dto: CreatePaymentDto): PaymentMethod {
+    switch (dto.paymentMethod) {
       case 'stripe':
         return PaymentMethod.STRIPE;
       case 'vnpay':

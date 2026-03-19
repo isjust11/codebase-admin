@@ -13,11 +13,12 @@ import { RefreshToken } from '../entities/refresh-token.entity';
 import { UpdateProfileDto } from 'src/dtos/update-profile-dto';
 import { FcmTokenService } from './fcm-token.service';
 import { SubscriptionStatus, UserSubscription } from 'src/entities/user-subscription.entity';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
   private tempTokens: Map<string, { user: any; accessToken: string, refreshToken: string }> = new Map();
-
+  private DEFAULT_PIN_EXPIRES_IN = 1;
   constructor(
     private userService: UserService,
     private jwtService: JwtService,
@@ -29,11 +30,14 @@ export class AuthService {
     private fcmTokenService: FcmTokenService,
     @InjectRepository(UserSubscription)
     private userSubscriptionRepository: Repository<UserSubscription>,
-  ) { }
+    private configService: ConfigService,
+  ) {
+    this.DEFAULT_PIN_EXPIRES_IN = this.configService.get<number>('pinExpiresIn') || 1;
+  }
 
   async validateUser(username: string, password: string): Promise<any> {
     const user = await this.userService.findByUsername(username);
-    if(user?.isWebsiteUser && !user?.isEmailVerified) {
+    if (user?.isWebsiteUser && !user?.isEmailVerified) {
       throw new BadRequestException('Email chưa được xác thực');
     }
     if (user?.isBlocked) {
@@ -52,7 +56,7 @@ export class AuthService {
   }
 
   async validateSubscription(user: User | null): Promise<void> {
-    if(user == null) {
+    if (user == null) {
       return;
     }
     const subscription = await this.userSubscriptionRepository.findOne({
@@ -287,7 +291,7 @@ export class AuthService {
 
       // Tạo và gửi mã PIN
       if (user.email) {
-        const pin = await this.generateAndSavePin(user);
+        const pin = await this.generateAndSavePin(user, this.DEFAULT_PIN_EXPIRES_IN);
         await this.emailService.sendPinEmail(
           user.email,
           pin,
@@ -512,26 +516,28 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('Tài khoản không tồn tại');
     }
-    const verificationToken = crypto.randomBytes(32).toString('hex');
-    user.verificationToken = verificationToken;
-    await this.userService.update(user.id, user);
+    const pin = await this.generateAndSavePin(user, this.DEFAULT_PIN_EXPIRES_IN);
     await this.emailService.sendForgotPasswordEmail(
       user.email,
-      verificationToken,
-      user.fullName || user.username
+      pin,
+      user.fullName || user.username,
+      this.DEFAULT_PIN_EXPIRES_IN
     );
-    return { message: `Email đã được gửi đến email ${user.email}` };
+    return { code: 'verify-pin', email: user.email };
   }
 
-  async resetPassword(token: string, password: string) {
-    const user = await this.userService.findByVerificationToken(token);
-    if (!user) {
-      throw new UnauthorizedException('Token không hợp lệ hoặc đã hết hạn');
+  async resetPassword(username: string, newPassword: string) {
+    try {
+      const user = await this.userService.findByUsername(username);
+      if (!user) {
+        throw new UnauthorizedException('Tài khoản không tồn tại');
+      }
+      user.password = newPassword;
+      await this.userService.update(user.id, user);
+      return { code: 'reset-password', status: 'success', data: { message: 'Mật khẩu đã được khôi phục thành công' } };
+    } catch (error) {
+      return { code: 'reset-password', status: 'error', data: { message: 'Mật khẩu đã được khôi phục thất bại!' } };
     }
-    user.verificationToken = '';
-    user.password = password;
-    await this.userService.update(user.id, user);
-    return { message: 'Mật khẩu đã được khôi phục thành công' };
   }
 
   async validateToken(token: string) {
@@ -559,10 +565,10 @@ export class AuthService {
   /**
    * Tạo và lưu mã PIN cho user
    */
-  async generateAndSavePin(user: User): Promise<string> {
+  async generateAndSavePin(user: User, expiresIn: number = 1): Promise<string> {
     const pin = this.generatePin();
     const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + 1); // PIN hết hạn sau 1 phút
+    expiresAt.setMinutes(expiresAt.getMinutes() + expiresIn); // PIN hết hạn sau 1 phút
 
     user.pinCode = pin;
     user.pinExpiresAt = expiresAt;
@@ -618,11 +624,7 @@ export class AuthService {
       throw new BadRequestException('Email không tồn tại');
     }
 
-    if (user.isEmailVerified) {
-      throw new BadRequestException('Tài khoản đã được xác thực');
-    }
-
-    const pin = await this.generateAndSavePin(user);
+    const pin = await this.generateAndSavePin(user, this.DEFAULT_PIN_EXPIRES_IN);
 
     // Gửi email chứa mã PIN
     await this.emailService.sendPinEmail(

@@ -23,7 +23,7 @@ export class LoginDto {
   @IsOptional()
   appVersion?: string;
 }
-export enum RegisterCode{
+export enum RegisterCode {
   AccountValidated = 'account_validated',
   ExistUsernameNotVerified = 'exist_username_not_verified',
   ExistUsernameVerified = 'exist_username_verified',
@@ -33,7 +33,7 @@ export enum RegisterCode{
   AccountBlocked = 'account_blocked',
   Ok = 'ok',
 }
-export class RegisterResultDto{
+export class RegisterResultDto {
   code: RegisterCode;
   message: string;
   data: any;
@@ -88,7 +88,7 @@ export class RegisterDto {
   @IsBoolean()
   @IsOptional()
   isAppleUser?: boolean;
-  
+
   @IsBoolean()
   @IsOptional()
   isWebsiteUser?: boolean;
@@ -113,10 +113,10 @@ export class ResendEmailDto {
 
 export class ResetPasswordDto {
   @IsString()
-  token: string;
+  username: string;
 
   @IsString()
-  password: string;
+  newPassword: string;
 }
 
 export class VerifyPinDto {

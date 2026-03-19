@@ -21,17 +21,17 @@ export class EmailService {
 
   async sendVerificationEmail(email: string, token: string, fullName: string) {
     const verificationUrl = `${this.configService.get<string>('CLIENT_URL')}/verify-email?token=${token}`;
-    
+
     // Đọc template HTML
     const templatePath = path.join(__dirname, '../templates/email/verification.html');
     let htmlContent = fs.readFileSync(templatePath, 'utf8');
-    
+
     // Thay thế các biến trong template
     htmlContent = htmlContent
       .replace(/{{fullName}}/g, fullName)
       .replace(/{{verificationUrl}}/g, verificationUrl)
       .replace(/{{appName}}/g, this.appName || 'ReadBox Admin');
-    
+
     const mailOptions = {
       from: this.configService.get<string>('EMAIL_USER'),
       to: email,
@@ -48,21 +48,21 @@ export class EmailService {
     }
   }
 
-  async sendForgotPasswordEmail(email: string, token: string, fullName: string) {
-    const verificationUrl = `${this.configService.get<string>('CLIENT_URL')}/reset-password?token=${token}`;
+  async sendForgotPasswordEmail(email: string, pin: string, fullName: string, expiresIn: number) {
 
     const templatePath = path.join(__dirname, '../templates/email/forgot-password.html');
     let htmlContent = fs.readFileSync(templatePath, 'utf8');
 
     htmlContent = htmlContent
       .replace(/{{fullName}}/g, fullName)
-      .replace(/{{verificationUrl}}/g, verificationUrl)
+      .replace(/{{pin}}/g, pin)
+      .replace(/{{expiresIn}}/g, expiresIn.toString())
       .replace(/{{appName}}/g, this.appName || 'ReadBox Admin');
 
     const mailOptions = {
       from: this.configService.get<string>('EMAIL_USER'),
       to: email,
-      subject: 'Khôi phục mật khẩu - ' + this.appName,
+      subject: 'Mã PIN xác thực tài khoản - ' + this.appName,
       html: htmlContent,
     };
 

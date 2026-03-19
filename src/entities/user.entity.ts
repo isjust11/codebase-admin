@@ -97,7 +97,7 @@ export class User {
   })
   roles: Role[];
 
-   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
@@ -105,7 +105,7 @@ export class User {
 
   // @Column({ type: 'json', nullable: true })
   permissions: string[];
-  
+
   @OneToMany(() => Book, book => book.createBy)
   books: Book[];
 
@@ -113,6 +113,7 @@ export class User {
   subscriptions: UserSubscription[];
 
   @BeforeInsert()
+  @BeforeUpdate()
   async hashPassword() {
     if (this.password && !this.password.startsWith('$2b$')) {
       this.password = await bcrypt.hash(this.password, 12);
