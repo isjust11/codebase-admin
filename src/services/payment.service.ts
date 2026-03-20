@@ -185,11 +185,11 @@ export class PaymentService {
     let expiresAt: Date;
 
     // Tính expiration date
-    if (plan.periodType === 'year') {
+    if (payment.periodMonths === 12) {
       expiresAt = new Date(now.setFullYear(now.getFullYear() + 1));
     } else {
       // month
-      expiresAt = new Date(now.setMonth(now.getMonth() + 1));
+      expiresAt = new Date(now.setMonth(now.getMonth() + payment.periodMonths));
     }
 
     if (subscription) {
@@ -200,10 +200,10 @@ export class PaymentService {
       ) {
         // Còn hạn: cộng thêm thời gian
         startedAt = subscription.expiresAt;
-        if (plan.periodType === 'year') {
+        if (payment.periodMonths === 12) {
           expiresAt = new Date(startedAt.setFullYear(startedAt.getFullYear() + 1));
         } else {
-          expiresAt = new Date(startedAt.setMonth(startedAt.getMonth() + 1));
+          expiresAt = new Date(startedAt.setMonth(startedAt.getMonth() + payment.periodMonths));
         }
       }
 
@@ -211,7 +211,9 @@ export class PaymentService {
       subscription.startedAt = subscription.startedAt || new Date();
       subscription.expiresAt = expiresAt;
       subscription.paymentId = payment.id;
-      subscription.currentPeriodKey = this.getCurrentPeriodKey(plan.periodType);
+      // theo cấu trúc 2026-03 đang dùng cho periodType, cần chuyển thành periodMonths
+      const periodKey = payment.periodMonths === 12 ? `${now.getFullYear()}-${now.getMonth() + 1}` : `${now.getFullYear()}-${now.getMonth() + 1}`;
+      subscription.currentPeriodKey = this.getCurrentPeriodKey(periodKey);
 
       await this.userSubscriptionRepository.save(subscription);
     } else {

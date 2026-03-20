@@ -113,15 +113,15 @@ export class UserInteractionController extends BaseController {
     }
   }
 
-  @Get('my-interactions')
+  @Post('my-interactions')
   async getMyInteractions(
     @Request() req: any,
-    @Query() query: UserInteractionQueryDto,
+    @Body() body: UserInteractionQueryDto,
     @Res() res: Response,
   ) {
     try {
       const userId = req.user.id;
-      const data = await this.userInteractionService.getUserInteractions(userId, query);
+      const data = await this.userInteractionService.getUserInteractions(userId, body);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);

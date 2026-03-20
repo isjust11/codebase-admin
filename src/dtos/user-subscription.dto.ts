@@ -9,6 +9,10 @@ export class CreateUserSubscriptionDto {
   @IsOptional()
   @IsEnum(SubscriptionStatus)
   status?: SubscriptionStatus;
+
+  @IsOptional()
+  @IsNumber()
+  periodMonths?: number;
 }
 
 export class UpdateUserSubscriptionDto {
