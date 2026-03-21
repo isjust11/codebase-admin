@@ -12,7 +12,7 @@ import { ConfigService } from '@nestjs/config';
 
 @Controller('media')
 @UseGuards(JwtAuthGuard, PermissionGuard)
-export class MediaController extends BaseController{
+export class MediaController extends BaseController {
   constructor(private mediaService: MediaService, private configService: ConfigService) {
     super();
   }
@@ -20,8 +20,8 @@ export class MediaController extends BaseController{
   @Get()
   @RequirePermission('READ', 'media')
   async getAll(@Query('page') page: number, @Query('size') size: number, @Query('search') search: string,
-  @Query('mimeType') mimeType: string     
-) {
+    @Query('mimeType') mimeType: string
+  ) {
     const filter: PaginationParams = {
       page: page || 1,
       size: size || 100,
@@ -44,32 +44,36 @@ export class MediaController extends BaseController{
     file: Express.Multer.File,
     @Request() req,
   ): Promise<Media> {
-    if (!file) {
-      throw new BadRequestException('No file uploaded');
+    try {
+      if (!file) {
+        throw new BadRequestException('No file uploaded');
+      }
+
+      // Validate file size
+      const maxSize = Number(this.configService.get('MAX_FILE_SIZE') || 10485760); // 10MB default
+      // if (file.size > maxSize) {
+      //   throw new BadRequestException(`File size exceeds the maximum allowed size of ${maxSize / 1024 / 1024}MB`);
+      // }
+
+      // Validate file type by extension (more reliable than mimetype)
+      const allowedExtensions = this.configService.get('ALLOWED_FILE_EXTENSIONS')?.split(',') ||
+        ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp3', 'wav', 'm4a', 'aac', 'ogg', 'flac',
+          'mp4', 'mov', 'wmv', 'avi', 'flv', 'mkv', 'webm', 'mpeg', 'mpg', '3gp', 'm4v',
+          'pdf', 'epub', 'mobi'];
+
+      // Extract file extension from filename
+      const fileExtension = file.originalname.split('.').pop()?.toLowerCase();
+
+      if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
+        throw new BadRequestException(
+          `File type ".${fileExtension}" is not allowed. Allowed types: ${allowedExtensions.join(', ')}`
+        );
+      }
+
+      return this.mediaService.upload(file, req.user);
+    } catch (error) {
+      throw error;
     }
-
-    // Validate file size
-    const maxSize = Number(this.configService.get('MAX_FILE_SIZE') || 10485760); // 10MB default
-    // if (file.size > maxSize) {
-    //   throw new BadRequestException(`File size exceeds the maximum allowed size of ${maxSize / 1024 / 1024}MB`);
-    // }
-
-    // Validate file type by extension (more reliable than mimetype)
-    const allowedExtensions = this.configService.get('ALLOWED_FILE_EXTENSIONS')?.split(',') || 
-      ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp3', 'wav', 'm4a', 'aac', 'ogg', 'flac', 
-       'mp4', 'mov', 'wmv', 'avi', 'flv', 'mkv', 'webm', 'mpeg', 'mpg', '3gp', 'm4v', 
-       'pdf', 'epub', 'mobi'];
-    
-    // Extract file extension from filename
-    const fileExtension = file.originalname.split('.').pop()?.toLowerCase();
-    
-    if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
-      throw new BadRequestException(
-        `File type ".${fileExtension}" is not allowed. Allowed types: ${allowedExtensions.join(', ')}`
-      );
-    }
-
-    return this.mediaService.upload(file, req.user);
   }
 
   @Put(':id')
@@ -84,7 +88,7 @@ export class MediaController extends BaseController{
 
   @Delete(':id')
   @RequirePermission('DELETE', 'media')
-  @HttpCode(204)  
+  @HttpCode(204)
   async delete(@Param('filename') filename: string, @Request() req,): Promise<{ success: boolean, message?: string }> {
     try {
       await this.mediaService.deleteFile(filename, req.user.id);
@@ -104,6 +108,6 @@ export class MediaController extends BaseController{
     } catch (error) {
       return { success: false, message: error.message };
     }
-   
+
   }
 } 
