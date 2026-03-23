@@ -1,12 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { FirebaseService } from './firebase.service';
 import { NotificationService } from './notification.service';
-import { NotificationType } from 'src/enums/notification.enum';
+import { NotificationType } from 'src/enums/notification.enum'; 
+import { FcmTokenService } from './fcm-token.service';
 
 type SendPayload = {
   title: string;
   body: string;
-  type: string;
+  type: NotificationType,
   data?: Record<string, string>;
 };
 
@@ -14,10 +15,27 @@ type SendPayload = {
 export class FcmService {
   private readonly logger = new Logger(FcmService.name);
 
-  constructor(private readonly firebase: FirebaseService, 
-    private readonly notificationService: NotificationService
+  constructor(private readonly firebase: FirebaseService,
+    private readonly notificationService: NotificationService,
+    @Inject(forwardRef(() => FcmTokenService))
+    private readonly fcmTokenService: FcmTokenService,
 
-  ) {}
+  ) { }
+
+  // send to user
+  async sendToUser(userId: number, payload: SendPayload) {
+    const user = await this.fcmTokenService.findByUserId(userId);
+    if (!user) {
+      this.logger.warn(`User with ID ${userId} not found`);
+      return;
+    }
+    const token = user.token;
+    if (!token) {
+      this.logger.warn(`User with ID ${userId} has no FCM token`);
+      return;
+    }
+    await this.sendToToken(token, payload, userId);
+  }
 
   async sendToToken(token: string, payload: SendPayload, userId?: number) {
     const messaging = this.firebase.messaging;
@@ -47,10 +65,10 @@ export class FcmService {
       },
     } as const;
     const messageId = await messaging.send(message);
-    if(messageId){
-      if(userId){
+    if (messageId) {
+      if (userId) {
         await this.notificationService.newNotification(
-          NotificationType.SYSTEM,
+          payload.type,
           payload.data,
           payload.title,
           payload.body,
@@ -132,7 +150,7 @@ export class FcmService {
       this.logger.warn('FCM messaging not initialized. Skipping subscribeToTopic');
       return { successCount: 0, failureCount: tokens.length, errors: [] };
     }
-    
+
     if (tokens.length === 0) {
       return { successCount: 0, failureCount: 0, errors: [] };
     }
@@ -140,14 +158,14 @@ export class FcmService {
     try {
       const response = await messaging.subscribeToTopic(tokens, topic);
       this.logger.log(`Subscribed ${response.successCount} tokens to topic: ${topic}`);
-      
+
       if (response.failureCount > 0) {
         this.logger.warn(`Failed to subscribe ${response.failureCount} tokens to topic: ${topic}`);
         response.errors.forEach((err, idx) => {
           this.logger.error(`Token ${tokens[idx]}: ${err.error}`);
         });
       }
-      
+
       return {
         successCount: response.successCount,
         failureCount: response.failureCount,
@@ -170,7 +188,7 @@ export class FcmService {
       this.logger.warn('FCM messaging not initialized. Skipping unsubscribeFromTopic');
       return { successCount: 0, failureCount: tokens.length, errors: [] };
     }
-    
+
     if (tokens.length === 0) {
       return { successCount: 0, failureCount: 0, errors: [] };
     }
@@ -178,14 +196,14 @@ export class FcmService {
     try {
       const response = await messaging.unsubscribeFromTopic(tokens, topic);
       this.logger.log(`Unsubscribed ${response.successCount} tokens from topic: ${topic}`);
-      
+
       if (response.failureCount > 0) {
         this.logger.warn(`Failed to unsubscribe ${response.failureCount} tokens from topic: ${topic}`);
         response.errors.forEach((err, idx) => {
           this.logger.error(`Token ${tokens[idx]}: ${err.error}`);
         });
       }
-      
+
       return {
         successCount: response.successCount,
         failureCount: response.failureCount,

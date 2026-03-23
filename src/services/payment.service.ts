@@ -4,6 +4,8 @@ import { Repository } from 'typeorm';
 import { Payment, PaymentMethod, PaymentStatus } from '../entities/payment.entity';
 import { UserSubscription, SubscriptionStatus } from '../entities/user-subscription.entity';
 import { SubscriptionPlan } from '../entities/subscription-plan.entity';
+import { FcmService } from './fcm.service';
+import { NotificationType } from 'src/enums/notification.enum';
 
 export interface CreatePaymentParams {
   userId: number;
@@ -23,6 +25,7 @@ export class PaymentService {
     private userSubscriptionRepository: Repository<UserSubscription>,
     @InjectRepository(SubscriptionPlan)
     private planRepository: Repository<SubscriptionPlan>,
+    private readonly fcmService: FcmService,
   ) { }
 
   /**
@@ -154,7 +157,18 @@ export class PaymentService {
     payment.paidAt = new Date();
     payment.gatewayTransactionId = gatewayTransactionId;
     await this.paymentRepository.save(payment);
-
+    // send notification success
+    await this.fcmService.sendToUser(payment.userId, {
+      title: 'Thanh toán thành công',
+      body: 'Thanh toán gói ' + payment.plan.name + ' thành công',
+      type: NotificationType.PAYMENT,
+      data: {
+        paymentId: payment.id.toString(),
+        transactionId: payment.transactionId,
+        paymentUrl: payment.paymentUrl,
+        amount: payment.amount.toString(),
+      },
+    });
     // Tạo hoặc gia hạn subscription
     await this.activateSubscription(payment);
   }

@@ -27,8 +27,6 @@ export class BookService {
     @InjectRepository(UserInteraction)
     private userInteractionRepository: Repository<UserInteraction>,
     private fcmService: FcmService,
-    private fcmTokenService: FcmTokenService,
-    private notificationService: NotificationService,
     @InjectRepository(Category)
     private categoryRepository: Repository<Category>,
     private mediaService: MediaService,
@@ -210,12 +208,12 @@ export class BookService {
     }
 
     let totalDataStorage = 0;
-  
+
     totalDataStorage = await this.resolveFileSize(createBookDto, userId!);
-    
+
     await this.checkSubscriptionStorage(userId!, totalDataStorage);
     const bookStatus = await this.categoryRepository.findOne({ where: { code: CategoryCodeEnum.BOOK_STATUS_PENDING } });
-    
+
     const book = this.bookRepository.create({
       ...createBookDto,
       statusId: bookStatus ? bookStatus.id : undefined,
@@ -229,25 +227,13 @@ export class BookService {
 
     if (savedBook) {
       try {
-        const userTokens = await this.fcmTokenService.findByUserId(savedBook.createById);
-        if (userTokens) {
-          const ebookTemplate = EbookTemplate.newEbook(savedBook);
-          const sendResult = await this.fcmService.sendToToken(userTokens.token, {
-            title: ebookTemplate.title,
-            body: ebookTemplate.body,
-            type: 'ebook',
-            data: ebookTemplate.data,
-          });
-          if (sendResult) {
-            await this.notificationService.newNotification(
-              NotificationType.EBOOK,
-              ebookTemplate.data,
-              ebookTemplate.title,
-              ebookTemplate.body,
-              userTokens.userId,
-            );
-          }
-        }
+        const ebookTemplate = EbookTemplate.newEbook(savedBook);
+        await this.fcmService.sendToUser(savedBook.createById, {
+          title: ebookTemplate.title,
+          body: ebookTemplate.body,
+          type: NotificationType.EBOOK,
+          data: ebookTemplate.data,
+        });
       } catch (error) {
         this.logger.error(`[createBook] Notification failed: ${error?.message}`);
       }
@@ -284,7 +270,7 @@ export class BookService {
     }
 
     Object.assign(book, updateBookDto);
-   
+
     const savedBook = await this.bookRepository.save(book);
 
     if (fileChanged && storageUsedBytes > 0) {

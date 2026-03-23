@@ -29,7 +29,7 @@ export class ArticleService {
     private readonly notificationService: NotificationService,
     private readonly topicSubscriptionService: TopicSubscriptionService,
     private readonly fcmService: FcmService
-  ) {}
+  ) { }
 
   async findPagination(params: PaginationParams, userId?: number, articleCode?: string, categoryId?: number): Promise<PaginatedResponse<any>> {
     const { page = 1, size = 10, search = '' } = params;
@@ -144,20 +144,20 @@ export class ArticleService {
 
     const article = this.articleRepository.create(data as DeepPartial<Article>);
     const savedArticle = await this.articleRepository.save(article);
-    
+
     // Send FCM notification to topic
     const topicName = 'topic-article';
-    const sendResult = await this.fcmService.sendToTopic(topicName, { 
-      title: 'Có bài viết mới', 
-      body: article.title, 
-      type: 'new_article',
+    const sendResult = await this.fcmService.sendToTopic(topicName, {
+      title: 'Có bài viết mới',
+      body: article.title,
+      type: NotificationType.NEW_ARTICLE,
       data: { articleId: article.id.toString() }
     });
-    
+
     if (sendResult) {
       // Get all users subscribed to this topic
       const subscribedUserIds = await this.topicSubscriptionService.getUserIdsByTopic(topicName);
-      
+
       if (subscribedUserIds.length > 0) {
         // Create individual notifications for each subscribed user
         await this.notificationService.createNotificationsForUsers(
@@ -167,13 +167,13 @@ export class ArticleService {
           'Có bài viết mới',
           article.title
         );
-        
+
         console.log(`Created ${subscribedUserIds.length} notifications for topic: ${topicName}`);
       } else {
         console.log(`No users subscribed to topic: ${topicName}`);
       }
     }
-    
+
     return savedArticle;
   }
 
@@ -208,9 +208,9 @@ export class ArticleService {
       const categoryIds = tipType.map(cat => cat.id);
       const articles = await this.articleRepository.find({
         where: { categoryId: In(categoryIds), title: Like(`%${search}%`) },
-      skip: (page - 1) * size,
-      take: size,
-      relations: ['createdBy', 'updatedBy', 'status', 'category', 'author'],
+        skip: (page - 1) * size,
+        take: size,
+        relations: ['createdBy', 'updatedBy', 'status', 'category', 'author'],
         order: { id: 'DESC' },
       });
       return articles;
@@ -339,7 +339,7 @@ export class ArticleService {
       .take(3)
       .select([
         'article.id',
-        'article.title', 
+        'article.title',
         'article.slug',
         'article.summary',
         'article.thumbnail',
@@ -378,19 +378,19 @@ export class ArticleService {
   // get trending news list
   async getTrendingList(params: PaginationParams): Promise<any[]> {
     const { page = 1, size = 10, search = '' } = params;
-    
+
     const qb = this.articleRepository.createQueryBuilder('article');
-    
+
     // Join với InteractionStats để lấy thống kê
     qb.leftJoin(InteractionStats, 'stats', 'stats.targetId = article.id')
       .andWhere('stats.targetType = :type', { type: InteractionTarget.ARTICLE })
       .andWhere('stats.likeCount > 0');
-    
+
     // Thêm search condition nếu có
     if (search) {
       qb.andWhere('article.title LIKE :search', { search: `%${search}%` });
     }
-    
+
     const results = await qb
       .orderBy('stats.likeCount', 'DESC')
       .addOrderBy('stats.viewCount', 'DESC')
@@ -399,7 +399,7 @@ export class ArticleService {
       .take(size)
       .select([
         'article.id',
-        'article.title', 
+        'article.title',
         'article.slug',
         'article.summary',
         'article.thumbnail',
@@ -436,19 +436,19 @@ export class ArticleService {
   // get favorites news list
   async getFavoritesList(params: PaginationParams): Promise<any[]> {
     const { page = 1, size = 10, search = '' } = params;
-    
+
     const qb = this.articleRepository.createQueryBuilder('article');
-    
+
     // Join với InteractionStats để lấy thống kê
     qb.leftJoin(InteractionStats, 'stats', 'stats.targetId = article.id')
       .andWhere('stats.targetType = :type', { type: InteractionTarget.ARTICLE })
       .andWhere('stats.likeCount > 0'); // Chỉ lấy những bài có lượt thích
-    
+
     // Thêm search condition nếu có
     if (search) {
       qb.andWhere('article.title LIKE :search', { search: `%${search}%` });
     }
-    
+
     const results = await qb
       .orderBy('stats.likeCount', 'DESC')
       .addOrderBy('stats.viewCount', 'DESC')
@@ -457,7 +457,7 @@ export class ArticleService {
       .take(size)
       .select([
         'article.id',
-        'article.title', 
+        'article.title',
         'article.slug',
         'article.summary',
         'article.thumbnail',
@@ -494,19 +494,19 @@ export class ArticleService {
   // get recent news list
   async getRecentList(params: PaginationParams): Promise<any[]> {
     const { page = 1, size = 10, search = '' } = params;
-    
+
     const qb = this.articleRepository.createQueryBuilder('article');
-    
+
     // Join với InteractionStats để lấy thống kê
     qb.leftJoin(InteractionStats, 'stats', 'stats.targetId = article.id')
       .andWhere('stats.targetType = :type', { type: InteractionTarget.ARTICLE })
       .andWhere('stats.viewCount > 0'); // Chỉ lấy những bài đã được xem
-    
+
     // Thêm search condition nếu có
     if (search) {
       qb.andWhere('article.title LIKE :search', { search: `%${search}%` });
     }
-    
+
     const results = await qb
       .orderBy('article.updatedAt', 'DESC') // Sắp xếp theo thời gian cập nhật
       .addOrderBy('stats.viewCount', 'DESC')
@@ -515,7 +515,7 @@ export class ArticleService {
       .take(size)
       .select([
         'article.id',
-        'article.title', 
+        'article.title',
         'article.slug',
         'article.summary',
         'article.thumbnail',
@@ -552,19 +552,19 @@ export class ArticleService {
   // get bookmarked news list
   async getBookmarkedList(params: PaginationParams): Promise<any[]> {
     const { page = 1, size = 10, search = '' } = params;
-    
+
     const qb = this.articleRepository.createQueryBuilder('article');
-    
+
     // Join với InteractionStats để lấy thống kê
     qb.leftJoin(InteractionStats, 'stats', 'stats.targetId = article.id')
       .andWhere('stats.targetType = :type', { type: InteractionTarget.ARTICLE })
       .andWhere('stats.bookmarkCount > 0'); // Chỉ lấy những bài đã được bookmark
-    
+
     // Thêm search condition nếu có
     if (search) {
       qb.andWhere('article.title LIKE :search', { search: `%${search}%` });
     }
-    
+
     const results = await qb
       .orderBy('stats.bookmarkCount', 'DESC')
       .addOrderBy('stats.likeCount', 'DESC')
@@ -574,7 +574,7 @@ export class ArticleService {
       .take(size)
       .select([
         'article.id',
-        'article.title', 
+        'article.title',
         'article.slug',
         'article.summary',
         'article.thumbnail',

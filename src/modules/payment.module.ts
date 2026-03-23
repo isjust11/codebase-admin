@@ -11,14 +11,18 @@ import { StripeService } from '../services/stripe.service';
 import { PayosService } from '../services/payos.service';
 import { PaymentController } from '../controllers/payment/payment.controller';
 import { AuthModule } from './auth.module';
+import { NotificationModule } from './notification.module';
+import { FcmService } from 'src/services/fcm.service';
 
 @Module({
   imports: [
     AuthModule,
-    TypeOrmModule.forFeature([Payment, SubscriptionPlan, UserSubscription]),
+    NotificationModule,
+    TypeOrmModule.forFeature([Payment, SubscriptionPlan, UserSubscription,]),
   ],
   controllers: [PaymentController],
-  providers: [PaymentService, VNPayService, MomoService, ZaloPayService, StripeService, PayosService],
+  providers: [PaymentService,
+    VNPayService, MomoService, ZaloPayService, StripeService, PayosService],
   exports: [PaymentService],
 })
 export class PaymentModule { }

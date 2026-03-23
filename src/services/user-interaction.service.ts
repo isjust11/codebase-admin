@@ -119,7 +119,7 @@ export class UserInteractionService {
         existingInteraction.updatedAt = new Date();
         await this.userInteractionRepository.save(existingInteraction);
         if (createDto.comment) {
-          this.sendInteractionNotification(userId, createDto, false).catch(() => {});
+          this.sendInteractionNotification(userId, createDto, false).catch(() => { });
         }
       } else {
         existingInteraction.updatedAt = new Date();
@@ -150,7 +150,7 @@ export class UserInteractionService {
 
     await this.updateInteractionStats(createDto.targetType, createDto.targetId, createDto.interactionType, 1);
 
-    this.sendInteractionNotification(userId, createDto, true).catch(() => {});
+    this.sendInteractionNotification(userId, createDto, true).catch(() => { });
 
     return savedInteraction;
   }
@@ -512,7 +512,7 @@ export class UserInteractionService {
             await this.fcmService.sendToToken(ownerToken.token, {
               title: notification.title,
               body: notification.body,
-              type: 'interaction',
+              type: NotificationType.INTERACTION,
               data: notification.data,
             });
           }
@@ -574,7 +574,7 @@ export class UserInteractionService {
           await this.fcmService.sendToToken(token.token, {
             title: notification.title,
             body: notification.body,
-            type: 'interaction',
+            type: NotificationType.INTERACTION,
             data: notification.data,
           });
         }

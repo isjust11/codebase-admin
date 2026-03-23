@@ -5,10 +5,11 @@ export enum NotificationStatus {
 
 export enum NotificationType {
   NEW_ARTICLE = 'NEW_ARTICLE',
-  EBOOK = 'EBOOK', 
+  EBOOK = 'EBOOK',
   FEEDBACK = 'FEEDBACK',
   SYSTEM = 'SYSTEM',
   INTERACTION = 'INTERACTION',
+  PAYMENT = 'PAYMENT',
 }
 
 export enum NotificationPriority {
