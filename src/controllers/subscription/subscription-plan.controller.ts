@@ -85,7 +85,7 @@ export class SubscriptionPlanController extends BaseController {
     @Res() res: Response,
   ) {
     try {
-      const numId = Number(id);
+      const numId = this.decode(id);
       if (Number.isNaN(numId)) {
         return this.error(res, { status: 400, message: 'Invalid id' });
       }
@@ -102,7 +102,7 @@ export class SubscriptionPlanController extends BaseController {
   @UseGuards(JwtAuthGuard, PermissionGuard)
   async remove(@Param('id') id: string, @Res() res: Response) {
     try {
-      const numId = Number(id);
+      const numId = this.decode(id);
       if (Number.isNaN(numId)) {
         return this.error(res, { status: 400, message: 'Invalid id' });
       }
