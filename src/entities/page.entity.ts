@@ -21,6 +21,9 @@ export class Page {
   @Column({ nullable: true })
   metaTitle: string;
 
+  @Column({ nullable: true })
+  linkPages: string;
+
   @Column({ type: 'text', nullable: true })
   metaDescription: string;
 

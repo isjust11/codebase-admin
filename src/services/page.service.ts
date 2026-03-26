@@ -12,7 +12,7 @@ export class PageService {
   constructor(
     @InjectRepository(Page)
     private pageRepository: Repository<Page>,
-  ) {}
+  ) { }
   async findPagination(params: PaginationParams) {
     const { page = 1, size = 10, search = '' } = params;
     const skip = (page - 1) * size;
@@ -40,7 +40,7 @@ export class PageService {
 
   async create(createPageDto: CreatePageDto): Promise<Page> {
 
-    if(createPageDto.title) {
+    if (createPageDto.title) {
       createPageDto.slug = slugify(createPageDto.title, { lower: true, strict: true });
     }
     // Check if slug already exists
@@ -78,7 +78,7 @@ export class PageService {
   }
 
   async findOne(id: number): Promise<Page> {
-    const page = await this.pageRepository.findOne({ 
+    const page = await this.pageRepository.findOne({
       where: { id },
       relations: ['createdBy', 'updatedBy'],
     });
@@ -89,9 +89,8 @@ export class PageService {
   }
 
   async findBySlug(slug: string): Promise<Page> {
-    const page = await this.pageRepository.findOne({ 
-      where: { slug },
-      relations: ['createdBy', 'updatedBy'],
+    const page = await this.pageRepository.findOne({
+      where: { slug }
     });
     if (!page) {
       throw new NotFoundException('Page not found');
@@ -103,7 +102,7 @@ export class PageService {
     const page = await this.findOne(id);
 
     // Check if slug is being updated and if it already exists
-    if(updatePageDto.title) {
+    if (updatePageDto.title) {
       updatePageDto.slug = slugify(updatePageDto.title, { lower: true, strict: true });
     }
     if (updatePageDto.slug && updatePageDto.slug !== page.slug) {

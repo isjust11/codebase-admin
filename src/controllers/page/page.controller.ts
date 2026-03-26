@@ -17,7 +17,7 @@ import { UpdatePageDto } from '../../dtos/update-page.dto';
 import { BaseController } from '../base/base.controller';
 import { RequirePermission } from '../../decorators/require-permissions.decorator';
 import { PermissionGuard } from '../../guards/permission.guard';
-import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
+import { JwtAuthGuard, Public } from '../../guards/jwt-auth.guard';
 import { Response } from 'express';
 
 @Controller('pages')
@@ -55,7 +55,7 @@ export class PageController extends BaseController {
       return this.error(res, error);
     }
   }
-
+  @Public()
   @Get('slug/:slug')
   async findBySlug(@Res() res: Response, @Param('slug') slug: string) {
     try {
@@ -65,7 +65,7 @@ export class PageController extends BaseController {
       return this.error(res, error);
     }
   }
-
+  
   @Get(':id')
   @RequirePermission('READ', 'static_page')
   async findOne(@Res() res: Response, @Param('id') id: string) {
