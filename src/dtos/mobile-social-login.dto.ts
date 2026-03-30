@@ -5,13 +5,12 @@ export class MobileSocialLoginDto {
   @IsNotEmpty()
   platformId: string; // ID từ Google/Facebook
 
-  @IsEmail()
-  @IsNotEmpty()
-  email: string;
+  @IsOptional()
+  email?: string;
 
   @IsString()
-  @IsNotEmpty()
-  fullName: string;
+  @IsOptional()
+  fullName?: string;
 
   @IsString()
   @IsOptional()
@@ -19,7 +18,7 @@ export class MobileSocialLoginDto {
 
   @IsString()
   @IsNotEmpty()
-  platform: 'google' | 'facebook'; // Loại platform
+  platform: 'google' | 'facebook' | 'apple'; // Loại platform
 
   @IsString()
   @IsNotEmpty()

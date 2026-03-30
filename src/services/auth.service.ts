@@ -204,37 +204,49 @@ export class AuthService {
     try {
       const { platformId, email, fullName, picture, platform, accessToken, fcmToken, deviceId } = mobileSocialLoginDto;
 
-      // Bước 1: Verify token với Google/Facebook servers
-      const verifiedData = await this.socialTokenVerificationService.verifyToken(platform, accessToken);
+      // Bước 1: Verify token với Google/Facebook/Apple servers
+      const verifiedData = await this.socialTokenVerificationService.verifyToken(platform as any, accessToken);
 
-      // Bước 2: Kiểm tra dữ liệu từ mobile có khớp với dữ liệu verified không
-      if (verifiedData.platformId !== platformId || verifiedData.email !== email) {
-        throw new UnauthorizedException('Dữ liệu từ mobile không khớp với token verified');
+      // Bước 2: Dữ liệu từ mobile (nếu có) nên khớp với dữ liệu verified về platformId
+      if (verifiedData.platformId !== platformId) {
+        throw new UnauthorizedException('Dữ liệu platformId từ mobile không khớp với token verified');
+      }
+
+      // Ưu tiên dùng email và fullName từ token verified (vì đây là dữ liệu từ server Google/Apple)
+      // Nếu verifiedData không có email (ví dụ Facebook profile không email), mới dùng từ client gửi lên
+      const finalEmail = verifiedData.email || email;
+      const finalFullName = fullName || verifiedData.fullName || 'User';
+
+      if (!finalEmail) {
+        throw new BadRequestException('Không tìm thấy địa chỉ email, vui lòng thử lại');
       }
 
       // Bước 3: Tìm user theo email và platformId
-      let user = await this.userService.findByEmailSocial(email, platformId);
+      let user = await this.userService.findByEmailSocial(finalEmail, platformId);
 
       if (!user) {
         // Tạo user mới nếu chưa tồn tại
         const registerDto: RegisterDto = {
-          username: email,
-          email: email,
-          fullName: fullName,
+          username: finalEmail,
+          email: finalEmail,
+          fullName: finalFullName,
           password: Math.random().toString(36).slice(-8), // Tạo mật khẩu ngẫu nhiên
           platformId: platformId,
           picture: picture,
           isGoogleUser: platform === 'google',
           isFacebookUser: platform === 'facebook',
+          isAppleUser: platform === 'apple',
           isEmailVerified: true,
         };
         user = await this.userService.create(registerDto);
       } else {
-        // Cập nhật thông tin nếu user đã tồn tại
+        // Cập nhật thông tin nếu user đã tồn tại (chỉ cập nhật nếu client gửi dữ liệu mới)
         user.platformId = platformId ?? '';
-        user.picture = picture ?? '';
+        if (picture) user.picture = picture;
+        if (fullName) user.fullName = fullName;
         user.isGoogleUser = platform === 'google';
         user.isFacebookUser = platform === 'facebook';
+        user.isAppleUser = platform === 'apple';
 
         await this.userService.update(user.id, user);
       }
