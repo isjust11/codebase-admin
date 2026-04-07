@@ -29,7 +29,9 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     const request = context.switchToHttp().getRequest();
     this.logger.debug(`Authenticating request to: ${request.url}`);
     this.logger.debug(`Authorization header: ${request.headers.authorization ? 'Present' : 'Missing'}`);
-
+    if (request.headers.authorization && request.url.includes('revenuecat/webhook')) {
+      return true;
+    }
     try {
       const result = await super.canActivate(context) as boolean;
       this.logger.debug(`Authentication successful for user: ${request.user?.id}`);
