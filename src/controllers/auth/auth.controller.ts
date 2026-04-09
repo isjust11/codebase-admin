@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, UseGuards, Request, Res, Query, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Request, Res, Query, UnauthorizedException, Delete, Param } from '@nestjs/common';
 import { AuthService } from '../../services/auth.service';
 import { LoginDto, RegisterDto, ResendEmailDto, ResetPasswordDto, VerifyPinDto, ResendPinDto } from '../../dtos/auth.dto';
 import { MobileSocialLoginDto } from '../../dtos/mobile-social-login.dto';
@@ -172,6 +172,16 @@ export class AuthController extends BaseController {
     }
     await this.authService.revokeRefreshToken(refreshToken);
     return this.success(res, { message: 'Đăng xuất thành công' });
+  }
+
+  @Delete('delete-account/:userId')
+  async deleteAccount(@Param('userId') userId: string, @Res() res: Response) {
+    try {
+      const result = await this.authService.deleteAccount(this.decode(userId));
+      return this.success(res, result);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 
   @Public()

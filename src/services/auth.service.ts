@@ -37,6 +37,9 @@ export class AuthService {
 
   async validateUser(username: string, password: string): Promise<any> {
     const user = await this.userService.findByUsername(username);
+    if (user?.isDeleted) {
+      throw new BadRequestException('Tài khoản không tồn tại');
+    }
     if (user?.isWebsiteUser && !user?.isEmailVerified) {
       throw new BadRequestException('Email chưa được xác thực');
     }
@@ -587,6 +590,17 @@ export class AuthService {
     await this.userService.update(user.id, user);
 
     return pin;
+  }
+
+  async deleteAccount(userId: number) {
+    const user = await this.userService.findById(userId);
+    if (!user) {
+      throw new UnauthorizedException('User không tồn tại');
+    }
+    user.isDeleted = true;
+    user.deletedAt = new Date();
+    await this.userService.update(user.id, user);
+    return { code: 'delete-account', status: 'success', data: { message: 'Tài khoản đã được xóa thành công' } };
   }
 
   /**

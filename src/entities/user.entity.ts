@@ -83,6 +83,12 @@ export class User {
   @Column({ nullable: true })
   linkedinLink: string;
 
+  @Column({ nullable: true })
+  isDeleted: boolean;
+
+  @Column({ nullable: true })
+  deletedAt: Date;
+
   @ManyToMany(() => Role)
   @JoinTable({
     name: 'user_roles',
