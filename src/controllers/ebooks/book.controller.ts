@@ -26,6 +26,10 @@ import { PaginationParams } from 'src/dtos/filter.dto';
 import { Response } from 'express';
 import { FilterType } from 'src/enums/filter-type.enum';
 import { MediaService } from 'src/services/media.service';
+import { RequirePermission } from 'src/decorators/require-permissions.decorator';
+import { RoleService } from 'src/services/role.service';
+import { RoleEnum } from 'src/enums/role.enum';
+import { CategoryCodeEnum } from 'src/enums/category-code.enum';
 
 @ApiTags('Books')
 @Controller('books')
@@ -33,13 +37,29 @@ import { MediaService } from 'src/services/media.service';
 export class BookController extends BaseController {
   private readonly logger = new Logger(BookController.name);
 
-  constructor(private bookService: BookService, private mediaService: MediaService) {
+  constructor(private bookService: BookService,
+    private mediaService: MediaService,
+    private readonly roleService: RoleService
+  ) {
     super();
   }
 
-  @Get('public')
-  @ApiOperation({ summary: 'Lấy tất cả sách công khai (không cần đăng nhập)' })
-  async getPublicBooks(@Query('page') page: number,
+  @Get('admin/statistics')
+  @RequirePermission('READ', 'EBOOK')
+  @ApiOperation({ summary: 'Thống kê sách cho admin' })
+  async getStatistics(@Res() res: Response) {
+    try {
+      const data = await this.bookService.getStatistics();
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Get('admin')
+  @RequirePermission('READ', 'EBOOK')
+  @ApiOperation({ summary: 'Lấy tất cả sách (cần đăng nhập)' })
+  async getAdminBooks(@Query('page') page: number,
     @Query('size') size: number,
     @Query('search') search: string,
     @Request() req: any,
@@ -48,14 +68,50 @@ export class BookController extends BaseController {
     @Query('categoryId') categoryId?: string,
   ) {
     const userId = req?.user?.id;
+    let isSupperAdmin = false;
     try {
       const filter: PaginationParams = {
         page: page || 1,
         size: size || 10,
         search: search || '',
       };
+      if (req?.user?.roles?.length > 0) {
+        const role = await this.roleService.findById(req?.user?.roles[0]);
+        isSupperAdmin = role?.code === RoleEnum.SUPPER_ADMIN;
+      }
       const categoryIdNumber = categoryId ? this.decode(categoryId) : undefined;
-      const data = await this.bookService.getPublicBooks(filter, filterType, categoryIdNumber, userId);
+      const data = await this.bookService.getPublicBooks(filter, filterType, categoryIdNumber, userId, isSupperAdmin);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Get('public')
+  @ApiOperation({ summary: 'Lấy tất cả sách công khai' })
+  async getPublicBooks(@Query('page') page: number,
+    @Query('size') size: number,
+    @Query('search') search: string,
+    @Request() req: any,
+    @Res() res: Response,
+    @Query('filterType') filterType?: FilterType,
+    @Query('categoryId') categoryId?: string,
+    @Query('statusCode') statusCode?: string,
+  ) {
+    const userId = req?.user?.id;
+    let isSupperAdmin = false;
+    try {
+      const filter: PaginationParams = {
+        page: page || 1,
+        size: size || 10,
+        search: search || '',
+      };
+      if (req?.user?.roles.length > 0) {
+        const role = await this.roleService.findById(req?.user?.roles[0]);
+        isSupperAdmin = role?.code === RoleEnum.SUPPER_ADMIN;
+      }
+      const categoryIdNumber = categoryId ? this.decode(categoryId) : undefined;
+      const data = await this.bookService.getPublicBooks(filter, filterType, categoryIdNumber, userId, isSupperAdmin, statusCode);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -129,10 +185,10 @@ export class BookController extends BaseController {
       const fileUrl = createBookDto?.fileUrl ? createBookDto.fileUrl.split('/').pop() : null;
       const coverImageUrl = createBookDto?.coverImageUrl ? createBookDto.coverImageUrl.split('/').pop() : null;
       if (fileUrl) {
-        try { await this.mediaService.deleteFile(fileUrl, userId); } catch {}
+        try { await this.mediaService.deleteFile(fileUrl, userId); } catch { }
       }
       if (coverImageUrl) {
-        try { await this.mediaService.deleteFile(coverImageUrl, userId); } catch {}
+        try { await this.mediaService.deleteFile(coverImageUrl, userId); } catch { }
       }
 
       return this.error(res, error);
@@ -243,5 +299,45 @@ export class BookController extends BaseController {
       return this.error(res, error);
     }
   }
+  
+  @Post(':id/approve')
+  @RequirePermission('UPDATE', 'EBOOK')
+  @ApiOperation({ summary: 'Duyệt sách' })
+  async approveBook(@Param('id') id: string, @Res() res: Response) {
+    try {
+      const bookId = this.decode(id);
+      const data = await this.bookService.updateStatus(bookId, CategoryCodeEnum.BOOK_STATUS_APPROVED);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Post(':id/reject')
+  @RequirePermission('UPDATE', 'EBOOK')
+  @ApiOperation({ summary: 'Từ chối sách' })
+  async rejectBook(@Param('id') id: string, @Res() res: Response) {
+    try {
+      const bookId = this.decode(id);
+      const data = await this.bookService.updateStatus(bookId, CategoryCodeEnum.BOOK_STATUS_REJECTED);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Put(':id/status')
+  @RequirePermission('UPDATE', 'EBOOK')
+  @ApiOperation({ summary: 'Cập nhật trạng thái sách' })
+  async updateStatus(@Param('id') id: string, @Body('statusCode') statusCode: CategoryCodeEnum, @Res() res: Response) {
+    try {
+      const bookId = this.decode(id);
+      const data = await this.bookService.updateStatus(bookId, statusCode);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
 }
 

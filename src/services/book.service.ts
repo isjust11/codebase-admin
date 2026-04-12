@@ -37,15 +37,26 @@ export class BookService {
     return this.bookRepository.find({ relations: ['category'] });
   }
 
-  async getPublicBooks(filter: PaginationParams, filterType?: FilterType, categoryId?: number, userId?: number): Promise<PaginatedResponse<Book>> {
+  async getPublicBooks(filter: PaginationParams,
+    filterType?: FilterType,
+    categoryId?: number,
+    userId?: number,
+    isSupperAdmin?: boolean,
+    statusCode?: string): Promise<PaginatedResponse<Book>> {
     const { page, size, search } = filter;
     const skip = ((page || 1) - 1) * (size || 10);
     const take = size;
-
     const query = this.bookRepository.createQueryBuilder('book')
       .leftJoinAndSelect('book.category', 'category')
-      .where('book.isPublic = :isPublic', { isPublic: true });
-
+      .leftJoinAndSelect('book.status', 'status')
+      .leftJoinAndSelect('book.createBy', 'createBy');
+    if (!isSupperAdmin) {
+      query.where('book.isPublic = :isPublic', { isPublic: true });
+    }
+    // Filter by statusCode (admin filtering by moderation status)
+    if (statusCode) {
+      query.andWhere('status.code = :statusCode', { statusCode });
+    }
     // Apply filter types
     if (filterType) {
       // Join với interaction_stats để lấy favorite books
@@ -313,6 +324,55 @@ export class BookService {
 
     const result = await this.bookRepository.delete(id);
     return result.affected ? result.affected > 0 : false;
+  }
+
+  async getStatistics(): Promise<any> {
+    const total = await this.bookRepository.count();
+
+    // Count by status
+    const statusCounts = await this.bookRepository.createQueryBuilder('book')
+      .leftJoin('book.status', 'status')
+      .select('status.code', 'code')
+      .addSelect('COUNT(*)', 'count')
+      .groupBy('status.code')
+      .getRawMany();
+
+    const stats = {
+      total,
+      pending: 0,
+      approved: 0,
+      rejected: 0,
+    };
+
+    statusCounts.forEach(sc => {
+      if (sc.code === CategoryCodeEnum.BOOK_STATUS_PENDING) stats.pending = parseInt(sc.count);
+      if (sc.code === CategoryCodeEnum.BOOK_STATUS_APPROVED) stats.approved = parseInt(sc.count);
+      if (sc.code === CategoryCodeEnum.BOOK_STATUS_REJECTED) stats.rejected = parseInt(sc.count);
+    });
+
+    return stats;
+  }
+
+  async updateStatus(id: number, statusCode: CategoryCodeEnum): Promise<Book> {
+    const book = await this.bookRepository.findOne({ where: { id } });
+    if (!book) {
+      throw new BadRequestException('Sách không tồn tại');
+    }
+
+    const status = await this.categoryRepository.findOne({ where: { code: statusCode } });
+    if (!status) {
+      throw new BadRequestException('Trạng thái không hợp lệ');
+    }
+
+    book.statusId = status.id;
+    book.status = status;
+
+    // Nếu là approved thì mặc định cho phép public
+    if (statusCode === CategoryCodeEnum.BOOK_STATUS_APPROVED) {
+      book.isPublic = true;
+    }
+
+    return this.bookRepository.save(book);
   }
 
   async searchBooks(keyword: string): Promise<Book[]> {

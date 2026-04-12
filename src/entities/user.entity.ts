@@ -13,7 +13,7 @@ export class User {
   @Column({ unique: true })
   username: string;
 
-  @Column()
+  @Column({ select: false })
   @Exclude()
   password: string;
 
@@ -50,10 +50,10 @@ export class User {
   @Column({ default: false })
   isEmailVerified: boolean;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, select: false })
   verificationToken: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, select: false })
   pinCode?: string;
 
   @Column({ nullable: true })
