@@ -41,7 +41,7 @@ export class SeedsCommonData1710669600002 implements MigrationInterface {
             SELECT id FROM category_type WHERE code = '${CategoryTypeEnum.FEATURE_TYPE}'
         `);
         const featureTypeId = featureTypeResult[0].id;
-        
+
         const bookTypeResult = await queryRunner.query(`
             SELECT id FROM category_type WHERE code = '${CategoryTypeEnum.BOOK_TYPE}'
         `);
@@ -95,7 +95,7 @@ export class SeedsCommonData1710669600002 implements MigrationInterface {
         `);
         const menuCategoryId = menuCategoryResult[0].id;
 
-         // Lấy category ID cho Menu
+        // Lấy category ID cho Menu
         const otherCategoryResult = await queryRunner.query(`
             SELECT id FROM category WHERE code = '${CategoryCodeEnum.FEATURE_OTHERS}'
         `);
@@ -120,7 +120,7 @@ export class SeedsCommonData1710669600002 implements MigrationInterface {
             ( 'Phân quyền', '/manager/admin/permissions', '${featureAdminId}', true)
         `);
 
-         // Insert chức năng khác
+        // Insert chức năng khác
         await queryRunner.query(`
             INSERT INTO feature (label, link, icon, iconType, parentId, isActive, iconSize,featureTypeId, createdAt, updatedAt) VALUES
             ('Danh mục', '/manager/cat', 'Dice4', 'lucide', null, true, 20,'${otherCategoryId}' , CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
@@ -138,7 +138,7 @@ export class SeedsCommonData1710669600002 implements MigrationInterface {
             ('Loại danh mục', '/manager/category-types', '${featureCatId}', true)
         `);
 
-         const categoryResult = await queryRunner.query(`
+        const categoryResult = await queryRunner.query(`
             SELECT id FROM feature WHERE link = '/manager/categories'
         `);
         const categoryId = categoryResult[0].id;
@@ -230,7 +230,7 @@ export class SeedsCommonData1710669600002 implements MigrationInterface {
             || resource = '${RESOURCES.FEATURE}' || resource = '${RESOURCES.CATEGORY}' || resource = '${RESOURCES.CATEGORY_TYPE}' || resource = '${RESOURCES.ARTICLE}'
             || resource = '${RESOURCES.EBOOK}'
         `);
-        
+
         // insert role permission
         for (const permission of permissionResult) {
             await queryRunner.query(`
@@ -243,10 +243,10 @@ export class SeedsCommonData1710669600002 implements MigrationInterface {
         await queryRunner.query(`
             INSERT INTO subscription_plan (name, code, description, isActive, createdAt, updatedAt) VALUES
             ('Free', '${SubscriptionPlanEnum.FREE}', 'Free plan', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-            ('Readbox Pro', '${SubscriptionPlanEnum.PRO}', 'Readbox Pro plan', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-            ('Readbox Ultra', '${SubscriptionPlanEnum.ULTRA}', 'Readbox Ultra plan', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            ('Readbox Pro Year', '${SubscriptionPlanEnum.PRO_YEAR}', 'Readbox Pro Year plan', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+            ('Readbox Pro Monthly', '${SubscriptionPlanEnum.PRO_MONTHLY}', 'Readbox Pro Monthly plan', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         `);
-        
+
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -256,7 +256,7 @@ export class SeedsCommonData1710669600002 implements MigrationInterface {
         await queryRunner.query('DELETE FROM category_type');
         await queryRunner.query('DELETE FROM role');
     }
-} 
+}
 // sql query to create user and flush privileges
 // CREATE USER 'admin'@'localhost' IDENTIFIED BY 'password';
 // GRANT ALL PRIVILEGES ON database_name.* TO 'username'@'host' IDENTIFIED BY 'password';

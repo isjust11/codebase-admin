@@ -16,8 +16,12 @@ export class RevenueCatWebhookController {
     if (secret && authHeader !== secret) {
       throw new UnauthorizedException('Invalid RevenueCat webhook authorization');
     }
+    try {
+      await this.revenueCatWebhookService.handleWebhook(body);
+      return { success: true };
+    } catch (error) {
+      return 
+    }
 
-    await this.revenueCatWebhookService.handleWebhook(body);
-    return { success: true };
   }
 }

@@ -17,7 +17,8 @@ export enum PaymentMethod {
     MOMO = 'momo',
     ZALOPAY = 'zalopay',
     PAYOS = 'payos',
-    CASH = 'cash'
+    CASH = 'cash',
+    REVENUECAT = 'revenuecat'
 }
 
 @Entity()

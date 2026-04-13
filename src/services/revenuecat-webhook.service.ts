@@ -4,6 +4,8 @@ import { Repository } from 'typeorm';
 import { UserSubscription, SubscriptionStatus } from '../entities/user-subscription.entity';
 import { SubscriptionPlan } from '../entities/subscription-plan.entity';
 import { User } from '../entities/user.entity';
+import { Payment, PaymentMethod, PaymentStatus } from '../entities/payment.entity';
+import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
 
 @Injectable()
 export class RevenueCatWebhookService {
@@ -16,9 +18,11 @@ export class RevenueCatWebhookService {
     private readonly planRepository: Repository<SubscriptionPlan>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-  ) {}
+    @InjectRepository(Payment)
+    private readonly paymentRepository: Repository<Payment>,
+  ) { }
 
-  async handleWebhook(body: any): Promise<void> {
+  async handleWebhook(body: any) {
     try {
       this.logger.log(`Received RevenueCat Webhook: ${JSON.stringify(body)}`);
 
@@ -33,6 +37,9 @@ export class RevenueCatWebhookService {
       const environment = event.environment; // 'PRODUCTION' or 'SANDBOX'
       const purchasedAtMs = event.purchased_at_ms;
       const expirationAtMs = event.expiration_at_ms;
+      const amount = event.price || 0;
+      const currency = event.currency || 'USD';
+      const transactionId = event.transaction_id || '';
 
       // Bỏ qua event từ Sandbox trên môi trường Production
       const isProduction = process.env.NODE_ENV === 'production';
@@ -42,7 +49,7 @@ export class RevenueCatWebhookService {
       }
 
       // Kiểm tra app_user_id có phải số nguyên hợp lệ không (tránh Anonymous ID)
-      const userIdNum = parseInt(appUserId, 10);
+      const userIdNum = Base64EncryptionUtil.decrypt(appUserId);
       if (isNaN(userIdNum)) {
         this.logger.warn(
           `Bỏ qua Webhook: app_user_id "${appUserId}" không phải số nguyên. ` +
@@ -62,8 +69,15 @@ export class RevenueCatWebhookService {
       }
 
       // Map productId sang planCode an toàn hơn
-      // Conventions: 'readbox_pro_monthly', 'readbox_ultra_annual', 'readbox_lifetime'
-      const plan = await this.resolvePlanFromProductId(productId);
+      // Conventions: 'readbox_pro_monthly', 'readbox_pro_year'
+      const parts = productId.split('_');
+      const productCode = parts[1]; // 'pro'
+      const periodRaw = parts[2];   // 'monthly' hoặc 'year'
+      const productCodeName = productCode.toUpperCase() + '_' + periodRaw.toUpperCase();
+      // Chuẩn hóa period sang 'month' hoặc 'year' để khớp với database
+      const dbPeriod = periodRaw === 'monthly' ? 'month' : 'year';
+
+      const plan = await this.resolvePlanFromProductId(productCodeName, dbPeriod);
 
       if (!plan) {
         this.logger.warn(
@@ -72,50 +86,47 @@ export class RevenueCatWebhookService {
         );
         return;
       }
-
+      let subscriptionActive;
       switch (type) {
         case 'INITIAL_PURCHASE':
         case 'NON_RENEWING_PURCHASE':
-          await this.handlePurchase(user.id, plan.id, purchasedAtMs, expirationAtMs, false);
+          subscriptionActive = await this.handlePurchase(user.id, plan.id, plan.periodType, purchasedAtMs, expirationAtMs, false, amount, currency, transactionId);
           break;
 
         case 'RENEWAL':
           // Khi gia hạn, reset lại usage trong kỳ
-          await this.handlePurchase(user.id, plan.id, purchasedAtMs, expirationAtMs, true);
+          subscriptionActive = await this.handlePurchase(user.id, plan.id, plan.periodType, purchasedAtMs, expirationAtMs, true, amount, currency, transactionId);
           break;
 
         case 'CANCELLATION':
-          await this.handleCancellation(user.id, plan.id, expirationAtMs);
+          subscriptionActive = await this.handleCancellation(user.id, plan.id, expirationAtMs);
           break;
 
         case 'EXPIRATION':
-          await this.handleExpiration(user.id, plan.id);
+          subscriptionActive = await this.handleExpiration(user.id, plan.id);
           break;
 
         case 'UNCANCELLATION':
           // Người dùng hủy xong nhưng đổi ý, reactivate lại
-          await this.handleUncancellation(user.id, plan.id);
+          subscriptionActive = await this.handleUncancellation(user.id, plan.id);
           break;
 
         case 'BILLING_ISSUES_DETECTED':
           // Thanh toán gặp vấn đề (thẻ hết hạn, không đủ tiền...)
-          await this.handleBillingIssue(user.id, plan.id);
+          subscriptionActive = await this.handleBillingIssue(user.id, plan.id);
           break;
 
         case 'PRODUCT_CHANGE':
           // Người dùng đổi gói (VD: Monthly → Annual)
           this.logger.log(`User ${user.id} changed product to: ${productId}`);
-          break;
-
-        case 'TRANSFER':
-          // Transfer giữa các app user ID, thường do restore purchases
-          this.logger.log(`Transfer event for user ${user.id}, product: ${productId}`);
+          subscriptionActive = await this.handlePurchase(user.id, plan.id, plan.periodType, purchasedAtMs, expirationAtMs, false, amount, currency, transactionId);
           break;
 
         default:
           this.logger.log(`Unhandled RevenueCat event type: ${type}`);
           break;
       }
+      return subscriptionActive;
     } catch (error) {
       this.logger.error(`Error processing RevenueCat webhook: ${error.message}`, error.stack);
       throw error;
@@ -124,36 +135,31 @@ export class RevenueCatWebhookService {
 
   /**
    * Resolve SubscriptionPlan từ productId một cách an toàn.
-   * Ưu tiên match trực tiếp với code trong DB, thay vì split cứng nhắc.
+   * Lọc theo cả code và periodType (month/year)
    */
-  private async resolvePlanFromProductId(productId: string): Promise<SubscriptionPlan | null> {
-    if (!productId) return null;
+  private async resolvePlanFromProductId(productCode: string, periodType: string): Promise<SubscriptionPlan | null> {
+    if (!productCode) return null;
 
-    // Lấy tất cả plans và tìm match
-    const allPlans = await this.planRepository.find({ where: { isActive: true } });
-    const productIdLower = productId.toLowerCase();
-
-    // Tìm theo cách match code trong productId
-    // VD: 'readbox_pro_monthly' match với plan code 'PRO'
-    for (const plan of allPlans) {
-      if (productIdLower.includes(plan.code.toLowerCase())) {
-        return plan;
+    // Tìm gói active có code và periodType khớp
+    return this.planRepository.findOne({
+      where: {
+        code: productCode as any,
+        periodType: periodType,
+        isActive: true
       }
-    }
-
-    // Fallback: query trực tiếp nếu productId chính là code
-    return this.planRepository
-      .createQueryBuilder('p')
-      .where('UPPER(p.code) = :code', { code: productId.toUpperCase() })
-      .getOne();
+    });
   }
 
   private async handlePurchase(
     userId: number,
     planId: number,
+    planPeriod: string,
     purchasedAtMs: number,
     expirationAtMs: number,
     isRenewal: boolean,
+    amount: number,
+    currency: string,
+    transactionId: string,
   ) {
     const startedAt = purchasedAtMs ? new Date(Number(purchasedAtMs)) : new Date();
     let expiresAt = new Date();
@@ -162,7 +168,11 @@ export class RevenueCatWebhookService {
       expiresAt = new Date(Number(expirationAtMs));
     } else {
       // fallback assumption if no expiration provided
-      expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+      if (planPeriod === 'month') {
+        expiresAt.setMonth(expiresAt.getMonth() + 1);
+      } else if (planPeriod === 'year') {
+        expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+      }
     }
 
     // Deactivate previous active plans if necessary, or just insert new
@@ -189,9 +199,9 @@ export class RevenueCatWebhookService {
         existingActive.currentPeriodKey = this.getCurrentPeriodKey();
       }
 
-      await this.subscriptionRepository.save(existingActive);
+      const subscriptionActive = await this.subscriptionRepository.save(existingActive);
       this.logger.log(`${isRenewal ? 'Renewed' : 'Updated'} plan ${planId} for user ${userId} until ${expiresAt}`);
-      return;
+      return subscriptionActive;
     }
 
     // Tạo subscription mới
@@ -209,8 +219,44 @@ export class RevenueCatWebhookService {
       currentPeriodKey: this.getCurrentPeriodKey(),
     });
 
-    await this.subscriptionRepository.save(sub);
+    const subscriptionActive = await this.subscriptionRepository.save(sub);
     this.logger.log(`Activated plan ${planId} for user ${userId} until ${expiresAt}`);
+
+    // Lưu thông tin thanh toán
+    await this.savePayment(userId, planId, subscriptionActive.id, amount, currency, transactionId);
+
+    return subscriptionActive;
+  }
+
+  private async savePayment(
+    userId: number,
+    planId: number,
+    userSubscriptionId: number,
+    amount: number,
+    currency: string,
+    transactionId: string,
+  ) {
+    try {
+      const payment = this.paymentRepository.create({
+        userId,
+        planId,
+        userSubscriptionId,
+        amount,
+        currency,
+        paymentMethod: PaymentMethod.REVENUECAT,
+        status: PaymentStatus.COMPLETED,
+        transactionId,
+        gatewayTransactionId: transactionId,
+        paidAt: new Date(),
+        description: `RevenueCat Payment for plan ${planId}`,
+        completedAt: new Date(),
+      });
+
+      await this.paymentRepository.save(payment);
+      this.logger.log(`Saved RevenueCat Payment: ${transactionId} for user ${userId}`);
+    } catch (error) {
+      this.logger.error(`Failed to save RevenueCat Payment: ${error.message}`);
+    }
   }
 
   private async handleCancellation(userId: number, planId: number, expirationAtMs: number) {

@@ -12,17 +12,18 @@ import { PayosService } from '../services/payos.service';
 import { PaymentController } from '../controllers/payment/payment.controller';
 import { AuthModule } from './auth.module';
 import { NotificationModule } from './notification.module';
-import { FcmService } from 'src/services/fcm.service';
+import { RevenueCatWebhookService } from 'src/services/revenuecat-webhook.service';
+import { User } from 'src/entities/user.entity';
 
 @Module({
   imports: [
     AuthModule,
     NotificationModule,
-    TypeOrmModule.forFeature([Payment, SubscriptionPlan, UserSubscription,]),
+    TypeOrmModule.forFeature([Payment, SubscriptionPlan, UserSubscription, User]),
   ],
   controllers: [PaymentController],
   providers: [PaymentService,
-    VNPayService, MomoService, ZaloPayService, StripeService, PayosService],
+    VNPayService, MomoService, ZaloPayService, StripeService, PayosService, RevenueCatWebhookService],
   exports: [PaymentService],
 })
 export class PaymentModule { }

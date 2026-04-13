@@ -9,6 +9,8 @@ import {
   Req,
   Res,
   UseGuards,
+  UnauthorizedException,
+  Headers
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { JwtAuthGuard, Public } from '../../guards/jwt-auth.guard';
@@ -23,6 +25,7 @@ import { StripeService } from '../../services/stripe.service';
 import { PayosService } from '../../services/payos.service';
 import { PaymentMethod, PaymentStatus } from '../../entities/payment.entity';
 import { CreatePaymentDto } from 'src/dtos/payment.dto';
+import { RevenueCatWebhookService } from 'src/services/revenuecat-webhook.service';
 
 
 @Controller('payment')
@@ -34,6 +37,7 @@ export class PaymentController extends BaseController {
     private readonly zaloPayService: ZaloPayService,
     private readonly stripeService: StripeService,
     private readonly payosService: PayosService,
+    private readonly revenueCatWebhookService: RevenueCatWebhookService
   ) {
     super();
   }
@@ -635,5 +639,26 @@ export class PaymentController extends BaseController {
     } catch (error) {
       this.error(res, error);
     }
+  }
+
+  @Post('revenuecat/webhook')
+  @UseGuards(JwtAuthGuard)
+  async handleWebhook(
+    @Body() body: any,
+    @Headers('authorization') authHeader: string,
+    @Res() res: Response,
+  ) {
+    // Kiểm tra Authorization header được cấu hình trên RevenueCat Dashboard
+    const secret = process.env.REVENUECAT_WEBHOOK_SECRET;
+    if (secret && authHeader !== secret) {
+      throw new UnauthorizedException('Invalid RevenueCat webhook authorization');
+    }
+    try {
+      const result = await this.revenueCatWebhookService.handleWebhook(body);
+      return this.success(res, result);
+    } catch (error) {
+      this.error(res, error);
+    }
+
   }
 }
