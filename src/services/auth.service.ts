@@ -36,7 +36,7 @@ export class AuthService {
   }
 
   async validateUser(username: string, password: string): Promise<any> {
-    const user = await this.userService.findByUsername(username);
+    const user = await this.userService.findByUsername(username, true);
     if (user?.isDeleted) {
       throw new BadRequestException('Tài khoản không tồn tại');
     }

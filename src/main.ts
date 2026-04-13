@@ -47,11 +47,11 @@ async function bootstrap() {
   // app.use(compression());
 
   // Validate và filter DTO, loại bỏ các field không hợp lệ
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,              // Loại bỏ các thuộc tính không có trong DTO
-    forbidNonWhitelisted: false,  // Không reject, chỉ strip (an toàn hơn)
-    transform: true,              // Tự động transform dữ liệu
-  }));
+  // app.useGlobalPipes(new ValidationPipe({
+  //   whitelist: true,              // Loại bỏ các thuộc tính không có trong DTO
+  //   forbidNonWhitelisted: false,  // Không reject, chỉ strip (an toàn hơn)
+  //   transform: true,              // Tự động transform dữ liệu
+  // }));
 
   // Cấu hình phục vụ file tĩnh
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {

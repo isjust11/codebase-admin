@@ -247,12 +247,30 @@ export class UserService {
     }
   }
 
-  async findByUsername(username: string): Promise<User | null> {
-    return this.userRepository.findOne({ where: { username }, relations: ['roles', 'roles.permissions'] });
+  async findByUsername(username: string, includePassword = false): Promise<User | null> {
+    const query = this.userRepository.createQueryBuilder('user')
+      .leftJoinAndSelect('user.roles', 'roles')
+      .leftJoinAndSelect('roles.permissions', 'permissions')
+      .where('user.username = :username', { username });
+
+    if (includePassword) {
+      query.addSelect('user.password');
+    }
+
+    return query.getOne();
   }
 
-  async findByEmail(email: string): Promise<User | null> {
-    return this.userRepository.findOne({ where: { email }, relations: ['roles', 'roles.permissions'] });
+  async findByEmail(email: string, includePassword = false): Promise<User | null> {
+    const query = this.userRepository.createQueryBuilder('user')
+      .leftJoinAndSelect('user.roles', 'roles')
+      .leftJoinAndSelect('roles.permissions', 'permissions')
+      .where('user.email = :email', { email });
+
+    if (includePassword) {
+      query.addSelect('user.password');
+    }
+
+    return query.getOne();
   }
 
   async findByPinCode(pinCode: string): Promise<User | null> {
