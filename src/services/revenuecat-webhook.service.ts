@@ -223,8 +223,8 @@ export class RevenueCatWebhookService {
     this.logger.log(`Activated plan ${planId} for user ${userId} until ${expiresAt}`);
 
     // Lưu thông tin thanh toán
-    await this.savePayment(userId, planId, subscriptionActive.id, amount, currency, transactionId);
-
+    const payment = await this.savePayment(userId, planId, subscriptionActive.id, amount, currency, transactionId);
+    this.subscriptionRepository.update(subscriptionActive.id, { paymentId: payment?.id });
     return subscriptionActive;
   }
 
@@ -252,8 +252,7 @@ export class RevenueCatWebhookService {
         completedAt: new Date(),
       });
 
-      await this.paymentRepository.save(payment);
-      this.logger.log(`Saved RevenueCat Payment: ${transactionId} for user ${userId}`);
+      return await this.paymentRepository.save(payment);
     } catch (error) {
       this.logger.error(`Failed to save RevenueCat Payment: ${error.message}`);
     }

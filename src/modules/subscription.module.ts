@@ -10,11 +10,12 @@ import { AuthModule } from './auth.module';
 import { RevenueCatWebhookController } from '../controllers/subscription/revenuecat-webhook.controller';
 import { RevenueCatWebhookService } from '../services/revenuecat-webhook.service';
 import { User } from '../entities/user.entity';
+import { Payment } from '../entities/payment.entity';
 
 @Module({
   imports: [
     AuthModule,
-    TypeOrmModule.forFeature([SubscriptionPlan, UserSubscription, User]),
+    TypeOrmModule.forFeature([SubscriptionPlan, UserSubscription, User, Payment]),
   ],
   controllers: [SubscriptionPlanController, UserSubscriptionController, RevenueCatWebhookController],
   providers: [SubscriptionPlanService, UserSubscriptionService, RevenueCatWebhookService],
