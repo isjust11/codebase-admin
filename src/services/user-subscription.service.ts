@@ -25,22 +25,29 @@ export class UserSubscriptionService {
       .createQueryBuilder('s')
       .leftJoinAndSelect('s.plan', 'plan')
       .where('s.userId = :userId', { userId })
-      .andWhere('s.status IN (:...statuses)', {
-        statuses: [SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIAL],
+      .andWhere('s.status = :status', {
+        status: SubscriptionStatus.ACTIVE,
       })
-      .andWhere('s.expiresAt >= :now', { now })
+      // Cho phép NULL vì gói FREE hoặc Lifetime có thể không có ngày hết hạn
+      .andWhere('(s.expiresAt >= :now OR s.expiresAt IS NULL)', { now })
       .orderBy('s.expiresAt', 'DESC')
       .getMany();
-    // get current active subscription
-    const currentActiveSubscription = subs.find(s => s.status === SubscriptionStatus.ACTIVE
+
+    // 1. Tìm gói trả phí đang hoạt động và có thông tin thanh toán
+    const currentActiveSubscription = subs.find(s =>
+      s.status === SubscriptionStatus.ACTIVE
+      && s.plan?.code !== SubscriptionPlanEnum.FREE
       && s.paymentId !== null
-      && new Date(s.expiresAt).getTime() > now.getTime());
-    if (!currentActiveSubscription) {
-      // get next trial subscription
-      const nextSubscription = subs.find(s => s.plan?.code === SubscriptionPlanEnum.FREE);
-      return nextSubscription ?? null;
+      && (s.expiresAt ? new Date(s.expiresAt).getTime() > now.getTime() : true));
+
+    if (currentActiveSubscription) {
+      return currentActiveSubscription;
     }
-    return currentActiveSubscription;
+
+    // 2. Nếu không có gói trả phí, tìm gói FREE (thường không có paymentId)
+    const freeSubscription = subs.find(s => s.plan?.code === SubscriptionPlanEnum.FREE);
+
+    return freeSubscription ?? null;
   }
 
   /** Lấy tất cả đăng ký của user (để admin hoặc lịch sử) */

@@ -43,10 +43,10 @@ export class RevenueCatWebhookService {
 
       // Bỏ qua event từ Sandbox trên môi trường Production
       const isProduction = process.env.NODE_ENV === 'production';
-      if (isProduction && environment === 'SANDBOX') {
-        this.logger.warn(`Bỏ qua SANDBOX event trong Production: ${type} for appUserId=${appUserId}`);
-        return;
-      }
+      // if (isProduction && environment === 'SANDBOX') {
+      //   this.logger.warn(`Bỏ qua SANDBOX event trong Production: ${type} for appUserId=${appUserId}`);
+      //   return;
+      // }
 
       // Kiểm tra app_user_id có phải số nguyên hợp lệ không (tránh Anonymous ID)
       const userIdNum = Base64EncryptionUtil.decrypt(appUserId);
@@ -68,16 +68,7 @@ export class RevenueCatWebhookService {
         return;
       }
 
-      // Map productId sang planCode an toàn hơn
-      // Conventions: 'readbox_pro_monthly', 'readbox_pro_year'
-      const parts = productId.split('_');
-      const productCode = parts[1]; // 'pro'
-      const periodRaw = parts[2];   // 'monthly' hoặc 'year'
-      const productCodeName = productCode.toUpperCase() + '_' + periodRaw.toUpperCase();
-      // Chuẩn hóa period sang 'month' hoặc 'year' để khớp với database
-      const dbPeriod = periodRaw === 'monthly' ? 'month' : 'year';
-
-      const plan = await this.resolvePlanFromProductId(productCodeName, dbPeriod);
+      const plan = await this.resolvePlanFromProductId(productId);
 
       if (!plan) {
         this.logger.warn(
@@ -96,6 +87,21 @@ export class RevenueCatWebhookService {
         case 'RENEWAL':
           // Khi gia hạn, reset lại usage trong kỳ
           subscriptionActive = await this.handlePurchase(user.id, plan.id, plan.periodType, purchasedAtMs, expirationAtMs, true, amount, currency, transactionId);
+          break;
+
+        case 'TRANSFER':
+          const transferredFrom = event.transferred_from || [];
+          const transferredTo = event.transferred_to || [];
+          subscriptionActive = await this.handleTransfer(
+            transferredFrom,
+            transferredTo,
+            plan,
+            purchasedAtMs,
+            expirationAtMs,
+            amount,
+            currency,
+            transactionId,
+          );
           break;
 
         case 'CANCELLATION':
@@ -137,14 +143,13 @@ export class RevenueCatWebhookService {
    * Resolve SubscriptionPlan từ productId một cách an toàn.
    * Lọc theo cả code và periodType (month/year)
    */
-  private async resolvePlanFromProductId(productCode: string, periodType: string): Promise<SubscriptionPlan | null> {
+  private async resolvePlanFromProductId(productCode: string): Promise<SubscriptionPlan | null> {
     if (!productCode) return null;
 
     // Tìm gói active có code và periodType khớp
     return this.planRepository.findOne({
       where: {
         code: productCode as any,
-        periodType: periodType,
         isActive: true
       }
     });
@@ -167,11 +172,16 @@ export class RevenueCatWebhookService {
     if (expirationAtMs) {
       expiresAt = new Date(Number(expirationAtMs));
     } else {
-      // fallback assumption if no expiration provided
+      // fallback assumption if no expiration provided by RevenueCat (e.g. some edge cases or Lifetime)
       if (planPeriod === 'month') {
         expiresAt.setMonth(expiresAt.getMonth() + 1);
+      } else if (planPeriod === 'six_month') {
+        expiresAt.setMonth(expiresAt.getMonth() + 6);
       } else if (planPeriod === 'year') {
         expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+      } else if (planPeriod === 'lifetime') {
+        // Gói trọn đời: Set ngày hết hạn rất xa trong tương lai (100 năm)
+        expiresAt.setFullYear(expiresAt.getFullYear() + 100);
       }
     }
 
@@ -200,6 +210,9 @@ export class RevenueCatWebhookService {
       }
 
       const subscriptionActive = await this.subscriptionRepository.save(existingActive);
+      // Lưu thông tin thanh toán
+      const payment = await this.savePayment(userId, planId, subscriptionActive.id, amount, currency, transactionId);
+      await this.subscriptionRepository.update(subscriptionActive.id, { paymentId: payment?.id });
       this.logger.log(`${isRenewal ? 'Renewed' : 'Updated'} plan ${planId} for user ${userId} until ${expiresAt}`);
       return subscriptionActive;
     }
@@ -223,8 +236,8 @@ export class RevenueCatWebhookService {
     this.logger.log(`Activated plan ${planId} for user ${userId} until ${expiresAt}`);
 
     // Lưu thông tin thanh toán
-    await this.savePayment(userId, planId, subscriptionActive.id, amount, currency, transactionId);
-
+    const payment = await this.savePayment(userId, planId, subscriptionActive.id, amount, currency, transactionId);
+    await this.subscriptionRepository.update(subscriptionActive.id, { paymentId: payment?.id });
     return subscriptionActive;
   }
 
@@ -252,8 +265,7 @@ export class RevenueCatWebhookService {
         completedAt: new Date(),
       });
 
-      await this.paymentRepository.save(payment);
-      this.logger.log(`Saved RevenueCat Payment: ${transactionId} for user ${userId}`);
+      return await this.paymentRepository.save(payment);
     } catch (error) {
       this.logger.error(`Failed to save RevenueCat Payment: ${error.message}`);
     }
@@ -314,6 +326,50 @@ export class RevenueCatWebhookService {
       this.logger.warn(`Billing issue detected for plan ${planId}, user ${userId}`);
       // TODO: Gửi push notification / email thông báo thanh toán thất bại cho user
     }
+  }
+
+  private async handleTransfer(
+    transferredFrom: string[],
+    transferredTo: string[],
+    plan: SubscriptionPlan,
+    purchasedAtMs: number,
+    expirationAtMs: number,
+    amount: number,
+    currency: string,
+    transactionId: string,
+  ) {
+    this.logger.log(`Processing TRANSFER event: from ${transferredFrom} to ${transferredTo}`);
+
+    // 1. Thu hồi quyền lợi từ các User cũ
+    for (const appUserId of transferredFrom) {
+      const userId = Base64EncryptionUtil.decrypt(appUserId);
+      if (userId > 0) {
+        await this.handleExpiration(userId, plan.id);
+      }
+    }
+
+    // 2. Cấp quyền lợi cho các User mới
+    let lastSub;
+    for (const appUserId of transferredTo) {
+      // Bỏ qua nếu là Anonymous ID
+      if (appUserId.startsWith('$RCAnonymousID')) continue;
+
+      const userId = Base64EncryptionUtil.decrypt(appUserId);
+      if (userId > 0) {
+        lastSub = await this.handlePurchase(
+          userId,
+          plan.id,
+          plan.periodType,
+          purchasedAtMs,
+          expirationAtMs,
+          false,
+          amount,
+          currency,
+          transactionId,
+        );
+      }
+    }
+    return lastSub;
   }
 
   /** Tạo key cho kỳ hiện tại, VD: '2025-04' */
