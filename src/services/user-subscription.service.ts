@@ -70,24 +70,25 @@ export class UserSubscriptionService {
     }
 
     const status = dto.status ?? SubscriptionStatus.PENDING_PAYMENT;
-    const isTrial = status === SubscriptionStatus.TRIAL;
+    const isFree = status === SubscriptionStatus.FREE;
     const userSubscription = await this.subscriptionRepository.findOne({ where: { userId, planId: plan.id } });
     if (userSubscription) {
       throw new BadRequestException('User already has a subscription for this plan');
     }
+    const now = new Date();
     const sub = this.subscriptionRepository.create({
       userId,
       planId: plan.id,
       status,
-      startedAt: new Date(),
-      expiresAt: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+      startedAt: now,
+      expiresAt: new Date(new Date(now).setUTCFullYear(now.getUTCFullYear() + 1)),
       storageUsedBytes: '0',
       ttsUsedInPeriod: 0,
       convertUsedInPeriod: 0,
       currentPeriodKey: this.getCurrentPeriodKey(),
     });
 
-    if (isTrial) {
+    if (isFree) {
       const now = new Date();
       sub.startedAt = now;
       sub.expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 ngày trial
@@ -115,7 +116,7 @@ export class UserSubscriptionService {
     sub.paymentId = paymentId;
     sub.startedAt = sub.startedAt ?? now;
     const expires = new Date(sub.startedAt);
-    expires.setMonth(expires.getMonth() + durationMonths);
+    expires.setUTCMonth(expires.getUTCMonth() + durationMonths);
     sub.expiresAt = expires;
     sub.currentPeriodKey = this.getCurrentPeriodKey();
 
@@ -208,7 +209,7 @@ export class UserSubscriptionService {
 
   private getCurrentPeriodKey(): string {
     const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
   }
 
   async findAllPaginated(

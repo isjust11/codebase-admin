@@ -68,12 +68,12 @@ export class AuthService {
       },
     });
     if (!subscription) {
-      // create a trial subscription
-      const freeSubscriptionPlan = await this.userService.createTrialSubscription(user?.id ?? 0);
+      // create a free subscription
+      const freeSubscriptionPlan = await this.userService.createFreeSubscription(user?.id ?? 0);
       const trialSubscription = await this.userSubscriptionRepository.create({
         userId: user?.id ?? 0,
         planId: freeSubscriptionPlan.id,
-        status: SubscriptionStatus.TRIAL,
+        status: SubscriptionStatus.FREE,
         startedAt: new Date(),
         expiresAt: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
       });

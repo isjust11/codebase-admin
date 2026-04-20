@@ -90,7 +90,7 @@ export class UserService {
     const isFirstUser = userCount === 0;
 
     // Tìm subscription plan FREE
-    const freeSubscriptionPlan = await this.createTrialSubscription(user.id);
+    const freeSubscriptionPlan = await this.createFreeSubscription(user.id);
 
     // Tìm role ADMIN nếu là tài khoản đầu tiên
     let roleIds: number[] = [];
@@ -134,7 +134,7 @@ export class UserService {
     return savedUser;
   }
 
-  async createTrialSubscription(userId: number): Promise<SubscriptionPlan> {
+  async createFreeSubscription(userId: number): Promise<SubscriptionPlan> {
     let freeSubscriptionPlan = await this.subscriptionPlanRepository.findOne({
       where: {
         code: SubscriptionPlanEnum.FREE,

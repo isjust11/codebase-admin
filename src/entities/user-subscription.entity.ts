@@ -24,6 +24,8 @@ export enum SubscriptionStatus {
   CANCELLED = 'cancelled',
   /** Dùng thử */
   TRIAL = 'trial',
+  /** Miễn phí */
+  FREE = 'free',
   /** Thanh toán thất bại */
   PAYMENT_FAILED = 'payment_failed',
 }

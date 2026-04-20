@@ -167,21 +167,22 @@ export class RevenueCatWebhookService {
     transactionId: string,
   ) {
     const startedAt = purchasedAtMs ? new Date(Number(purchasedAtMs)) : new Date();
-    let expiresAt = new Date();
+    // Use startedAt as the base for expiresAt if expirationAtMs is missing
+    let expiresAt = new Date(startedAt);
 
     if (expirationAtMs) {
       expiresAt = new Date(Number(expirationAtMs));
     } else {
       // fallback assumption if no expiration provided by RevenueCat (e.g. some edge cases or Lifetime)
       if (planPeriod === 'month') {
-        expiresAt.setMonth(expiresAt.getMonth() + 1);
+        expiresAt.setUTCMonth(expiresAt.getUTCMonth() + 1);
       } else if (planPeriod === 'six_month') {
-        expiresAt.setMonth(expiresAt.getMonth() + 6);
+        expiresAt.setUTCMonth(expiresAt.getUTCMonth() + 6);
       } else if (planPeriod === 'year') {
-        expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+        expiresAt.setUTCFullYear(expiresAt.getUTCFullYear() + 1);
       } else if (planPeriod === 'lifetime') {
         // Gói trọn đời: Set ngày hết hạn rất xa trong tương lai (100 năm)
-        expiresAt.setFullYear(expiresAt.getFullYear() + 100);
+        expiresAt.setUTCFullYear(expiresAt.getUTCFullYear() + 100);
       }
     }
 
@@ -375,6 +376,6 @@ export class RevenueCatWebhookService {
   /** Tạo key cho kỳ hiện tại, VD: '2025-04' */
   private getCurrentPeriodKey(): string {
     const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
   }
 }
