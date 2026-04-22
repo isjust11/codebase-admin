@@ -59,11 +59,11 @@ export class UserSubscription {
   status: SubscriptionStatus;
 
   /** Ngày bắt đầu có hiệu lực */
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: 'datetime', nullable: true })
   startedAt: Date;
 
   /** Ngày hết hạn */
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: 'datetime', nullable: true })
   expiresAt: Date;
 
   /** Thanh toán gắn với đăng ký này (optional) */

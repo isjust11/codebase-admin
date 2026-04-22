@@ -181,8 +181,8 @@ export class RevenueCatWebhookService {
       } else if (planPeriod === 'year') {
         expiresAt.setUTCFullYear(expiresAt.getUTCFullYear() + 1);
       } else if (planPeriod === 'lifetime') {
-        // Gói trọn đời: Set ngày hết hạn rất xa trong tương lai (100 năm)
-        expiresAt.setUTCFullYear(expiresAt.getUTCFullYear() + 100);
+        // Gói trọn đời: Set ngày hết hạn rất xa trong tương lai (10 năm)
+        expiresAt.setUTCFullYear(expiresAt.getUTCFullYear() + 10);
       }
     }
 
