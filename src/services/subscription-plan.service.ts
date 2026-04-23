@@ -13,7 +13,7 @@ export class SubscriptionPlanService {
   constructor(
     @InjectRepository(SubscriptionPlan)
     private readonly planRepository: Repository<SubscriptionPlan>,
-  ) {}
+  ) { }
 
   async findAll(activeOnly = false): Promise<SubscriptionPlan[]> {
     const qb = this.planRepository.createQueryBuilder('p').orderBy('p.sortOrder', 'ASC');
@@ -54,6 +54,7 @@ export class SubscriptionPlanService {
       updates.storageLimitBytes = String(dto.storageLimitBytes);
     }
     Object.assign(plan, updates);
+    plan.id = id;
     return this.planRepository.save(plan);
   }
 
