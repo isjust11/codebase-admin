@@ -62,4 +62,11 @@ export class SubscriptionPlanService {
     const plan = await this.findById(id);
     await this.planRepository.remove(plan);
   }
+
+  getMetadata() {
+    return {
+      codes: Object.values(SubscriptionPlanEnum),
+      periodTypes: ['month', 'six_month', 'year', 'lifetime'],
+    };
+  }
 }
