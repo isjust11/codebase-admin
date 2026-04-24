@@ -9,7 +9,7 @@ import {
   Query,
   Res,
   UseGuards,
-  
+
 } from '@nestjs/common';
 import { Response } from 'express';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
@@ -26,6 +26,18 @@ import {
 export class SubscriptionPlanController extends BaseController {
   constructor(private readonly planService: SubscriptionPlanService) {
     super();
+  }
+
+  /** Lấy metadata (enums) cho frontend */
+  @Get('metadata/enums')
+  @UseGuards(JwtAuthGuard, PermissionGuard)
+  async getMetadata(@Res() res: Response) {
+    try {
+      const result = this.planService.getMetadata();
+      return this.success(res, result);
+    } catch (error) {
+      this.error(res, error);
+    }
   }
 
   /** Danh sách gói (cho app: ?activeOnly=true) */

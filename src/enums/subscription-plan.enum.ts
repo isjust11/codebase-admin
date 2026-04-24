@@ -3,5 +3,9 @@ export enum SubscriptionPlanEnum {
     PRO_YEAR = 'PRO_YEAR',
     PRO_MONTHLY = 'PRO_MONTHLY',
     ULTRA = 'ULTRA',
-    LIFETIME = 'LIFETIME'
+    LIFETIME = 'LIFETIME',
+    RB_YEAR = 'RB_YEAR',
+    RB_MONTH = 'RB_MONTH',
+    RB_6MONTH = 'RB_6MONTH',
+    RB_LIFETIME = 'RB_LIFETIME',
 }

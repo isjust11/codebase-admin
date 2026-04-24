@@ -25,22 +25,29 @@ export class UserSubscriptionService {
       .createQueryBuilder('s')
       .leftJoinAndSelect('s.plan', 'plan')
       .where('s.userId = :userId', { userId })
-      .andWhere('s.status IN (:...statuses)', {
-        statuses: [SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIAL],
+      .andWhere('s.status = :status', {
+        status: SubscriptionStatus.ACTIVE,
       })
-      .andWhere('s.expiresAt >= :now', { now })
+      // Cho phép NULL vì gói FREE hoặc Lifetime có thể không có ngày hết hạn
+      .andWhere('(s.expiresAt >= :now OR s.expiresAt IS NULL)', { now })
       .orderBy('s.expiresAt', 'DESC')
       .getMany();
-    // get current active subscription
-    const currentActiveSubscription = subs.find(s => s.status === SubscriptionStatus.ACTIVE
+
+    // 1. Tìm gói trả phí đang hoạt động và có thông tin thanh toán
+    const currentActiveSubscription = subs.find(s =>
+      s.status === SubscriptionStatus.ACTIVE
+      && s.plan?.code !== SubscriptionPlanEnum.FREE
       && s.paymentId !== null
-      && new Date(s.expiresAt).getTime() > now.getTime());
-    if (!currentActiveSubscription) {
-      // get next trial subscription
-      const nextSubscription = subs.find(s => s.plan?.code === SubscriptionPlanEnum.FREE);
-      return nextSubscription ?? null;
+      && (s.expiresAt ? new Date(s.expiresAt).getTime() > now.getTime() : true));
+
+    if (currentActiveSubscription) {
+      return currentActiveSubscription;
     }
-    return currentActiveSubscription;
+
+    // 2. Nếu không có gói trả phí, tìm gói FREE (thường không có paymentId)
+    const freeSubscription = subs.find(s => s.plan?.code === SubscriptionPlanEnum.FREE);
+
+    return freeSubscription ?? null;
   }
 
   /** Lấy tất cả đăng ký của user (để admin hoặc lịch sử) */
@@ -63,24 +70,25 @@ export class UserSubscriptionService {
     }
 
     const status = dto.status ?? SubscriptionStatus.PENDING_PAYMENT;
-    const isTrial = status === SubscriptionStatus.TRIAL;
+    const isFree = status === SubscriptionStatus.FREE;
     const userSubscription = await this.subscriptionRepository.findOne({ where: { userId, planId: plan.id } });
     if (userSubscription) {
       throw new BadRequestException('User already has a subscription for this plan');
     }
+    const now = new Date();
     const sub = this.subscriptionRepository.create({
       userId,
       planId: plan.id,
       status,
-      startedAt: new Date(),
-      expiresAt: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+      startedAt: now,
+      expiresAt: new Date(new Date(now).setUTCFullYear(now.getUTCFullYear() + 1)),
       storageUsedBytes: '0',
       ttsUsedInPeriod: 0,
       convertUsedInPeriod: 0,
       currentPeriodKey: this.getCurrentPeriodKey(),
     });
 
-    if (isTrial) {
+    if (isFree) {
       const now = new Date();
       sub.startedAt = now;
       sub.expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 ngày trial
@@ -108,7 +116,7 @@ export class UserSubscriptionService {
     sub.paymentId = paymentId;
     sub.startedAt = sub.startedAt ?? now;
     const expires = new Date(sub.startedAt);
-    expires.setMonth(expires.getMonth() + durationMonths);
+    expires.setUTCMonth(expires.getUTCMonth() + durationMonths);
     sub.expiresAt = expires;
     sub.currentPeriodKey = this.getCurrentPeriodKey();
 
@@ -201,7 +209,7 @@ export class UserSubscriptionService {
 
   private getCurrentPeriodKey(): string {
     const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
   }
 
   async findAllPaginated(
