@@ -241,7 +241,7 @@ export class SeedsCommonData1710669600002 implements MigrationInterface {
 
         // insert subscription plan
         await queryRunner.query(`
-            INSERT INTO subscription_plan (name, code, description, isActive, createdAt, updatedAt) VALUES
+            INSERT INTO subscription_plans (name, code, description, isActive, createdAt, updatedAt) VALUES
             ('Free', '${SubscriptionPlanEnum.FREE}', 'Free plan', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
             ('Readbox Pro Year', '${SubscriptionPlanEnum.PRO_YEAR}', 'Readbox Pro Year plan', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
             ('Readbox Pro Monthly', '${SubscriptionPlanEnum.PRO_MONTHLY}', 'Readbox Pro Monthly plan', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
