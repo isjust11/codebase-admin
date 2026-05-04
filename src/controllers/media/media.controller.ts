@@ -86,7 +86,7 @@ export class MediaController extends BaseController {
     return this.mediaService.update(this.decode(id), updateMediaDto, req.user.id);
   }
 
-  @Delete(':id')
+  @Delete(':filename')
   @RequirePermission('DELETE', 'media')
   @HttpCode(204)
   async delete(@Param('filename') filename: string, @Request() req,): Promise<{ success: boolean, message?: string }> {

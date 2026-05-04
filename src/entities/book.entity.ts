@@ -25,10 +25,10 @@ export class Book {
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Column({ name: 'cover_image_url', nullable: true })
+  @Column({ name: 'cover_image_url', type: 'text', nullable: true })
   coverImageUrl: string;
 
-  @Column({ name: 'file_url', nullable: false })
+  @Column({ name: 'file_url', type: 'text', nullable: false })
   fileUrl: string;
 
   @Column({ name: 'total_pages', nullable: true })
