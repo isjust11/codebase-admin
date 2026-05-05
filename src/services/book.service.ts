@@ -8,9 +8,7 @@ import { FilterType } from 'src/enums/filter-type.enum';
 import { UserInteraction } from 'src/entities/user-interaction.entity';
 import { InteractionTarget } from 'src/enums/interaction-target.enum';
 import { FcmService } from './fcm.service';
-import { FcmTokenService } from './fcm-token.service';
 import { EbookTemplate } from 'src/templates/notification/ebook-template';
-import { NotificationService } from './notification.service';
 import { NotificationType } from 'src/enums/notification.enum';
 import { Category } from 'src/entities/category.entity';
 import { MediaService } from './media.service';
@@ -196,9 +194,9 @@ export class BookService {
         });
       }
       await this.userInteractionRepository.save(interaction);
-
+      const storageData = await this.mediaService.getUserStorageUsedData(userId);
       await this.userSubscriptionService.incrementUsage(userId, {
-        storageBytes: totalDataStorage,
+        storageBytes: storageData?.usedSize || 0,
       });
       this.logger.log(`[trackStorage] userId=${userId} bookId=${bookId} totalDataStorage=${totalDataStorage}`);
     } catch (err) {
@@ -244,6 +242,7 @@ export class BookService {
           body: ebookTemplate.body,
           type: NotificationType.EBOOK,
           data: ebookTemplate.data,
+          bodyHtml: ebookTemplate.bodyHtml,
         });
       } catch (error) {
         this.logger.error(`[createBook] Notification failed: ${error?.message}`);
@@ -261,15 +260,6 @@ export class BookService {
 
     this.validateBookData(updateBookDto, false);
 
-    if (updateBookDto.categoryId) {
-      const category = await this.categoryRepository.findOne({ where: { id: updateBookDto.categoryId } });
-      if (!category) {
-        throw new BadRequestException('Danh mục không tồn tại');
-      }
-      book.category = category;
-      book.categoryId = category.id;
-    }
-
     const fileChanged = updateBookDto.fileUrl && updateBookDto.fileUrl !== book.fileUrl;
     let storageUsedBytes = 0;
 
@@ -281,7 +271,14 @@ export class BookService {
     }
 
     Object.assign(book, updateBookDto);
-
+    if (updateBookDto.categoryId) {
+      const category = await this.categoryRepository.findOne({ where: { id: updateBookDto.categoryId } });
+      if (!category) {
+        throw new BadRequestException('Danh mục không tồn tại');
+      }
+      book.category = category;
+      book.categoryId = category.id;
+    }
     const savedBook = await this.bookRepository.save(book);
 
     if (fileChanged && storageUsedBytes > 0) {
@@ -308,14 +305,10 @@ export class BookService {
 
     if (book.fileSize > 0 && book.createById) {
       try {
+        const usedSize = await this.mediaService.getUserStorageUsedData(book.createById);
+
         await this.userSubscriptionService.incrementUsage(book.createById, {
-          storageBytes: -book.fileSize,
-        });
-        await this.userInteractionRepository.delete({
-          userId: book.createById,
-          targetId: id,
-          targetType: InteractionTarget.BOOK,
-          interactionType: InteractionType.UPLOAD,
+          storageBytes: (usedSize?.usedSize || 0),
         });
       } catch (err) {
         this.logger.warn(`[deleteBook] Storage rollback failed: ${err?.message}`);

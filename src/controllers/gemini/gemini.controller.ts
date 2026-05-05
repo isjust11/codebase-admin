@@ -11,6 +11,7 @@ import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { PermissionGuard } from '../../guards/permission.guard';
 import { LookupRequestDto } from '../../dtos/gemini/lookup-request.dto';
 import { TranslateRequestDto } from '../../dtos/gemini/translate-request.dto';
+import { GenerateBookCoverRequestDto } from '../../dtos/gemini/generate-book-cover-request.dto';
 
 @Controller('ai')
 @UseGuards(JwtAuthGuard, PermissionGuard)
@@ -64,6 +65,30 @@ export class GeminiController {
       return {
         status: false,
         message: error.message || 'Lỗi khi dịch thuật',
+        code: error.status || 500,
+      };
+    }
+  }
+
+  // generate book cover
+  @Post('generate-book-cover')
+  @HttpCode(HttpStatus.OK)
+  async generateBookCover(@Body() dto: GenerateBookCoverRequestDto) {
+    try {
+      const result = await this.geminiService.generateBookCover(
+        dto.title,
+        dto.author,
+      );
+      return {
+        status: true,
+        message: 'Tạo ảnh bìa sách thành công',
+        data: result,
+      };
+    } catch (error) {
+      console.error('Error in generateBookCover:', error);
+      return {
+        status: false,
+        message: error.message || 'Lỗi khi tạo ảnh bìa sách',
         code: error.status || 500,
       };
     }

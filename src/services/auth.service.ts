@@ -14,6 +14,7 @@ import { UpdateProfileDto } from 'src/dtos/update-profile-dto';
 import { FcmTokenService } from './fcm-token.service';
 import { SubscriptionStatus, UserSubscription } from 'src/entities/user-subscription.entity';
 import { ConfigService } from '@nestjs/config';
+import { MediaService } from './media.service';
 
 @Injectable()
 export class AuthService {
@@ -30,7 +31,7 @@ export class AuthService {
     private fcmTokenService: FcmTokenService,
     @InjectRepository(UserSubscription)
     private userSubscriptionRepository: Repository<UserSubscription>,
-    private configService: ConfigService,
+    private configService: ConfigService
   ) {
     this.DEFAULT_PIN_EXPIRES_IN = this.configService.get<number>('pinExpiresIn') || 1;
   }
@@ -600,6 +601,7 @@ export class AuthService {
     user.isDeleted = true;
     user.deletedAt = new Date();
     await this.userService.update(user.id, user);
+
     return { code: 'delete-account', status: 'success', data: { message: 'Tài khoản đã được xóa thành công' } };
   }
 

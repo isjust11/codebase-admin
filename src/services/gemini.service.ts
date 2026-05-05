@@ -98,9 +98,38 @@ Văn bản: "${text}"`;
         contents: prompt,
       });
 
+
       return response.text ?? '';
     } catch (error) {
       console.error('GeminiService.translate error:', error);
+      throw new InternalServerErrorException(
+        `Lỗi khi gọi Gemini API: ${error.message || 'Unknown error'}`,
+      );
+    }
+  }
+  //  generateBook Cover
+  async generateBookCover(title: string, author: string): Promise<string> {
+    try {
+      const prompt = `A professional and creative book cover design for a book titled "${title}" written by ${author}. High quality, elegant typography, modern design, digital art, no text spelling errors.`;
+      
+      const response = await this.genAI.models.generateImages({
+        model: 'imagen-4.0-generate-001',
+        prompt: prompt,
+        config: {
+          numberOfImages: 1,
+          aspectRatio: '3:4', // Tỉ lệ chuẩn cho bìa sách
+        }
+      });
+
+      const imageBytes = response.generatedImages?.[0]?.image?.imageBytes;
+      if (!imageBytes) {
+        throw new Error('Không có ảnh được tạo từ API');
+      }
+
+      // Trả về chuỗi Base64 dưới dạng Data URI để dễ dàng lưu hoặc hiển thị
+      return `data:image/jpeg;base64,${imageBytes}`;
+    } catch (error) {
+      console.error('GeminiService.generateBookCover error:', error);
       throw new InternalServerErrorException(
         `Lỗi khi gọi Gemini API: ${error.message || 'Unknown error'}`,
       );

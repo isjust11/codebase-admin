@@ -1,7 +1,7 @@
 import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { FirebaseService } from './firebase.service';
 import { NotificationService } from './notification.service';
-import { NotificationType } from 'src/enums/notification.enum'; 
+import { NotificationType } from 'src/enums/notification.enum';
 import { FcmTokenService } from './fcm-token.service';
 
 type SendPayload = {
@@ -9,6 +9,7 @@ type SendPayload = {
   body: string;
   type: NotificationType,
   data?: Record<string, string>;
+  bodyHtml?: string;
 };
 
 @Injectable()

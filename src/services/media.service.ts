@@ -7,7 +7,7 @@ import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
 import { User } from 'src/entities/user.entity';
 import imageSize from 'image-size';
 import { ConfigService } from '@nestjs/config';
-import { S3Client, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command, HeadObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command, HeadObjectCommand, GetObjectCommand, DeleteObjectsCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 @Injectable()
@@ -134,13 +134,51 @@ export class MediaService {
   async deleteFile(filename: string, userId: number): Promise<void> {
     try {
       if (filename) {
+        const filePath = `user-files/${userId}/${filename}`;
         await this.s3Client.send(new DeleteObjectCommand({
           Bucket: this.bucketName,
-          Key: filename,
+          Key: filePath,
         }));
       }
     } catch (_error) {
       throw new Error(`Failed to delete file: ${_error.message}`);
+    }
+  }
+
+  // delete userdata
+  async deleteUserData(userId: number): Promise<void> {
+    try {
+      const result = await this.s3Client.send(new ListObjectsV2Command({
+        Bucket: this.bucketName,
+        Prefix: `user-files/${userId}/`,
+      }));
+      const files = result.Contents?.map((item) => item.Key) || [];
+      if (files.length > 0) {
+        await this.s3Client.send(new DeleteObjectsCommand({
+          Bucket: this.bucketName,
+          Delete: {
+            Objects: files.map((key) => ({ Key: key || '' })),
+          },
+        }));
+      }
+    } catch (_error) {
+      throw new Error(`Failed to delete user data: ${_error.message}`);
+    }
+  }
+
+  // lấy dung lượng lưu trữ thực tế của user
+  async getUserStorageUsedData(userId: number): Promise<{ usedSize: number; } | null> {
+    try {
+      const result = await this.s3Client.send(new ListObjectsV2Command({
+        Bucket: this.bucketName,
+        Prefix: `user-files/${userId}/`,
+      }));
+      const usedSize = result.Contents?.reduce((acc, item) => acc + (item.Size || 0), 0) || 0;
+      return {
+        usedSize,
+      };
+    } catch {
+      return null;
     }
   }
 

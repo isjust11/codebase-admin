@@ -39,7 +39,6 @@ export class UserSubscriptionService {
       && s.plan?.code !== SubscriptionPlanEnum.FREE
       && s.paymentId !== null
       && (s.expiresAt ? new Date(s.expiresAt).getTime() > now.getTime() : true));
-
     if (currentActiveSubscription) {
       return currentActiveSubscription;
     }
@@ -140,8 +139,9 @@ export class UserSubscriptionService {
     }
 
     if (dto.storageBytes) {
+      // storageUsedBytes là tổng dung lượng sử dụng, 
       sub.storageUsedBytes = String(
-        Number(sub.storageUsedBytes) + dto.storageBytes,
+        Number(dto.storageBytes || 0),
       );
     }
     if (dto.ttsCount) {
