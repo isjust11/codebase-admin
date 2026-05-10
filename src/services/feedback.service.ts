@@ -5,6 +5,7 @@ import { Feedback, FeedbackStatus, FeedbackType, FeedbackPriority } from '../ent
 import { CreateFeedbackDto } from '../dtos/create-feedback.dto';
 import { UpdateFeedbackDto } from '../dtos/update-feedback.dto';
 import { PaginatedResponse, PaginationParams } from '../dtos/filter.dto';
+import { getMessages, SupportedLocale } from 'src/constants/messages';
 
 @Injectable()
 export class FeedbackService {
@@ -86,7 +87,6 @@ export class FeedbackService {
   }
 
   async create(createFeedbackDto: CreateFeedbackDto): Promise<Feedback> {
-    // Create feedback entity from DTO
     const feedbackData: DeepPartial<Feedback> = {
       ...createFeedbackDto,
       attachments: createFeedbackDto.attachments ? createFeedbackDto.attachments.join(',') : '',
@@ -112,31 +112,28 @@ export class FeedbackService {
     });
   }
 
-  async findOne(id: number): Promise<Feedback> {
+  async findOne(id: number, locale: SupportedLocale = 'vi'): Promise<Feedback> {
     const feedback = await this.feedbackRepository.findOne({ 
       where: { id },
       relations: ['user', 'assignedTo'],
     });
     if (!feedback) {
-      throw new NotFoundException('Feedback not found');
+      throw new NotFoundException(getMessages(locale).feedback.notFound);
     }
     return feedback;
   }
 
-  async update(id: number, updateFeedbackDto: UpdateFeedbackDto): Promise<Feedback> {
-    const feedback = await this.findOne(id);
+  async update(id: number, updateFeedbackDto: UpdateFeedbackDto, locale: SupportedLocale = 'vi'): Promise<Feedback> {
+    const feedback = await this.findOne(id, locale);
 
-    // Handle status change to resolved
     if (updateFeedbackDto.status === FeedbackStatus.RESOLVED && feedback.status !== FeedbackStatus.RESOLVED) {
       updateFeedbackDto.resolvedAt = new Date();
     }
 
-    // Update attachments if provided
     if (updateFeedbackDto.attachments) {
       updateFeedbackDto.attachments = updateFeedbackDto.attachments;
     }
 
-    // Handle assigned user
     if (updateFeedbackDto.assignedToId) {
       updateFeedbackDto.assignedToId = updateFeedbackDto.assignedToId;
     }
@@ -145,13 +142,13 @@ export class FeedbackService {
     return await this.feedbackRepository.save(feedback);
   }
 
-  async remove(id: number): Promise<void> {
-    const feedback = await this.findOne(id);
+  async remove(id: number, locale: SupportedLocale = 'vi'): Promise<void> {
+    const feedback = await this.findOne(id, locale);
     await this.feedbackRepository.remove(feedback);
   }
 
-  async updateStatus(id: number, status: FeedbackStatus): Promise<Feedback> {
-    const feedback = await this.findOne(id);
+  async updateStatus(id: number, status: FeedbackStatus, locale: SupportedLocale = 'vi'): Promise<Feedback> {
+    const feedback = await this.findOne(id, locale);
     feedback.status = status;
     
     if (status === FeedbackStatus.RESOLVED) {
@@ -161,8 +158,8 @@ export class FeedbackService {
     return await this.feedbackRepository.save(feedback);
   }
 
-  async assignToUser(id: number, assignedToId: number): Promise<Feedback> {
-    const feedback = await this.findOne(id);
+  async assignToUser(id: number, assignedToId: number, locale: SupportedLocale = 'vi'): Promise<Feedback> {
+    const feedback = await this.findOne(id, locale);
     feedback.assignedToId = assignedToId;
     return await this.feedbackRepository.save(feedback);
   }

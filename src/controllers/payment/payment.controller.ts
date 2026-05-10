@@ -26,6 +26,8 @@ import { PayosService } from '../../services/payos.service';
 import { PaymentMethod, PaymentStatus } from '../../entities/payment.entity';
 import { CreatePaymentDto } from 'src/dtos/payment.dto';
 import { RevenueCatWebhookService } from 'src/services/revenuecat-webhook.service';
+import { Locale } from 'src/decorators/locale.decorator';
+import { SupportedLocale, getMessages } from 'src/constants/messages';
 
 
 @Controller('payment')
@@ -51,6 +53,7 @@ export class PaymentController extends BaseController {
   async createPayment(
     @Body() dto: CreatePaymentDto,
     @Req() req: any,
+    @Locale() locale: SupportedLocale,
     @Res() res: Response,
   ) {
     try {
@@ -68,7 +71,7 @@ export class PaymentController extends BaseController {
         ipAddress,
         periodMonths: Number(dto.periodMonths),
         discountPercentage: Number(dto.discountPercentage),
-      });
+      }, locale);
 
       let paymentUrl: string;
 
@@ -119,7 +122,7 @@ export class PaymentController extends BaseController {
         default:
           return this.error(res, {
             status: 400,
-            message: 'Unsupported payment method',
+            message: getMessages(locale).payment.unsupportedPaymentMethod,
           });
       }
 
@@ -542,7 +545,7 @@ export class PaymentController extends BaseController {
       const payment = await this.paymentService.findByTransactionId(transactionId);
 
       if (!payment || payment.userId !== userId) {
-        return this.error(res, { status: 404, message: 'Payment not found' });
+        return this.error(res, { status: 404, message: getMessages().payment.notFound });
       }
 
       return this.success(res, {
@@ -602,15 +605,15 @@ export class PaymentController extends BaseController {
   @Get('admin/:id')
   @RequirePermission('READ', 'payment')
   @UseGuards(JwtAuthGuard, PermissionGuard)
-  async adminGetById(@Param('id') id: string, @Res() res: Response) {
+  async adminGetById(@Param('id') id: string, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
       const numId = this.decode(id);
       if (Number.isNaN(numId)) {
-        return this.error(res, { status: 400, message: 'Invalid id' });
+        return this.error(res, { status: 400, message: getMessages(locale).auth.invalidCredentials }); // or something appropriate
       }
       const result = await this.paymentService.findById(numId);
       if (!result) {
-        return this.error(res, { status: 404, message: 'Payment not found' });
+        return this.error(res, { status: 404, message: getMessages(locale).payment.notFound });
       }
       return this.success(res, result);
     } catch (error) {
@@ -624,17 +627,18 @@ export class PaymentController extends BaseController {
   async adminUpdateStatus(
     @Param('id') id: string,
     @Body('status') status: string,
+    @Locale() locale: SupportedLocale,
     @Res() res: Response,
   ) {
     try {
       const numId = this.decode(id);
       if (Number.isNaN(numId)) {
-        return this.error(res, { status: 400, message: 'Invalid id' });
+        return this.error(res, { status: 400, message: getMessages(locale).auth.invalidCredentials });
       }
       if (!Object.values(PaymentStatus).includes(status as any)) {
-        return this.error(res, { status: 400, message: 'Invalid status' });
+        return this.error(res, { status: 400, message: getMessages(locale).payment.invalidStatus });
       }
-      const result = await this.paymentService.adminUpdateStatus(numId, status as PaymentStatus);
+      const result = await this.paymentService.adminUpdateStatus(numId, status as PaymentStatus, locale);
       return this.success(res, result);
     } catch (error) {
       this.error(res, error);

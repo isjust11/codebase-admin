@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { getMessages, SupportedLocale } from 'src/constants/messages';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, In, Like, MoreThan, Repository, Brackets } from 'typeorm';
 import { Article } from '../entities/article.entity';
@@ -177,10 +178,10 @@ export class ArticleService {
     return savedArticle;
   }
 
-  async findByDiscovery(params: PaginationParams, categoryId: number): Promise<Article[]> {
+  async findByDiscovery(params: PaginationParams, categoryId: number, locale: SupportedLocale = 'vi'): Promise<Article[]> {
     const { page = 1, size = 10, search = '' } = params;
     const category = await this.categoryService.findOne(categoryId);
-    if (!category) throw new NotFoundException('Category not found');
+    if (!category) throw new NotFoundException(getMessages(locale).article.categoryNotFound);
     if (category.code.toLowerCase() == "all") {
       const allCategory = await this.categoryTypeService.findArticleType();
       const categoryIds = allCategory.map(cat => cat.id);
@@ -198,13 +199,13 @@ export class ArticleService {
   }
 
   //get list tips
-  async getTipList(params: PaginationParams, categoryId: number): Promise<Article[]> {
+  async getTipList(params: PaginationParams, categoryId: number, locale: SupportedLocale = 'vi'): Promise<Article[]> {
     const { page = 1, size = 10, search = '' } = params;
     const tipType = await this.categoryTypeService.findByCode(CategoryTypeEnum.ARTICLE);
-    if (!tipType) throw new NotFoundException('Tip type not found');
+    if (!tipType) throw new NotFoundException(getMessages(locale).article.tipTypeNotFound);
     if (!categoryId || categoryId == 0) {
       const tipType = await this.categoryTypeService.findArticleType();
-      if (!tipType) throw new NotFoundException('Tip type not found');
+      if (!tipType) throw new NotFoundException(getMessages(locale).article.tipTypeNotFound);
       const categoryIds = tipType.map(cat => cat.id);
       const articles = await this.articleRepository.find({
         where: { categoryId: In(categoryIds), title: Like(`%${search}%`) },
@@ -225,18 +226,18 @@ export class ArticleService {
   }
 
   // get tip detail 
-  async getTipDetails(id: number): Promise<Article> {
+  async getTipDetails(id: number, locale: SupportedLocale = 'vi'): Promise<Article> {
     const article = await this.articleRepository.findOne({ where: { id } });
-    if (!article) throw new NotFoundException('Article not found');
+    if (!article) throw new NotFoundException(getMessages(locale).article.articleNotFound);
     return article;
   }
 
-  async findOne(id: number, userId?: number): Promise<any> {
+  async findOne(id: number, userId?: number, locale: SupportedLocale = 'vi'): Promise<any> {
     const article = await this.articleRepository.findOne({
       where: { id },
       relations: ['createdBy', 'updatedBy', 'status', 'category', 'author']
     });
-    if (!article) throw new NotFoundException('Article not found');
+    if (!article) throw new NotFoundException(getMessages(locale).article.articleNotFound);
 
     // Get interaction stats
     const interactionStats = await this.userInteractionService.getInteractionStats(
@@ -271,9 +272,9 @@ export class ArticleService {
   }
 
 
-  async updateView(id: number, data: ArticleDto): Promise<Article> {
+  async updateView(id: number, data: ArticleDto, locale: SupportedLocale = 'vi'): Promise<Article> {
     const article = await this.articleRepository.findOne({ where: { id } });
-    if (!article) throw new NotFoundException('Article not found');
+    if (!article) throw new NotFoundException(getMessages(locale).article.articleNotFound);
 
     Object.assign(article, {
       ...data,
@@ -283,9 +284,9 @@ export class ArticleService {
     return this.articleRepository.save(article);
   }
 
-  async update(id: number, data: ArticleDto): Promise<Article> {
+  async update(id: number, data: ArticleDto, locale: SupportedLocale = 'vi'): Promise<Article> {
     const article = await this.articleRepository.findOne({ where: { id } });
-    if (!article) throw new NotFoundException('Article not found');
+    if (!article) throw new NotFoundException(getMessages(locale).article.articleNotFound);
 
     Object.assign(article, {
       ...data,
@@ -322,9 +323,9 @@ export class ArticleService {
     return this.articleRepository.save(article);
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: number, locale: SupportedLocale = 'vi'): Promise<void> {
     const result = await this.articleRepository.delete(id);
-    if (result.affected === 0) throw new NotFoundException('Article not found');
+    if (result.affected === 0) throw new NotFoundException(getMessages(locale).article.articleNotFound);
   }
 
   // get featured news list

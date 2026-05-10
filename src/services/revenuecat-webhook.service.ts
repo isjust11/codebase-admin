@@ -6,6 +6,7 @@ import { SubscriptionPlan } from '../entities/subscription-plan.entity';
 import { User } from '../entities/user.entity';
 import { Payment, PaymentMethod, PaymentStatus } from '../entities/payment.entity';
 import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
+import { getMessages, SupportedLocale } from 'src/constants/messages';
 
 @Injectable()
 export class RevenueCatWebhookService {
@@ -22,13 +23,13 @@ export class RevenueCatWebhookService {
     private readonly paymentRepository: Repository<Payment>,
   ) { }
 
-  async handleWebhook(body: any) {
+  async handleWebhook(body: any, locale: SupportedLocale = 'vi') {
     try {
       this.logger.log(`Received RevenueCat Webhook: ${JSON.stringify(body)}`);
 
       const event = body.event;
       if (!event) {
-        throw new BadRequestException('No event found in webhook body');
+        throw new BadRequestException(getMessages(locale).revenuecat.noEventFound);
       }
 
       const type = event.type;

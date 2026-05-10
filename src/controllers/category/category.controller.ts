@@ -7,6 +7,8 @@ import { RequirePermission } from 'src/decorators/require-permissions.decorator'
 import { PermissionGuard } from 'src/guards/permission.guard';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { Response } from 'express';
+import { Locale } from 'src/decorators/locale.decorator';
+import { SupportedLocale } from 'src/constants/messages';
 
 @Controller('categories')
 @UseGuards(JwtAuthGuard, PermissionGuard)
@@ -37,10 +39,11 @@ export class CategoryController extends BaseController {
     @Param('categoryTypeCode') categoryTypeCode: string,
     @Query('sortBy') sortBy: string,
     @Query('sortType') sortType: 'ASC' | 'DESC',
+    @Locale() locale: SupportedLocale,
     @Res() res: Response,
   ) {
     try {
-      const categories = await this.categoryService.findByCategoryTypeCode(categoryTypeCode, sortBy, sortType);
+      const categories = await this.categoryService.findByCategoryTypeCode(categoryTypeCode, sortBy, sortType, locale);
       return this.success(res as any, categories);
     } catch (error) {
       return this.error(res as any, error);
@@ -116,4 +119,4 @@ export class CategoryController extends BaseController {
       return this.error(res, error);
     }
   }
-} 
+}

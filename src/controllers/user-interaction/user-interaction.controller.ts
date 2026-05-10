@@ -26,6 +26,8 @@ import { UserInteraction } from 'src/entities/user-interaction.entity';
 import { InteractionTarget } from 'src/enums/interaction-target.enum';
 import { InteractionType } from 'src/enums/interaction-type.enum';
 import { PermissionGuard } from '../../guards/permission.guard';
+import { Locale } from 'src/decorators/locale.decorator';
+import { SupportedLocale } from 'src/constants/messages';
 @Controller('user-interactions')
 @UseGuards(JwtAuthGuard, PermissionGuard)
 export class UserInteractionController extends BaseController {
@@ -38,11 +40,12 @@ export class UserInteractionController extends BaseController {
   async createInteraction(
     @Request() req: any,
     @Body() createDto: CreateUserInteractionDto,
+    @Locale() locale: SupportedLocale,
     @Res() res: Response,
   ) {
     try {
       const userId = req.user.id;
-      const data = await this.userInteractionService.createInteraction(userId, createDto);
+      const data = await this.userInteractionService.createInteraction(userId, createDto, locale);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -57,6 +60,7 @@ export class UserInteractionController extends BaseController {
     @Param('targetId') targetId: string,
     @Param('interactionType') interactionType: InteractionType,
     @Body() updateDto: UpdateUserInteractionDto,
+    @Locale() locale: SupportedLocale,
     @Res() res: Response,
   ) {
     try {
@@ -68,6 +72,7 @@ export class UserInteractionController extends BaseController {
         idInteraction,
         interactionType,
         updateDto,
+        locale
       );
       return this.success(res, data);
     } catch (error) {
@@ -82,6 +87,7 @@ export class UserInteractionController extends BaseController {
     @Param('targetType') targetType: InteractionTarget,
     @Param('targetId') targetId: string,
     @Param('interactionType') interactionType: InteractionType,
+    @Locale() locale: SupportedLocale,
     @Res() res: Response,
   ) {
     try {
@@ -92,6 +98,7 @@ export class UserInteractionController extends BaseController {
         targetType,
         targetNumber,
         interactionType,
+        locale
       );
       return this.success(res, null);
     } catch (error) {
@@ -165,6 +172,7 @@ export class UserInteractionController extends BaseController {
     @Request() req: any,
     @Param('targetType') targetType: string,
     @Param('targetId') targetId: string,
+    @Locale() locale: SupportedLocale,
     @Res() res: Response,
   ) {
     try {
@@ -174,7 +182,7 @@ export class UserInteractionController extends BaseController {
         interactionType: InteractionType.VIEW,
         targetType: targetType as InteractionTarget,
         targetId: targetIdNumber,
-      });
+      }, locale);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -188,6 +196,7 @@ export class UserInteractionController extends BaseController {
     @Request() req: any,
     @Param('targetType') targetType: string,
     @Param('targetId') targetId: string,
+    @Locale() locale: SupportedLocale,
     @Res() res: Response,
   ) {
     try {
@@ -197,7 +206,7 @@ export class UserInteractionController extends BaseController {
         interactionType: InteractionType.LIKE,
         targetType: targetType as InteractionTarget,
         targetId: targetNumber,
-      });
+      }, locale);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -211,6 +220,7 @@ export class UserInteractionController extends BaseController {
     @Request() req: any,
     @Param('targetType') targetType: string,
     @Param('targetId') targetId: string,
+    @Locale() locale: SupportedLocale,
     @Res() res: Response,
   ) {
     try {
@@ -220,7 +230,7 @@ export class UserInteractionController extends BaseController {
         interactionType: InteractionType.BOOKMARK,
         targetType: targetType as InteractionTarget,
         targetId: targetIdNumber,
-      });
+      }, locale);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -234,6 +244,7 @@ export class UserInteractionController extends BaseController {
     @Param('targetType') targetType: string,
     @Param('targetId') targetId: string,
     @Body() body: { sharePlatform?: string },
+    @Locale() locale: SupportedLocale,
     @Res() res: Response,
   ) {
     try {
@@ -244,7 +255,7 @@ export class UserInteractionController extends BaseController {
         targetType: targetType as InteractionTarget,
         targetId: targetIdNumber,
         sharePlatform: body.sharePlatform,
-      });
+      }, locale);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -259,6 +270,7 @@ export class UserInteractionController extends BaseController {
     @Param('targetType') targetType: string,
     @Param('targetId') targetId: string,
     @Body() body: { rating: number, comment?: string },
+    @Locale() locale: SupportedLocale,
     @Res() res: Response,
   ) {
     try {
@@ -270,7 +282,7 @@ export class UserInteractionController extends BaseController {
         targetId: targetIdNumber,
         rating: body.rating,
         comment: body.comment,
-      });
+      }, locale);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -299,6 +311,7 @@ export class UserInteractionController extends BaseController {
     @Request() req: any,
     @Param('targetType') targetType: string,
     @Param('targetId') targetId: string,
+    @Locale() locale: SupportedLocale,
     @Res() res: Response,
   ) {
     try {
@@ -308,7 +321,7 @@ export class UserInteractionController extends BaseController {
         interactionType: InteractionType.FOLLOW,
         targetType: targetType as InteractionTarget,
         targetId: targetIdNumber,
-      });
+      }, locale);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -324,6 +337,7 @@ export class UserInteractionController extends BaseController {
     @Param('actionType') actionType: InteractionType,
     @Param('targetId') targetId: string,
     @Body() body: { metadata?: any },
+    @Locale() locale: SupportedLocale,
     @Res() res: Response,
   ) {
     try {
@@ -334,7 +348,7 @@ export class UserInteractionController extends BaseController {
         targetType: targetType,
         targetId: targetIdNumber,
         metadata: body.metadata,
-      });
+      }, locale);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -366,6 +380,7 @@ export class UserInteractionController extends BaseController {
     @Param('targetType') targetType: InteractionTarget,
     @Param('interactionType') interactionType: InteractionType,
     @Param('targetId') targetId: string,
+    @Locale() locale: SupportedLocale,
     @Res() res: Response,
   ) {
     try {
@@ -376,6 +391,7 @@ export class UserInteractionController extends BaseController {
         targetType as InteractionTarget,
         targetIdNumber,
         interactionType as InteractionType,
+        locale
       );
       return this.success(res, new UserInteraction(
       ));
@@ -390,6 +406,7 @@ export class UserInteractionController extends BaseController {
     @Param('targetType') targetType: InteractionTarget,
     @Param('interactionType') interactionType: InteractionType,
     @Param('targetId') targetId: string,
+    @Locale() locale: SupportedLocale,
     @Res() res: Response,
   ) {
     try {
@@ -400,6 +417,7 @@ export class UserInteractionController extends BaseController {
         targetType,
         targetIdNumber,
         interactionType,
+        locale
       );
       return this.success(res, data);
     } catch (error) {
@@ -414,6 +432,7 @@ export class UserInteractionController extends BaseController {
     @Param('targetType') targetType: InteractionTarget,
     @Param('interactionType') interactionType: InteractionType,
     @Param('targetId') targetId: string,
+    @Locale() locale: SupportedLocale,
     @Res() res: Response,
   ) {
     try {
@@ -424,6 +443,7 @@ export class UserInteractionController extends BaseController {
         targetType,
         targetIdNumber,
         interactionType,
+        locale
       );
       return this.success(res, data);
     } catch (error) {

@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { getMessages, SupportedLocale } from 'src/constants/messages';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SubscriptionPlan } from '../entities/subscription-plan.entity';
@@ -23,18 +24,18 @@ export class SubscriptionPlanService {
     return qb.getMany();
   }
 
-  async findById(id: number): Promise<SubscriptionPlan> {
+  async findById(id: number, locale: SupportedLocale = 'vi'): Promise<SubscriptionPlan> {
     const plan = await this.planRepository.findOne({ where: { id } });
     if (!plan) {
-      throw new NotFoundException(`Subscription plan #${id} not found`);
+      throw new NotFoundException(getMessages(locale).subscription.planNotFound);
     }
     return plan;
   }
 
-  async findByCode(code: SubscriptionPlanEnum): Promise<SubscriptionPlan> {
+  async findByCode(code: SubscriptionPlanEnum, locale: SupportedLocale = 'vi'): Promise<SubscriptionPlan> {
     const plan = await this.planRepository.findOne({ where: { code } });
     if (!plan) {
-      throw new NotFoundException(`Plan ${code} not found`);
+      throw new NotFoundException(getMessages(locale).subscription.planNotFound);
     }
     return plan;
   }
@@ -47,8 +48,8 @@ export class SubscriptionPlanService {
     return this.planRepository.save(plan);
   }
 
-  async update(id: number, dto: UpdateSubscriptionPlanDto): Promise<SubscriptionPlan> {
-    const plan = await this.findById(id);
+  async update(id: number, dto: UpdateSubscriptionPlanDto, locale: SupportedLocale = 'vi'): Promise<SubscriptionPlan> {
+    const plan = await this.findById(id, locale);
     const updates: Partial<SubscriptionPlan> = { ...dto } as any;
     if (dto.storageLimitBytes !== undefined) {
       updates.storageLimitBytes = String(dto.storageLimitBytes);
@@ -58,8 +59,8 @@ export class SubscriptionPlanService {
     return this.planRepository.save(plan);
   }
 
-  async remove(id: number): Promise<void> {
-    const plan = await this.findById(id);
+  async remove(id: number, locale: SupportedLocale = 'vi'): Promise<void> {
+    const plan = await this.findById(id, locale);
     await this.planRepository.remove(plan);
   }
 

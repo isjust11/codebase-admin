@@ -7,6 +7,8 @@ import { AuthGuard } from '@nestjs/passport';
 import { Response } from 'express';
 import { BaseController } from '../base/base.controller';
 import { UpdateProfileDto } from '../../dtos/update-profile-dto';
+import { Locale } from '../../decorators/locale.decorator';
+import { SupportedLocale } from '../../constants/messages';
 
 @Controller('auth')
 export class AuthController extends BaseController {
@@ -16,9 +18,9 @@ export class AuthController extends BaseController {
 
   @Public()
   @Post('login')
-  async login(@Body() loginDto: LoginDto, @Res() res: Response) {
+  async login(@Body() loginDto: LoginDto, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
-      const result = await this.authService.login(loginDto);
+      const result = await this.authService.login(loginDto, locale);
       return this.success(res, result);
     } catch (error) {
       return this.error(res, error);
@@ -27,9 +29,9 @@ export class AuthController extends BaseController {
 
   @Public()
   @Post('register')
-  async register(@Body() registerDto: RegisterDto, @Res() res: Response) {
+  async register(@Body() registerDto: RegisterDto, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
-      const result = await this.authService.register(registerDto);
+      const result = await this.authService.register(registerDto, locale);
       return this.success(res, result);
     } catch (error) {
       return this.error(res, error);
@@ -37,9 +39,9 @@ export class AuthController extends BaseController {
   }
 
   @Get('verify-token')
-  async verifyToken(@Query('token') token: string, @Res() res: Response) {
+  async verifyToken(@Query('token') token: string, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
-      const result = await this.authService.verifyToken(token);
+      const result = await this.authService.verifyToken(token, locale);
       return this.success(res, result);
     } catch (error) {
       return this.error(res, error);
@@ -48,9 +50,9 @@ export class AuthController extends BaseController {
 
   @Public()
   @Post('resend-email')
-  async resendEmail(@Body() resendEmailDto: ResendEmailDto, @Res() res: Response) {
+  async resendEmail(@Body() resendEmailDto: ResendEmailDto, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
-      const result = await this.authService.resendEmail(resendEmailDto);
+      const result = await this.authService.resendEmail(resendEmailDto, locale);
       return this.success(res, result);
     } catch (error) {
       return this.error(res, error);
@@ -59,9 +61,9 @@ export class AuthController extends BaseController {
 
   @Public()
   @Get('verify-email')
-  async verifyEmail(@Query('token') token: string, @Res() res: Response) {
+  async verifyEmail(@Query('token') token: string, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
-      const result = await this.authService.verifyEmail(token);
+      const result = await this.authService.verifyEmail(token, locale);
       return this.success(res, result);
     } catch (error) {
       return this.error(res, error);
@@ -72,7 +74,7 @@ export class AuthController extends BaseController {
   @Get('profile')
   async getProfile(@Request() req, @Res() res: Response) {
     try {
-      const result = await this.authService.getProfile(req.userß);
+      const result = await this.authService.getProfile(req.user);
       return this.success(res, result);
     } catch (error) {
       return this.error(res, error);
@@ -81,9 +83,9 @@ export class AuthController extends BaseController {
 
   @UseGuards(JwtAuthGuard)
   @Post('update-profile')
-  async updateProfile(@Body() updateProfileDto: UpdateProfileDto, @Request() req, @Res() res: Response) {
+  async updateProfile(@Body() updateProfileDto: UpdateProfileDto, @Locale() locale: SupportedLocale, @Request() req, @Res() res: Response) {
     try {
-      const result = await this.authService.updateProfile(updateProfileDto, req.user.id);
+      const result = await this.authService.updateProfile(updateProfileDto, req.user.id, locale);
       return this.success(res, result);
     } catch (error) {
       return this.error(res, error);
@@ -134,9 +136,9 @@ export class AuthController extends BaseController {
 
   @Public()
   @Get('token-info')
-  async getTokenInfo(@Query('token') token: string, @Res() res: Response) {
+  async getTokenInfo(@Query('token') token: string, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
-      const result = await this.authService.getTempTokenInfo(token);
+      const result = await this.authService.getTempTokenInfo(token, locale);
       return this.success(res, result);
     } catch (error) {
       return this.error(res, error);
@@ -145,12 +147,12 @@ export class AuthController extends BaseController {
 
   @Public()
   @Post('refresh-token')
-  async refreshToken(@Body('refreshToken') refreshToken: string, @Res() res: Response) {
+  async refreshToken(@Body('refreshToken') refreshToken: string, @Locale() locale: SupportedLocale, @Res() res: Response) {
     if (!refreshToken) {
       throw new UnauthorizedException('Refresh token is required');
     }
     try {
-      const result = await this.authService.refreshAccessToken(refreshToken);
+      const result = await this.authService.refreshAccessToken(refreshToken, locale);
       return this.success(res, result);
     } catch (error) {
       const _error = error.response;
@@ -175,9 +177,9 @@ export class AuthController extends BaseController {
   }
 
   @Delete('delete-account/:userId')
-  async deleteAccount(@Param('userId') userId: string, @Res() res: Response) {
+  async deleteAccount(@Param('userId') userId: string, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
-      const result = await this.authService.deleteAccount(this.decode(userId));
+      const result = await this.authService.deleteAccount(this.decode(userId), locale);
       return this.success(res, result);
     } catch (error) {
       return this.error(res, error);
@@ -186,9 +188,9 @@ export class AuthController extends BaseController {
 
   @Public()
   @Post('forgot-password')
-  async forgotPassword(@Body('username') username: string, @Res() res: Response) {
+  async forgotPassword(@Body('username') username: string, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
-      const result = await this.authService.forgotPassword(username);
+      const result = await this.authService.forgotPassword(username, locale);
       return this.success(res, result);
     } catch (error) {
       return this.error(res, error);
@@ -197,9 +199,9 @@ export class AuthController extends BaseController {
 
   @Public()
   @Post('reset-password')
-  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto, @Res() res: Response) {
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
-      const result = await this.authService.resetPassword(resetPasswordDto.username, resetPasswordDto.newPassword);
+      const result = await this.authService.resetPassword(resetPasswordDto.username, resetPasswordDto.newPassword, locale);
       return this.success(res, result);
     } catch (error) {
       return this.error(res, error);
@@ -208,9 +210,9 @@ export class AuthController extends BaseController {
 
   @Public()
   @Get('validate-token')
-  async validateToken(@Query('token') token: string, @Res() res: Response) {
+  async validateToken(@Query('token') token: string, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
-      const result = await this.authService.validateToken(token);
+      const result = await this.authService.validateToken(token, locale);
       return this.success(res, result);
     } catch (error) {
       const _error = error.response;
@@ -226,9 +228,9 @@ export class AuthController extends BaseController {
 
   @Public()
   @Post('mobile/social-login')
-  async mobileSocialLogin(@Body() mobileSocialLoginDto: MobileSocialLoginDto, @Res() res: Response) {
+  async mobileSocialLogin(@Body() mobileSocialLoginDto: MobileSocialLoginDto, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
-      const result = await this.authService.mobileSocialLogin(mobileSocialLoginDto);
+      const result = await this.authService.mobileSocialLogin(mobileSocialLoginDto, locale);
       return this.success(res, result);
     } catch (error) {
       return this.error(res, error);
@@ -237,9 +239,9 @@ export class AuthController extends BaseController {
 
   @Public()
   @Post('verify-pin')
-  async verifyPin(@Body() verifyPinDto: VerifyPinDto, @Res() res: Response) {
+  async verifyPin(@Body() verifyPinDto: VerifyPinDto, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
-      const result = await this.authService.verifyPin(verifyPinDto);
+      const result = await this.authService.verifyPin(verifyPinDto, locale);
       return this.success(res, result);
     } catch (error) {
       return this.error(res, error);
@@ -248,12 +250,12 @@ export class AuthController extends BaseController {
 
   @Public()
   @Post('resend-pin')
-  async resendPin(@Body() resendPinDto: ResendPinDto, @Res() res: Response) {
+  async resendPin(@Body() resendPinDto: ResendPinDto, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
-      const result = await this.authService.resendPin(resendPinDto);
+      const result = await this.authService.resendPin(resendPinDto, locale);
       return this.success(res, result);
     } catch (error) {
       return this.error(res, error);
     }
   }
-} 
+}

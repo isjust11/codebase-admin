@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { getMessages, SupportedLocale } from 'src/constants/messages';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MultiImage, HerbalImageType, ImageEntityType } from '../entities/multi-image.entity';
@@ -84,16 +85,16 @@ export class MultiImageService {
     return this.getMainImageByEntity(ImageEntityType.HERBAL, herbalId);
   }
 
-  async findOne(id: number): Promise<MultiImage> {
+  async findOne(id: number, locale: SupportedLocale = 'vi'): Promise<MultiImage> {
     const multiImage = await this.multiImageRepository.findOne({
       where: { id },
     });
-    if (!multiImage) throw new NotFoundException('Multi image not found');
+    if (!multiImage) throw new NotFoundException(getMessages(locale).multiImage.notFound);
     return plainToClass(MultiImage, multiImage);
   }
-
-  async update(id: number, data: MultiImageDto): Promise<MultiImage> {
-    const multiImage = await this.findOne(id);
+ 
+  async update(id: number, data: MultiImageDto, locale: SupportedLocale = 'vi'): Promise<MultiImage> {
+    const multiImage = await this.findOne(id, locale);
     
     // Xử lý entityType và entityId nếu có trong data
     if (data.entityId) {
@@ -119,8 +120,8 @@ export class MultiImageService {
     return this.multiImageRepository.save(multiImage);
   }
 
-  async remove(id: number): Promise<boolean> {
-    const multiImage = await this.findOne(id);
+  async remove(id: number, locale: SupportedLocale = 'vi'): Promise<boolean> {
+    const multiImage = await this.findOne(id, locale);
     const filename = multiImage.url?.split('/').pop() ?? '';
     if (filename) {
       await this.mediaService.deleteFile(filename, 1);
@@ -129,7 +130,7 @@ export class MultiImageService {
       id,
       isActive: true,
     });
-    if (result.affected === 0) throw new NotFoundException('Multi image not found');
+    if (result.affected === 0) throw new NotFoundException(getMessages(locale).multiImage.notFound);
     return true;
   }
 

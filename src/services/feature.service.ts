@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { getMessages, SupportedLocale } from 'src/constants/messages';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AssignRoleDto } from 'src/dtos/assign-role.dto';
@@ -78,21 +79,21 @@ export class FeatureService {
         return await queryBuilder.orderBy('feature.sortOrder', 'ASC').getMany();
     }
 
-    async findOne(id: number): Promise<Feature> {
+    async findOne(id: number, locale: SupportedLocale = 'vi'): Promise<Feature> {
         const feature = await this.featureRepository.findOne({
             where: { id },
             relations: ['children', 'parent'],
         });
 
         if (!feature) {
-            throw new NotFoundException(`Feature with ID ${id} not found`);
+            throw new NotFoundException(getMessages(locale).feature.notFound);
         }
 
         return feature;
     }
 
-    async update(id: number, updateFeatureDto: FeatureDto): Promise<Feature> {
-        const feature = await this.findOne(id);
+    async update(id: number, updateFeatureDto: FeatureDto, locale: SupportedLocale = 'vi'): Promise<Feature> {
+        const feature = await this.findOne(id, locale);
         Object.assign(feature, updateFeatureDto);
         if (!updateFeatureDto.parentId || updateFeatureDto.parentId === '') {
             feature.parent = undefined;
@@ -105,21 +106,21 @@ export class FeatureService {
         return await this.featureRepository.save(feature);
     }
 
-    async remove(id: number): Promise<void> {
+    async remove(id: number, locale: SupportedLocale = 'vi'): Promise<void> {
         const result = await this.featureRepository.delete(id);
         if (result.affected === 0) {
-            throw new NotFoundException(`Feature with ID ${id} not found`);
+            throw new NotFoundException(getMessages(locale).feature.notFound);
         }
     }
 
-    async assignRoles(featureId: number, assignRoleDto: AssignRoleDto) {
+    async assignRoles(featureId: number, assignRoleDto: AssignRoleDto, locale: SupportedLocale = 'vi') {
         const feature = await this.featureRepository.findOne({
             where: { id: featureId },
             relations: ['roles'],
         });
 
         if (!feature) {
-            throw new Error('Feature not found');
+            throw new Error(getMessages(locale).feature.notFound);
         }
 
         const roles = await this.roleService.findByIds(assignRoleDto.roleIds);
@@ -128,14 +129,14 @@ export class FeatureService {
         return this.featureRepository.save(feature);
     }
 
-    async removeRoles(featureId: number, roleIds: number[]) {
+    async removeRoles(featureId: number, roleIds: number[], locale: SupportedLocale = 'vi') {
         const feature = await this.featureRepository.findOne({
             where: { id: featureId },
             relations: ['roles'],
         });
 
         if (!feature) {
-            throw new Error('Feature not found');
+            throw new Error(getMessages(locale).feature.notFound);
         }
         // feature.roles = feature.roles.filter(
         //     role => !roleIds.includes(role.id)

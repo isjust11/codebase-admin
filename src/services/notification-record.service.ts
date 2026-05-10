@@ -4,6 +4,7 @@ import { Repository, FindOptionsWhere, ILike, In } from 'typeorm';
 import { Notification } from '../entities/notification.entity';
 import { PaginationParams } from 'src/dtos/filter.dto';
 import { NotificationStatus } from 'src/enums/notification.enum';
+import { getMessages, SupportedLocale } from 'src/constants/messages';
 
 @Injectable()
 export class NotificationRecordService {
@@ -61,9 +62,9 @@ export class NotificationRecordService {
     return this.notificationRepo.findOne({ where: { id } });
   }
 
-  async update(id: number, data: Partial<Notification>) {
+  async update(id: number, data: Partial<Notification>, locale: SupportedLocale = 'vi') {
     const existing = await this.findOne(id);
-    if (!existing) throw new NotFoundException('Notification not found');
+    if (!existing) throw new Error(getMessages(locale).notification.notificationNotFound);
     Object.assign(existing, data);
     return this.notificationRepo.save(existing);
   }

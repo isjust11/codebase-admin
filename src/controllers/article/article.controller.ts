@@ -7,6 +7,8 @@ import { RequirePermission } from 'src/decorators/require-permissions.decorator'
 import { PermissionGuard } from 'src/guards/permission.guard';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { Response } from 'express';
+import { Locale } from 'src/decorators/locale.decorator';
+import { SupportedLocale } from 'src/constants/messages';
 
 @Controller('article')
 @UseGuards(JwtAuthGuard, PermissionGuard)
@@ -55,7 +57,6 @@ export class ArticleController extends BaseController {
     }
   }
 
-  // get featured news list
   @Get('featured')
   @RequirePermission('READ', 'article')
   async getFeaturedList(@Res() res: Response) {
@@ -67,7 +68,6 @@ export class ArticleController extends BaseController {
     }
   }
 
-  // get recomment news list
   @Get('recommend')
   @RequirePermission('READ', 'article')
   async getRecommendList(@Query('searchData') searchData: string, @Res() res: Response) {
@@ -97,6 +97,7 @@ export class ArticleController extends BaseController {
       @Query('page') page: number,
       @Query('size') size: number,
       @Query('search') search: string,
+    @Locale() locale: SupportedLocale,
     @Request() req,
     @Res() res: Response) {
     try {
@@ -105,20 +106,20 @@ export class ArticleController extends BaseController {
         size: size || 10,
         search: search || '',
       };
-      const data = await this.articleService.findByDiscovery(filter, this.decode(categoryId));
+      const data = await this.articleService.findByDiscovery(filter, this.decode(categoryId), locale);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
     }
   }
 
-  // get tip list
   @Get('tips')
   @RequirePermission('READ', 'article')
   async getTipList(@Query('page') page: number,
   @Query('size') size: number,
   @Query('search') search: string,
   @Query('categoryId') categoryId: string,
+  @Locale() locale: SupportedLocale,
   @Res() res: Response) {
     try {
       const filter: PaginationParams = {
@@ -127,18 +128,18 @@ export class ArticleController extends BaseController {
         search: search || '',
         categoryId: categoryId || '',
       };
-      const data = await this.articleService.getTipList(filter, this.decode(categoryId));
+      const data = await this.articleService.getTipList(filter, this.decode(categoryId), locale);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
     }
   }
-  // get tip details
+
   @Get('tips/:id')
   @RequirePermission('READ', 'article')
-  async getTipDetails(@Param('id') id: string, @Res() res: Response) {
+  async getTipDetails(@Param('id') id: string, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
-      const data = await this.articleService.getTipDetails(this.decode(id));
+      const data = await this.articleService.getTipDetails(this.decode(id), locale);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -147,9 +148,9 @@ export class ArticleController extends BaseController {
 
   @Get(':id')
   @RequirePermission('READ', 'article')
-  async findOne(@Param('id') id: string, @Request() req, @Res() res: Response) {
+  async findOne(@Param('id') id: string, @Locale() locale: SupportedLocale, @Request() req, @Res() res: Response) {
     try {
-      const data = await this.articleService.findOne(this.decode(id), req.user?.id);
+      const data = await this.articleService.findOne(this.decode(id), req.user?.id, locale);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -158,26 +159,25 @@ export class ArticleController extends BaseController {
 
   @Put(':id')
   @RequirePermission('UPDATE', 'article')
-  async update(@Param('id') id: string, @Body() dto: ArticleDto, @Request() req, @Res() res: Response) {
+  async update(@Param('id') id: string, @Body() dto: ArticleDto, @Locale() locale: SupportedLocale, @Request() req, @Res() res: Response) {
     try {
       const data = await this.articleService.update(this.decode(id), {
         ...dto,
         updatedBy: req.user.id,
-      });
+      }, locale);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
     }
   }
 
-  // view and like
   @Post('view/:id')
   @RequirePermission('UPDATE', 'article')
-  async updateView(@Param('id') id: string, @Body() dto: ArticleDto, @Request() req, @Res() res: Response) {
+  async updateView(@Param('id') id: string, @Body() dto: ArticleDto, @Locale() locale: SupportedLocale, @Request() req, @Res() res: Response) {
     try {
       const data = await this.articleService.updateView(this.decode(id), {
         ...dto,
-      });
+      }, locale);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -226,9 +226,9 @@ export class ArticleController extends BaseController {
 
   @Delete(':id')
   @RequirePermission('DELETE', 'article')
-  async remove(@Param('id') id: string, @Res() res: Response) {
+  async remove(@Param('id') id: string, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
-      const data = await this.articleService.remove(this.decode(id));
+      const data = await this.articleService.remove(this.decode(id), locale);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);

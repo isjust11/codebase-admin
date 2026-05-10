@@ -8,6 +8,9 @@ import { RequirePermission, RequirePermissionsAction } from 'src/decorators/requ
 import { PaginationParams } from 'src/dtos/filter.dto';
 import { BaseController } from '../base/base.controller';
 import { Response } from 'express';
+import { Locale } from 'src/decorators/locale.decorator';
+import { SupportedLocale } from 'src/constants/messages';
+
 @Controller('users')
 @UseGuards(PermissionGuard)
 @UseGuards(JwtAuthGuard)
@@ -70,10 +73,11 @@ export class UserController extends BaseController {
   async update(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
+    @Locale() locale: SupportedLocale,
     @Res() res: Response,
   ) {
     try {
-      const result = await this.userService.update(this.decode(id), updateUserDto);
+      const result = await this.userService.update(this.decode(id), updateUserDto, locale);
       return this.success(res, result);
     } catch (error) {
       this.error(res, error);
@@ -82,9 +86,9 @@ export class UserController extends BaseController {
 
   @Delete(':id')
   @RequirePermission('DELETE', 'user')
-  async remove(@Param('id') id: string, @Res() res: Response) {
+  async remove(@Param('id') id: string, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
-      const result = await this.userService.remove(this.decode(id));
+      const result = await this.userService.remove(this.decode(id), locale);
       return this.success(res, result);
     } catch (error) {
       this.error(res, error);
@@ -93,9 +97,9 @@ export class UserController extends BaseController {
 
   @Put(':id/block')
   @RequirePermission('UPDATE', 'user')
-  async blockUser(@Param('id') id: string, @Res() res: Response) {
+  async blockUser(@Param('id') id: string, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
-      const result = await this.userService.blockUser(this.decode(id));
+      const result = await this.userService.blockUser(this.decode(id), locale);
       return this.success(res, result);
     } catch (error) {
       this.error(res, error);
@@ -104,9 +108,9 @@ export class UserController extends BaseController {
 
   @Put(':id/unblock')
   @RequirePermission('UPDATE', 'user')
-  async unblockUser(@Param('id') id: string, @Res() res: Response) {
+  async unblockUser(@Param('id') id: string, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
-      const result = await this.userService.unblockUser(this.decode(id));
+      const result = await this.userService.unblockUser(this.decode(id), locale);
       return this.success(res, result);
     } catch (error) {
       this.error(res, error);
@@ -127,4 +131,4 @@ export class UserController extends BaseController {
       this.error(res, error);
     }
   }
-} 
+}

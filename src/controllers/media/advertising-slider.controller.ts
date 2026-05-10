@@ -7,6 +7,8 @@ import { PermissionGuard } from '../../guards/permission.guard';
 import { RequirePermission } from 'src/decorators/require-permissions.decorator';
 import { PaginationParams } from 'src/dtos/filter.dto';
 import { BaseController } from '../base/base.controller';
+import { Locale } from 'src/decorators/locale.decorator';
+import { SupportedLocale } from 'src/constants/messages';
 
 @Controller('advertising-sliders')
 @UseGuards(PermissionGuard)
@@ -74,8 +76,8 @@ export class AdvertisingSliderController extends BaseController {
 
   @Get(':id')
   @RequirePermission('READ', 'advertising-slider')
-  async getSliderById(@Param('id') id: string): Promise<AdvertisingSlider> {
-    return this.advertisingSliderService.findById(+id);
+  async getSliderById(@Param('id') id: string, @Locale() locale: SupportedLocale): Promise<AdvertisingSlider> {
+    return this.advertisingSliderService.findById(this.decode(id), locale);
   }
 
   @Post()
@@ -92,15 +94,16 @@ export class AdvertisingSliderController extends BaseController {
   async update(
     @Param('id') id: string,
     @Body() updateAdvertisingSliderDto: UpdateAdvertisingSliderDto,
-    @Req() req: any
+    @Req() req: any,
+    @Locale() locale: SupportedLocale
   ): Promise<AdvertisingSlider> {
-    return this.advertisingSliderService.update(this.decode(id), updateAdvertisingSliderDto);
+    return this.advertisingSliderService.update(this.decode(id), updateAdvertisingSliderDto, locale);
   }
 
   @Delete(':id')
   @RequirePermission('DELETE', 'advertising-slider')
-  async remove(@Param('id') id: string): Promise<void> {
-    return this.advertisingSliderService.remove(this.decode(id));
+  async remove(@Param('id') id: string, @Locale() locale: SupportedLocale): Promise<void> {
+    return this.advertisingSliderService.remove(this.decode(id), locale);
   }
 
   // Mobile app specific endpoints (no authentication required for these)
@@ -126,13 +129,13 @@ export class AdvertisingSliderController extends BaseController {
 
   // Analytics tracking endpoints
   @Post(':id/view')
-  async incrementView(@Param('id') id: string): Promise<AdvertisingSlider> {
-    return this.advertisingSliderService.incrementViewCount(this.decode(id));
+  async incrementView(@Param('id') id: string, @Locale() locale: SupportedLocale): Promise<AdvertisingSlider> {
+    return this.advertisingSliderService.incrementViewCount(this.decode(id), locale);
   }
 
   @Post(':id/click')
-  async incrementClick(@Param('id') id: string): Promise<AdvertisingSlider> {
-    return this.advertisingSliderService.incrementClickCount(this.decode(id));
+  async incrementClick(@Param('id') id: string, @Locale() locale: SupportedLocale): Promise<AdvertisingSlider> {
+    return this.advertisingSliderService.incrementClickCount(this.decode(id), locale);
   }
 
   // Management endpoints
@@ -140,18 +143,20 @@ export class AdvertisingSliderController extends BaseController {
   @RequirePermission('UPDATE', 'advertising-slider')
   async toggleActive(
     @Param('id') id: string,
-    @Req() req: any
+    @Req() req: any,
+    @Locale() locale: SupportedLocale
   ): Promise<AdvertisingSlider> {
-    return this.advertisingSliderService.toggleActive(this.decode(id));
+    return this.advertisingSliderService.toggleActive(this.decode(id), locale);
   }
 
   @Put(':id/toggle-featured')
   @RequirePermission('UPDATE', 'advertising-slider')
   async toggleFeatured(
     @Param('id') id: string,
-    @Req() req: any
+    @Req() req: any,
+    @Locale() locale: SupportedLocale
   ): Promise<AdvertisingSlider> {
-    return this.advertisingSliderService.toggleFeatured(this.decode(id));
+    return this.advertisingSliderService.toggleFeatured(this.decode(id), locale);
   }
 
   @Put(':id/order/:order')
@@ -159,8 +164,9 @@ export class AdvertisingSliderController extends BaseController {
   async updateOrder(
     @Param('id') id: string,
     @Param('order') order: string,
-    @Req() req: any
+    @Req() req: any,
+    @Locale() locale: SupportedLocale
   ): Promise<AdvertisingSlider> {
-    return this.advertisingSliderService.updateOrder(this.decode(id), +order);
+    return this.advertisingSliderService.updateOrder(this.decode(id), +order, locale);
   }
 } 

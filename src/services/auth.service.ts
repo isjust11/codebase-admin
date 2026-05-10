@@ -1,4 +1,5 @@
 import { BadRequestException, forwardRef, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { getMessages, SupportedLocale } from 'src/constants/messages';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from './user.service';
 import { LoginDto, RegisterDto, JwtPayload, ResendEmailDto, RegisterResultDto, RegisterCode, VerifyPinDto, ResendPinDto } from '../dtos/auth.dto';
@@ -14,7 +15,6 @@ import { UpdateProfileDto } from 'src/dtos/update-profile-dto';
 import { FcmTokenService } from './fcm-token.service';
 import { SubscriptionStatus, UserSubscription } from 'src/entities/user-subscription.entity';
 import { ConfigService } from '@nestjs/config';
-import { MediaService } from './media.service';
 
 @Injectable()
 export class AuthService {
@@ -36,16 +36,17 @@ export class AuthService {
     this.DEFAULT_PIN_EXPIRES_IN = this.configService.get<number>('pinExpiresIn') || 1;
   }
 
-  async validateUser(username: string, password: string): Promise<any> {
+  async validateUser(username: string, password: string, locale: SupportedLocale = 'vi'): Promise<any> {
     const user = await this.userService.findByUsername(username, true);
+    const m = getMessages(locale).auth;
     if (user?.isDeleted) {
-      throw new BadRequestException('Tài khoản không tồn tại');
+      throw new BadRequestException(m.accountNotFound);
     }
     if (user?.isWebsiteUser && !user?.isEmailVerified) {
-      throw new BadRequestException('Email chưa được xác thực');
+      throw new BadRequestException(m.emailNotVerified);
     }
     if (user?.isBlocked) {
-      throw new BadRequestException('Tài khoản đã bị khóa, vui lòng liên hệ admin để được hỗ trợ');
+      throw new BadRequestException(m.accountBlocked);
     }
     // check if user has active subscription
     await this.validateSubscription(user);
@@ -82,29 +83,29 @@ export class AuthService {
     }
   }
 
-  async validateRegisterUser(registerDto: RegisterDto): Promise<RegisterResultDto> {
+  async validateRegisterUser(registerDto: RegisterDto, locale: SupportedLocale = 'vi'): Promise<RegisterResultDto> {
     const existingUser = await this.userService.findByUsername(registerDto.username);
-    // trường hợp đã tồn tại tài khoản và email trùng nhau
+    const m = getMessages(locale).auth;
+    
     if (existingUser) {
       if (existingUser.email === registerDto.email) {
         if (existingUser.isEmailVerified) {
           return {
             code: RegisterCode.AccountValidated,
-            message: 'Tài khoản đã được xác thực, hãy đăng nhập để tiếp tục',
+            message: m.accountValidated,
             data: existingUser
           };
         } else {
           return {
             code: RegisterCode.ExistUsernameNotVerified,
-            message: 'Tài khoản chưa được xác thực, hãy xác thực tài khoản để tiếp tục',
+            message: m.accountExistNotVerified,
             data: existingUser
           };
         }
       } else {
-        // tài khoản đã tồn tại nhưng email khác
         return {
           code: RegisterCode.AccountIsExist,
-          message: 'Tài khoản đã tồn tại',
+          message: m.accountExist,
           data: existingUser
         };
       }
@@ -113,23 +114,22 @@ export class AuthService {
       if (existingEmail && existingEmail.isWebsiteUser) {
         return {
           code: RegisterCode.ExistEmail,
-          message: 'Email đã được đăng ký bởi tài khoản khác',
+          message: m.emailExist,
           data: existingEmail
         };
       }
     }
     return {
       code: RegisterCode.Ok,
-      message: 'Tài khoản chưa tồn tại',
+      message: m.accountNotExist,
       data: null
     };
   }
 
-  // udpate profile 
-  async updateProfile(updateProfileDto: UpdateProfileDto, userId: string) {
+  async updateProfile(updateProfileDto: UpdateProfileDto, userId: string, locale: SupportedLocale = 'vi') {
     const user = await this.userService.findById(parseInt(userId));
     if (!user) {
-      throw new UnauthorizedException('User không tồn tại');
+      throw new UnauthorizedException(getMessages(locale).auth.userNotFound);
     }
     user.fullName = updateProfileDto.fullName;
     user.picture = updateProfileDto.picture;
@@ -148,19 +148,17 @@ export class AuthService {
 
   async validateSocialUser(socialUser: any): Promise<any> {
     try {
-      // Tìm user theo email
       let user = await this.userService.findByEmailSocial(socialUser.email, socialUser.platformId);
 
       if (!user) {
-        // Tạo user mới nếu chưa tồn tại
         const registerDto: RegisterDto = {
           username: socialUser.email,
           email: socialUser.email,
           fullName: socialUser.fullName,
-          password: Math.random().toString(36).slice(-8), // Tạo mật khẩu ngẫu nhiên
-          platformId: socialUser.platformId, // Lưu ID từ Google
-          picture: socialUser.picture, // Lưu ảnh đại diện
-          isGoogleUser: socialUser.isGoogleUser || false, // Đánh dấu là user đăng nhập bằng Google
+          password: Math.random().toString(36).slice(-8),
+          platformId: socialUser.platformId,
+          picture: socialUser.picture,
+          isGoogleUser: socialUser.isGoogleUser || false,
           isFacebookUser: socialUser.isFacebookUser || false,
           deviceId: socialUser.deviceId,
           platform: socialUser.platform,
@@ -175,7 +173,6 @@ export class AuthService {
           }, user.id);
         }
       } else {
-        // Cập nhật thông tin nếu user đã tồn tại
         user.platformId = socialUser.platformId;
         user.picture = socialUser.picture;
         user.isGoogleUser = socialUser.isGoogleUser || false;
@@ -190,7 +187,6 @@ export class AuthService {
           }, user.id);
         }
       }
-      // validate subscription
       await this.validateSubscription(user);
       return this.generateToken(user);
     } catch (_error) {
@@ -199,42 +195,32 @@ export class AuthService {
     }
   }
 
-  /**
-   * Xử lý đăng nhập social cho mobile app
-   * @param mobileSocialLoginDto - Dữ liệu từ mobile app
-   * @returns Token và thông tin user
-   */
-  async mobileSocialLogin(mobileSocialLoginDto: MobileSocialLoginDto) {
+  async mobileSocialLogin(mobileSocialLoginDto: MobileSocialLoginDto, locale: SupportedLocale = 'vi') {
     try {
       const { platformId, email, fullName, picture, platform, accessToken, fcmToken, deviceId } = mobileSocialLoginDto;
+      const m = getMessages(locale).auth;
 
-      // Bước 1: Verify token với Google/Facebook/Apple servers
-      const verifiedData = await this.socialTokenVerificationService.verifyToken(platform as any, accessToken);
+      const verifiedData = await this.socialTokenVerificationService.verifyToken(platform as any, accessToken, locale);
 
-      // Bước 2: Dữ liệu từ mobile (nếu có) nên khớp với dữ liệu verified về platformId
       if (verifiedData.platformId !== platformId) {
-        throw new UnauthorizedException('Dữ liệu platformId từ mobile không khớp với token verified');
+        throw new UnauthorizedException(m.platformIdMismatch);
       }
 
-      // Ưu tiên dùng email và fullName từ token verified (vì đây là dữ liệu từ server Google/Apple)
-      // Nếu verifiedData không có email (ví dụ Facebook profile không email), mới dùng từ client gửi lên
       const finalEmail = verifiedData.email || email;
       const finalFullName = fullName || verifiedData.fullName || 'User';
 
       if (!finalEmail) {
-        throw new BadRequestException('Không tìm thấy địa chỉ email, vui lòng thử lại');
+        throw new BadRequestException(m.emailNotFound);
       }
 
-      // Bước 3: Tìm user theo email và platformId
       let user = await this.userService.findByEmailSocial(finalEmail, platformId);
 
       if (!user) {
-        // Tạo user mới nếu chưa tồn tại
         const registerDto: RegisterDto = {
           username: finalEmail,
           email: finalEmail,
           fullName: finalFullName,
-          password: Math.random().toString(36).slice(-8), // Tạo mật khẩu ngẫu nhiên
+          password: Math.random().toString(36).slice(-8),
           platformId: platformId,
           picture: picture,
           isGoogleUser: platform === 'google',
@@ -244,7 +230,6 @@ export class AuthService {
         };
         user = await this.userService.create(registerDto);
       } else {
-        // Cập nhật thông tin nếu user đã tồn tại (chỉ cập nhật nếu client gửi dữ liệu mới)
         user.platformId = platformId ?? '';
         if (picture) user.picture = picture;
         if (fullName) user.fullName = fullName;
@@ -261,7 +246,6 @@ export class AuthService {
           deviceId: deviceId ?? '',
         }, user.id);
       }
-      // validate subscription
       await this.validateSubscription(user);
 
       return this.generateToken(user);
@@ -270,21 +254,18 @@ export class AuthService {
       if (error instanceof BadRequestException) {
         throw error;
       }
-      throw new BadRequestException('Đăng nhập social không thành công');
+      throw new BadRequestException(getMessages(locale).auth.socialLoginFailed);
     }
   }
 
-  async login(loginDto: LoginDto) {
+  async login(loginDto: LoginDto, locale: SupportedLocale = 'vi') {
     const { username, password, fcmToken, platform, deviceId, appVersion } = loginDto;
-    const user = await this.validateUser(username, password);
+    const user = await this.validateUser(username, password, locale);
 
     if (!user) {
-      throw new BadRequestException('Tài khoản hoặc mật khẩu không chính xác');
+      throw new BadRequestException(getMessages(locale).auth.invalidCredentials);
     }
 
-    // if (user.isWebsiteUser && !user.isEmailVerified) {
-    //   throw new BadRequestException('Email chưa được xác thực');
-    // }
     if (fcmToken) {
       await this.fcmTokenService.registerOrUpdate({
         token: fcmToken,
@@ -296,8 +277,10 @@ export class AuthService {
     return this.generateToken(user);
   }
 
-  async register(registerDto: RegisterDto) {
-    const validateUser = await this.validateRegisterUser(registerDto);
+  async register(registerDto: RegisterDto, locale: SupportedLocale = 'vi') {
+    const validateUser = await this.validateRegisterUser(registerDto, locale);
+    const m = getMessages(locale).auth;
+    
     if (validateUser.code === RegisterCode.Ok) {
       const user = await this.userService.create({
         ...registerDto,
@@ -305,7 +288,6 @@ export class AuthService {
         isWebsiteUser: true,
       });
 
-      // Tạo và gửi mã PIN
       if (user.email) {
         const pin = await this.generateAndSavePin(user, this.DEFAULT_PIN_EXPIRES_IN);
         await this.emailService.sendPinEmail(
@@ -316,20 +298,19 @@ export class AuthService {
 
         return {
           code: RegisterCode.Ok,
-          message: 'Mã PIN đã được gửi đến email của bạn',
+          message: m.pinSent,
           data: {
             ...user,
-            pin: pin // Trả về PIN để test (trong production nên bỏ dòng này)
+            pin: pin
           }
         };
       }
       return {
         code: RegisterCode.Ok,
-        message: 'Đăng ký thành công',
+        message: m.registerSuccess,
         data: user
       };
     } else {
-      // trường hợp tài khoản đã tồn tại
       if (validateUser.code === RegisterCode.ExistUsernameNotVerified) {
         const pin = await this.generateAndSavePin(validateUser.data);
         await this.emailService.sendPinEmail(
@@ -339,26 +320,27 @@ export class AuthService {
         );
         return {
           code: RegisterCode.Ok,
-          message: 'Mã PIN đã được gửi đến email của bạn',
+          message: m.pinSent,
           data: {
             ...validateUser.data,
-            pin: pin // Trả về PIN để test (trong production nên bỏ dòng này)
+            pin: pin
           }
         };
       }
       return validateUser;
     }
   }
-  async verifyToken(token: string) {
-    const result = await this.validateToken(token);
+
+  async verifyToken(token: string, locale: SupportedLocale = 'vi') {
+    const result = await this.validateToken(token, locale);
     return result;
   }
 
-  async resendEmail(resendEmailDto: ResendEmailDto) {
+  async resendEmail(resendEmailDto: ResendEmailDto, locale: SupportedLocale = 'vi') {
     const { email } = resendEmailDto;
     const user = await this.userService.findByEmail(email);
     if (!user) {
-      throw new UnauthorizedException('Email không tồn tại');
+      throw new UnauthorizedException(getMessages(locale).auth.emailNotExist);
     }
     const verificationToken = crypto.randomBytes(32).toString('hex');
     user.verificationToken = verificationToken;
@@ -370,17 +352,17 @@ export class AuthService {
     );
   }
 
-  async verifyEmail(token: string) {
+  async verifyEmail(token: string, locale: SupportedLocale = 'vi') {
     const user = await this.userService.findByVerificationToken(token);
     if (!user) {
-      throw new UnauthorizedException('Token xác thực không hợp lệ');
+      throw new UnauthorizedException(getMessages(locale).auth.invalidVerificationToken);
     }
 
     user.isEmailVerified = true;
     user.verificationToken = '';
     await this.userService.update(user.id, user);
 
-    return { message: 'Email đã được xác thực thành công' };
+    return { message: getMessages(locale).auth.emailVerified };
   }
 
   async getProfile(user: User) {
@@ -404,17 +386,11 @@ export class AuthService {
       permissions: permissions?.map(permission => permission?.code),
     };
 
-    // Tạo access token
     const accessToken = this.jwtService.sign(payload);
-
-    // Tạo refresh token
     const refreshToken = await this.createRefreshToken(user);
 
-    // Cập nhật thời gian đăng nhập
-    // user.lastLogin = new Date();
     user.roles = user.roles.map(role => ({ ...role, permissions: [] }));
     user.permissions = permissions?.map(permission => permission?.code);
-    // await this.userService.update(user.id, user);
     return {
       accessToken,
       refreshToken: refreshToken.token,
@@ -425,7 +401,7 @@ export class AuthService {
   private async createRefreshToken(user: User): Promise<RefreshToken> {
     const token = crypto.randomBytes(40).toString('hex');
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // Refresh token hết hạn sau 7 ngày
+    expiresAt.setDate(expiresAt.getDate() + 7);
 
     const refreshToken = this.refreshTokenRepository.create({
       token,
@@ -436,16 +412,18 @@ export class AuthService {
     return await this.refreshTokenRepository.save(refreshToken);
   }
 
-  async refreshAccessToken(refreshTokenString: string) {
+  async refreshAccessToken(refreshTokenString: string, locale: SupportedLocale = 'vi') {
     const foundToken = await this.refreshTokenRepository.findOne({
       where: { token: refreshTokenString, isRevoked: false },
       relations: ['user', 'user.roles', 'user.roles.permissions']
     });
 
+    const m = getMessages(locale).auth;
+
     if (!foundToken) {
       throw new UnauthorizedException({
         status: 401,
-        message: 'Refresh token không hợp lệ',
+        message: m.refreshTokenInvalid,
         code: 'refresh_token_invalid',
         statusCode: 401,
         data: null
@@ -456,12 +434,11 @@ export class AuthService {
       await this.revokeRefreshToken(refreshTokenString);
       throw new UnauthorizedException({
         status: 401,
-        message: 'Refresh token đã hết hạn',
+        message: m.refreshTokenExpired,
         code: 'refresh_token_expired',
         statusCode: 401,
         data: null
       });
-
     }
     const permissions = foundToken.user.roles.flatMap(role => role.permissions).filter(permission => permission.isActive);
     const payload: JwtPayload = {
@@ -480,7 +457,6 @@ export class AuthService {
     };
     foundToken.user.roles = foundToken.user.roles.map(role => ({ ...role, permissions: [] }));
     foundToken.user.permissions = permissions?.map(permission => permission?.code);
-    // Tạo access token mới
     const accessToken = this.jwtService.sign(payload);
 
     return {
@@ -504,14 +480,12 @@ export class AuthService {
   async createTempToken(userInfo: any) {
     const tempToken = crypto.randomBytes(32).toString('hex');
 
-    // Lưu thông tin vào bộ nhớ tạm thời
     this.tempTokens.set(tempToken, {
       user: userInfo.user,
       accessToken: userInfo.accessToken,
       refreshToken: userInfo.refreshToken
     });
 
-    // Tự động xóa sau 5 phút
     setTimeout(() => {
       this.tempTokens.delete(tempToken);
     }, 5 * 60 * 1000);
@@ -519,18 +493,18 @@ export class AuthService {
     return tempToken;
   }
 
-  async getTempTokenInfo(tempToken: string) {
+  async getTempTokenInfo(tempToken: string, locale: SupportedLocale = 'vi') {
     const info = this.tempTokens.get(tempToken);
     if (!info) {
-      throw new UnauthorizedException('Token không hợp lệ hoặc đã hết hạn');
+      throw new UnauthorizedException(getMessages(locale).auth.tokenInvalid);
     }
     return info;
   }
 
-  async forgotPassword(username: string) {
+  async forgotPassword(username: string, locale: SupportedLocale = 'vi') {
     const user = await this.userService.findByUsername(username);
     if (!user) {
-      throw new UnauthorizedException('Tài khoản không tồn tại');
+      throw new UnauthorizedException(getMessages(locale).auth.accountNotFound);
     }
     const pin = await this.generateAndSavePin(user, this.DEFAULT_PIN_EXPIRES_IN);
     await this.emailService.sendForgotPasswordEmail(
@@ -542,28 +516,29 @@ export class AuthService {
     return { code: 'verify-pin', email: user.email };
   }
 
-  async resetPassword(username: string, newPassword: string) {
+  async resetPassword(username: string, newPassword: string, locale: SupportedLocale = 'vi') {
+    const m = getMessages(locale).auth;
     try {
       const user = await this.userService.findByUsername(username);
       if (!user) {
-        throw new UnauthorizedException('Tài khoản không tồn tại');
+        throw new UnauthorizedException(m.accountNotFound);
       }
       user.password = newPassword;
       await this.userService.update(user.id, user);
-      return { code: 'reset-password', status: 'success', data: { message: 'Mật khẩu đã được khôi phục thành công' } };
+      return { code: 'reset-password', status: 'success', data: { message: m.passwordResetSuccess } };
     } catch (error) {
-      return { code: 'reset-password', status: 'error', data: { message: 'Mật khẩu đã được khôi phục thất bại!' } };
+      return { code: 'reset-password', status: 'error', data: { message: m.passwordResetFailed } };
     }
   }
 
-  async validateToken(token: string) {
+  async validateToken(token: string, locale: SupportedLocale = 'vi') {
     try {
       const decoded = this.jwtService.verify(token);
       return decoded;
     } catch (error) {
       throw new UnauthorizedException({
         status: 401,
-        message: 'Token không hợp lệ hoặc đã hết hạn',
+        message: getMessages(locale).auth.tokenInvalid,
         code: 'token_invalid',
         statusCode: 401,
         data: null
@@ -571,20 +546,14 @@ export class AuthService {
     }
   }
 
-  /**
-   * Tạo mã PIN 4 số ngẫu nhiên
-   */
   private generatePin(): string {
     return Math.floor(1000 + Math.random() * 9000).toString();
   }
 
-  /**
-   * Tạo và lưu mã PIN cho user
-   */
   async generateAndSavePin(user: User, expiresIn: number = 1): Promise<string> {
     const pin = this.generatePin();
     const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + expiresIn); // PIN hết hạn sau 1 phút
+    expiresAt.setMinutes(expiresAt.getMinutes() + expiresIn);
 
     user.pinCode = pin;
     user.pinExpiresAt = expiresAt;
@@ -593,42 +562,39 @@ export class AuthService {
     return pin;
   }
 
-  async deleteAccount(userId: number) {
+  async deleteAccount(userId: number, locale: SupportedLocale = 'vi') {
     const user = await this.userService.findById(userId);
     if (!user) {
-      throw new UnauthorizedException('User không tồn tại');
+      throw new UnauthorizedException(getMessages(locale).auth.userNotFound);
     }
     user.isDeleted = true;
     user.deletedAt = new Date();
     await this.userService.update(user.id, user);
 
-    return { code: 'delete-account', status: 'success', data: { message: 'Tài khoản đã được xóa thành công' } };
+    return { code: 'delete-account', status: 'success', data: { message: getMessages(locale).auth.accountDeleted } };
   }
 
-  /**
-   * Xác thực mã PIN
-   */
-  async verifyPin(verifyPinDto: VerifyPinDto) {
+  async verifyPin(verifyPinDto: VerifyPinDto, locale: SupportedLocale = 'vi') {
     const { email, pin } = verifyPinDto;
+    const m = getMessages(locale).auth;
 
     const user = await this.userService.findByEmail(email);
     if (!user) {
-      throw new BadRequestException('Email không tồn tại');
+      throw new BadRequestException(m.emailNotExist);
     }
 
     if (!user.pinCode || !user.pinExpiresAt) {
-      throw new BadRequestException('Mã PIN không tồn tại hoặc đã hết hạn');
+      throw new BadRequestException(m.pinNotFound);
     }
 
     if (new Date() > user.pinExpiresAt) {
-      throw new BadRequestException('Mã PIN đã hết hạn');
+      throw new BadRequestException(m.pinExpired);
     }
 
     if (user.pinCode !== pin) {
-      throw new BadRequestException('Mã PIN không chính xác');
+      throw new BadRequestException(m.pinInvalid);
     }
 
-    // Xác thực thành công, cập nhật trạng thái user
     user.isEmailVerified = true;
     user.pinCode = '';
     user.pinExpiresAt = undefined;
@@ -637,24 +603,20 @@ export class AuthService {
 
     return {
       code: 'verify',
-      message: 'Xác thực mã PIN thành công'
+      message: m.pinVerified
     };
   }
 
-  /**
-   * Gửi lại mã PIN
-   */
-  async resendPin(resendPinDto: ResendPinDto) {
+  async resendPin(resendPinDto: ResendPinDto, locale: SupportedLocale = 'vi') {
     const { email } = resendPinDto;
 
     const user = await this.userService.findByEmail(email);
     if (!user) {
-      throw new BadRequestException('Email không tồn tại');
+      throw new BadRequestException(getMessages(locale).auth.emailNotExist);
     }
 
     const pin = await this.generateAndSavePin(user, this.DEFAULT_PIN_EXPIRES_IN);
 
-    // Gửi email chứa mã PIN
     await this.emailService.sendPinEmail(
       user.email,
       pin,
@@ -663,18 +625,12 @@ export class AuthService {
 
     return {
       code: 'resend',
-      message: 'Mã PIN mới đã được gửi đến email của bạn',
+      message: getMessages(locale).auth.pinResent,
     };
   }
 
-  /**
-   * Parse date từ format 'dd/MM/yyyy' sang Date object
-   * @param dateString - Date string theo format 'dd/MM/yyyy'
-   * @returns Date object hoặc undefined nếu không parse được
-   */
   private parseDateFromDDMMYYYY(dateString: string): Date | undefined {
     try {
-      // Kiểm tra format dd/MM/yyyy
       const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
       const match = dateString.match(dateRegex);
 
@@ -686,15 +642,12 @@ export class AuthService {
       const month = parseInt(match[2], 10);
       const year = parseInt(match[3], 10);
 
-      // Validate date values
       if (day < 1 || day > 31 || month < 1 || month > 12 || year < 1900) {
         throw new Error('Invalid date values');
       }
 
-      // Tạo Date object (month - 1 vì Date constructor sử dụng 0-based month)
       const date = new Date(year, month - 1, day);
 
-      // Kiểm tra xem date có hợp lệ không
       if (date.getDate() !== day || date.getMonth() !== month - 1 || date.getFullYear() !== year) {
         throw new Error('Invalid date');
       }
@@ -705,4 +658,4 @@ export class AuthService {
       return undefined;
     }
   }
-} 
+}

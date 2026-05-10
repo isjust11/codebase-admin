@@ -6,6 +6,8 @@ import { NotificationRecordService } from '../../services/notification-record.se
 import { PaginationParams } from 'src/dtos/filter.dto';
 import { Response } from 'express';
 import { NotificationStatus } from 'src/enums/notification.enum';
+import { Locale } from 'src/decorators/locale.decorator';
+import { SupportedLocale } from 'src/constants/messages';
 @Controller('notifications')
 @UseGuards(JwtAuthGuard)
 export class NotificationController extends BaseController {
@@ -72,9 +74,9 @@ export class NotificationController extends BaseController {
 
   @Put('mark-read/:id')
   @RequirePermission('UPDATE', 'notification')
-  async markRead(@Param('id') id: string, @Res() res: Response) {
+  async markRead(@Param('id') id: string, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
-      const data = await this.service.update(this.decode(id), { status: NotificationStatus.READ });
+      const data = await this.service.update(this.decode(id), { status: NotificationStatus.READ }, locale);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -108,9 +110,9 @@ export class NotificationController extends BaseController {
 
   @Patch(':id')
   @RequirePermission('UPDATE', 'notification')
-  async update(@Param('id') id: string, @Body() body: any, @Res() res: Response) {
+  async update(@Param('id') id: string, @Body() body: any, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
-      const data = await this.service.update(this.decode(id), body);
+      const data = await this.service.update(this.decode(id), body, locale);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);

@@ -19,6 +19,8 @@ import { PaginationParams } from 'src/dtos/filter.dto';
 import { RequirePermission } from 'src/decorators/require-permissions.decorator';
 import { BaseController } from '../base/base.controller';
 import { Response } from 'express';
+import { Locale } from 'src/decorators/locale.decorator';
+import { SupportedLocale } from 'src/constants/messages';
 
 @Controller('roles')
 @UseGuards(JwtAuthGuard)
@@ -86,10 +88,11 @@ export class RoleController extends BaseController {
   async update(
     @Param('id') id: string,
     @Body() updateRoleDto: RoleDto,
+    @Locale() locale: SupportedLocale,
     @Res() res: Response,
   ) {
     try {
-      const result = await this.roleService.update(this.decode(id), updateRoleDto);
+      const result = await this.roleService.update(this.decode(id), updateRoleDto, locale);
       return this.success(res, result);
     } catch (error) {
       this.error(res, error);
@@ -98,9 +101,9 @@ export class RoleController extends BaseController {
 
   @Delete(':id')
   @RequirePermission('DELETE', 'role')
-  async remove(@Param('id') id: string, @Res() res: Response) {
+  async remove(@Param('id') id: string, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
-      const result = await this.roleService.remove(this.decode(id));
+      const result = await this.roleService.remove(this.decode(id), locale);
       return this.success(res, result);
     } catch (error) {
       this.error(res, error);
@@ -109,9 +112,9 @@ export class RoleController extends BaseController {
 
   @Get(':id/features')
   @RequirePermission('READ', 'role')
-  async getFeaturesByRole(@Param('id') id: string, @Res() res: Response) {
+  async getFeaturesByRole(@Param('id') id: string, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
-      const result = await this.roleService.getFeaturesByRole(this.decode(id));
+      const result = await this.roleService.getFeaturesByRole(this.decode(id), locale);
       return this.success(res, result);
     } catch (error) {
       this.error(res, error);
@@ -123,10 +126,11 @@ export class RoleController extends BaseController {
   async assignFeatures(
     @Param('id') id: string,
     @Body() assignFeatureDto: AssignFeatureDto,
+    @Locale() locale: SupportedLocale,
     @Res() res: Response,
   ) {
     try {
-      const result = await this.roleService.assignFeatures(this.decode(id), assignFeatureDto);
+      const result = await this.roleService.assignFeatures(this.decode(id), assignFeatureDto, locale);
       return this.success(res, result);
     } catch (error) {
       this.error(res, error);
@@ -136,9 +140,9 @@ export class RoleController extends BaseController {
   // Permission management endpoints
   @Get(':id/permissions')
   @RequirePermission('READ', 'role')
-  async getPermissionsByRole(@Param('id') id: string, @Res() res: Response) {
+  async getPermissionsByRole(@Param('id') id: string, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
-      const result = await this.roleService.getPermissionsByRole(this.decode(id));
+      const result = await this.roleService.getPermissionsByRole(this.decode(id), locale);
       return this.success(res, result);
     } catch (error) {
       this.error(res, error);
@@ -150,10 +154,11 @@ export class RoleController extends BaseController {
   async assignPermissions(
     @Param('id') id: string,
     @Body() assignPermissionDto: AssignPermissionDto,
+    @Locale() locale: SupportedLocale,
     @Res() res: Response,
   ) {
     try {
-      const result = await this.roleService.assignPermissions(this.decode(id), assignPermissionDto);
+      const result = await this.roleService.assignPermissions(this.decode(id), assignPermissionDto, locale);
       return this.success(res, result);
     } catch (error) {
       this.error(res, error);
@@ -164,10 +169,11 @@ export class RoleController extends BaseController {
   async removePermissions(
     @Param('id') id: string,
     @Body() assignPermissionDto: AssignPermissionDto,
+    @Locale() locale: SupportedLocale,
     @Res() res: Response,
   ) {
     try {
-      const result = await this.roleService.removePermissions(this.decode(id), assignPermissionDto);
+      const result = await this.roleService.removePermissions(this.decode(id), assignPermissionDto, locale);
       return this.success(res, result);
     } catch (error) {
       this.error(res, error);
@@ -175,9 +181,9 @@ export class RoleController extends BaseController {
   }
 
   @Get(':id/permissions/stats')
-  async getPermissionStats(@Param('id') id: string, @Res() res: Response) {
+  async getPermissionStats(@Param('id') id: string, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
-      const result = await this.roleService.getPermissionStats(this.decode(id));
+      const result = await this.roleService.getPermissionStats(this.decode(id), locale);
       return this.success(res, result);
     } catch (error) {
       this.error(res, error);

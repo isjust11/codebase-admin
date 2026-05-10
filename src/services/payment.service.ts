@@ -6,6 +6,7 @@ import { UserSubscription, SubscriptionStatus } from '../entities/user-subscript
 import { SubscriptionPlan } from '../entities/subscription-plan.entity';
 import { FcmService } from './fcm.service';
 import { NotificationType } from 'src/enums/notification.enum';
+import { getMessages, SupportedLocale } from 'src/constants/messages';
 
 export interface CreatePaymentParams {
   userId: number;
@@ -31,13 +32,13 @@ export class PaymentService {
   /**
    * Tạo payment record mới
    */
-  async createPayment(params: CreatePaymentParams): Promise<Payment> {
+  async createPayment(params: CreatePaymentParams, locale: SupportedLocale = 'vi'): Promise<Payment> {
     // Lấy thông tin gói
     const plan = await this.planRepository.findOne({
       where: { id: params.planId },
     });
     if (!plan || !plan.isActive) {
-      throw new Error('Plan not found or inactive');
+      throw new Error(getMessages(locale).subscription.planNotAvailable);
     }
 
     // Tạo payment
@@ -116,9 +117,9 @@ export class PaymentService {
     });
   }
 
-  async adminUpdateStatus(id: number, status: PaymentStatus): Promise<Payment> {
+  async adminUpdateStatus(id: number, status: PaymentStatus, locale: SupportedLocale = 'vi'): Promise<Payment> {
     const payment = await this.paymentRepository.findOne({ where: { id } });
-    if (!payment) throw new Error('Payment not found');
+    if (!payment) throw new Error(getMessages(locale).payment.notFound);
     payment.status = status;
     if (status === PaymentStatus.REFUNDED) {
       payment.completedAt = new Date();
@@ -142,6 +143,7 @@ export class PaymentService {
   async handlePaymentSuccess(
     paymentId: number,
     gatewayTransactionId: string,
+    locale: SupportedLocale = 'vi'
   ): Promise<void> {
     const payment = await this.paymentRepository.findOne({
       where: { id: paymentId },
@@ -149,7 +151,7 @@ export class PaymentService {
     });
 
     if (!payment) {
-      throw new Error('Payment not found');
+      throw new Error(getMessages(locale).payment.notFound);
     }
 
     // Cập nhật payment
@@ -159,8 +161,8 @@ export class PaymentService {
     await this.paymentRepository.save(payment);
     // send notification success
     await this.fcmService.sendToUser(payment.userId, {
-      title: 'Thanh toán thành công',
-      body: 'Thanh toán gói ' + payment.plan.name + ' thành công',
+      title: getMessages(locale).payment.paymentSuccess,
+      body: getMessages(locale).payment.paymentBodySuccess(payment.plan.name),
       type: NotificationType.PAYMENT,
       data: {
         paymentId: payment.id.toString(),

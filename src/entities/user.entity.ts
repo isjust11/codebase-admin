@@ -53,7 +53,7 @@ export class User {
   @Column({ nullable: true, select: false })
   verificationToken: string;
 
-  @Column({ nullable: true, select: false })
+  @Column({ nullable: true, select: true })
   pinCode?: string;
 
   @Column({ nullable: true })

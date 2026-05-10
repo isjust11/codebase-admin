@@ -19,6 +19,8 @@ import { RequirePermission } from '../../decorators/require-permissions.decorato
 import { PermissionGuard } from '../../guards/permission.guard';
 import { JwtAuthGuard, Public } from '../../guards/jwt-auth.guard';
 import { Response } from 'express';
+import { Locale } from 'src/decorators/locale.decorator';
+import { SupportedLocale } from 'src/constants/messages';
 
 @Controller('pages')
 @UseGuards(JwtAuthGuard, PermissionGuard)
@@ -29,12 +31,12 @@ export class PageController extends BaseController {
 
   @Post()
   @RequirePermission('CREATE', 'static_page')
-  async create(@Body() createPageDto: CreatePageDto, @Request() req, @Res() res: Response) {
+  async create(@Body() createPageDto: CreatePageDto, @Request() req, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
       const data = await this.pageService.create({
         ...createPageDto,
         createdBy: req.user.id,
-      });
+      }, locale);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -57,9 +59,9 @@ export class PageController extends BaseController {
   }
   @Public()
   @Get('slug/:slug')
-  async findBySlug(@Res() res: Response, @Param('slug') slug: string) {
+  async findBySlug(@Res() res: Response, @Param('slug') slug: string, @Locale() locale: SupportedLocale) {
     try {
-      const data = await this.pageService.findBySlug(slug);
+      const data = await this.pageService.findBySlug(slug, locale);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -68,9 +70,9 @@ export class PageController extends BaseController {
   
   @Get(':id')
   @RequirePermission('READ', 'static_page')
-  async findOne(@Res() res: Response, @Param('id') id: string) {
+  async findOne(@Res() res: Response, @Param('id') id: string, @Locale() locale: SupportedLocale) {
     try {
-      const data = await this.pageService.findOne(this.decode(id));
+      const data = await this.pageService.findOne(this.decode(id), locale);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -84,12 +86,13 @@ export class PageController extends BaseController {
     @Res() res: Response,
     @Body() updatePageDto: UpdatePageDto,
     @Request() req,
+    @Locale() locale: SupportedLocale,
   ) {
     try {
       const data = await this.pageService.update(this.decode(id), {
         ...updatePageDto,
         updatedBy: req.user.id,
-      });
+      }, locale);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -98,9 +101,9 @@ export class PageController extends BaseController {
 
   @Patch(':id/toggle-active')
   @RequirePermission('UPDATE', 'static_page')
-  async toggleActive(@Res() res: Response, @Param('id') id: string) {
+  async toggleActive(@Res() res: Response, @Param('id') id: string, @Locale() locale: SupportedLocale) {
     try {
-      const data = await this.pageService.toggleActive(this.decode(id));
+      const data = await this.pageService.toggleActive(this.decode(id), locale);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -109,9 +112,9 @@ export class PageController extends BaseController {
 
   @Delete(':id')
   @RequirePermission('DELETE', 'static_page')
-  async remove(@Res() res: Response, @Param('id') id: string) {
+  async remove(@Res() res: Response, @Param('id') id: string, @Locale() locale: SupportedLocale) {
     try {
-      const data = await this.pageService.remove(this.decode(id));
+      const data = await this.pageService.remove(this.decode(id), locale);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);

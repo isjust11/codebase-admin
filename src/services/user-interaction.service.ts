@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, Logger, BadRequestException } from '@nestjs/common';
+import { getMessages, SupportedLocale } from 'src/constants/messages';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, Not } from 'typeorm';
 import { UserInteraction } from '../entities/user-interaction.entity';
@@ -50,9 +51,9 @@ export class UserInteractionService {
     private notificationService: NotificationService,
   ) { }
 
-  async createInteraction(userId: number, createDto: CreateUserInteractionDto): Promise<UserInteraction> {
+  async createInteraction(userId: number, createDto: CreateUserInteractionDto, locale: SupportedLocale = 'vi'): Promise<UserInteraction> {
     // Validate target exists
-    await this.validateTarget(createDto.targetType, createDto.targetId);
+    await this.validateTarget(createDto.targetType, createDto.targetId, locale);
 
     // Check if interaction already exists
     const existingInteraction = await this.userInteractionRepository.findOne({
@@ -196,6 +197,7 @@ export class UserInteractionService {
     targetId: number,
     interactionType: InteractionType,
     updateDto: UpdateUserInteractionDto,
+    locale: SupportedLocale = 'vi'
   ): Promise<UserInteraction> {
     const interaction = await this.userInteractionRepository.findOne({
       where: {
@@ -207,7 +209,7 @@ export class UserInteractionService {
     });
 
     if (!interaction) {
-      throw new NotFoundException('Interaction not found');
+      throw new NotFoundException(getMessages(locale).userInteraction.notFound);
     }
 
     // Update fields
@@ -232,6 +234,7 @@ export class UserInteractionService {
     targetType: InteractionTarget,
     targetId: number,
     interactionType: InteractionType,
+    locale: SupportedLocale = 'vi'
   ): Promise<void> {
     const interaction = await this.userInteractionRepository.findOne({
       where: {
@@ -243,7 +246,7 @@ export class UserInteractionService {
     });
 
     if (!interaction) {
-      throw new NotFoundException('Interaction not found');
+      throw new NotFoundException(getMessages(locale).userInteraction.notFound);
     }
 
     await this.userInteractionRepository.remove(interaction);
@@ -355,7 +358,7 @@ export class UserInteractionService {
     return status;
   }
 
-  private async validateTarget(targetType: InteractionTarget, targetId: number): Promise<void> {
+  private async validateTarget(targetType: InteractionTarget, targetId: number, locale: SupportedLocale = 'vi'): Promise<void> {
     let exists = false;
 
     switch (targetType) {
@@ -370,7 +373,7 @@ export class UserInteractionService {
     }
 
     if (!exists) {
-      throw new NotFoundException(`Target ${targetType} with id ${targetId} not found`);
+      throw new NotFoundException(getMessages(locale).userInteraction.notFound);
     }
   }
 

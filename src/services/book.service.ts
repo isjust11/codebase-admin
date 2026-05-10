@@ -1,4 +1,5 @@
 import { Injectable, Logger, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { getMessages, SupportedLocale } from 'src/constants/messages';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository } from 'typeorm';
 import { Book } from '../entities/book.entity';
@@ -100,31 +101,32 @@ export class BookService {
     });
   }
 
-  private validateBookData(dto: CreateBookDto | UpdateBookDto, isCreate: boolean): void {
+  private validateBookData(dto: CreateBookDto | UpdateBookDto, isCreate: boolean, locale: SupportedLocale = 'vi'): void {
+    const m = getMessages(locale).book;
     if (isCreate) {
       const createDto = dto as CreateBookDto;
       if (!createDto.title?.trim()) {
-        throw new BadRequestException('Tiêu đề sách không được để trống');
+        throw new BadRequestException(m.titleRequired);
       }
       if (!createDto.author?.trim()) {
-        throw new BadRequestException('Tác giả không được để trống');
+        throw new BadRequestException(m.authorRequired);
       }
       if (!createDto.fileUrl?.trim()) {
-        throw new BadRequestException('File sách không được để trống');
+        throw new BadRequestException(m.fileRequired);
       }
     } else {
       const updateDto = dto as UpdateBookDto;
       if (updateDto.title !== undefined && !updateDto.title?.trim()) {
-        throw new BadRequestException('Tiêu đề sách không được để trống');
+        throw new BadRequestException(m.titleRequired);
       }
       if (updateDto.author !== undefined && !updateDto.author?.trim()) {
-        throw new BadRequestException('Tác giả không được để trống');
+        throw new BadRequestException(m.authorRequired);
       }
     }
 
     // if (dto.categoryId) {
     //   if (typeof dto.categoryId !== 'number' || dto.categoryId <= 0) {
-    //     throw new BadRequestException('Danh mục không hợp lệ');
+    //     throw new BadRequestException(m.categoryNotFound);
     //   }
     // }
   }
@@ -147,11 +149,12 @@ export class BookService {
     }
   }
 
-  private async checkSubscriptionStorage(userId: number, bytes: number): Promise<void> {
+  private async checkSubscriptionStorage(userId: number, bytes: number, locale: SupportedLocale = 'vi'): Promise<void> {
     if (bytes <= 0) return;
+    const m = getMessages(locale).subscription;
     const sub = await this.userSubscriptionService.getActiveSubscription(userId);
     if (!sub) {
-      throw new ForbiddenException('Bạn chưa có gói đăng ký đang hoạt động. Vui lòng đăng ký gói để tải sách lên.');
+      throw new ForbiddenException(m.noActiveSubscription);
     }
     const canStore = await this.userSubscriptionService.canUseStorage(userId, bytes);
     if (!canStore) {
@@ -159,9 +162,7 @@ export class BookService {
       const usedBytes = Number(sub.storageUsedBytes ?? 0);
       const limitMB = (limitBytes / (1024 * 1024)).toFixed(1);
       const usedMB = (usedBytes / (1024 * 1024)).toFixed(1);
-      throw new ForbiddenException(
-        `Dung lượng lưu trữ đã đầy (${usedMB}MB / ${limitMB}MB). Vui lòng nâng cấp gói.`,
-      );
+      throw new ForbiddenException(m.storageFull(usedMB, limitMB));
     }
   }
 
@@ -204,15 +205,15 @@ export class BookService {
     }
   }
 
-  async createBook(createBookDto: CreateBookDto): Promise<Book> {
+  async createBook(createBookDto: CreateBookDto, locale: SupportedLocale = 'vi'): Promise<Book> {
     const userId = createBookDto.createById;
 
-    this.validateBookData(createBookDto, true);
+    this.validateBookData(createBookDto, true, locale);
 
     if (createBookDto.categoryId) {
       const category = await this.categoryRepository.findOne({ where: { id: createBookDto.categoryId } });
       if (!category) {
-        throw new BadRequestException('Danh mục không tồn tại');
+        throw new BadRequestException(getMessages(locale).book.categoryNotFound);
       }
     }
 
@@ -220,7 +221,7 @@ export class BookService {
 
     totalDataStorage = await this.resolveFileSize(createBookDto, userId!);
 
-    await this.checkSubscriptionStorage(userId!, totalDataStorage);
+    await this.checkSubscriptionStorage(userId!, totalDataStorage, locale);
     const bookStatus = await this.categoryRepository.findOne({ where: { code: CategoryCodeEnum.BOOK_STATUS_PENDING } });
 
     const book = this.bookRepository.create({
@@ -251,14 +252,14 @@ export class BookService {
     return savedBook;
   }
 
-  async updateBook(id: number, updateBookDto: UpdateBookDto): Promise<Book | null> {
+  async updateBook(id: number, updateBookDto: UpdateBookDto, locale: SupportedLocale = 'vi'): Promise<Book | null> {
     const userId = updateBookDto.createById;
     const book = await this.bookRepository.findOne({ where: { id } });
     if (!book) {
       return null;
     }
 
-    this.validateBookData(updateBookDto, false);
+    this.validateBookData(updateBookDto, false, locale);
 
     const fileChanged = updateBookDto.fileUrl && updateBookDto.fileUrl !== book.fileUrl;
     let storageUsedBytes = 0;
@@ -274,7 +275,7 @@ export class BookService {
     if (updateBookDto.categoryId) {
       const category = await this.categoryRepository.findOne({ where: { id: updateBookDto.categoryId } });
       if (!category) {
-        throw new BadRequestException('Danh mục không tồn tại');
+        throw new BadRequestException(getMessages(locale).book.categoryNotFound);
       }
       book.category = category;
       book.categoryId = category.id;
@@ -346,15 +347,16 @@ export class BookService {
     return stats;
   }
 
-  async updateStatus(id: number, statusCode: CategoryCodeEnum): Promise<Book> {
+  async updateStatus(id: number, statusCode: CategoryCodeEnum, locale: SupportedLocale = 'vi'): Promise<Book> {
     const book = await this.bookRepository.findOne({ where: { id } });
+    const m = getMessages(locale).book;
     if (!book) {
-      throw new BadRequestException('Sách không tồn tại');
+      throw new BadRequestException(m.bookNotFound);
     }
 
     const status = await this.categoryRepository.findOne({ where: { code: statusCode } });
     if (!status) {
-      throw new BadRequestException('Trạng thái không hợp lệ');
+      throw new BadRequestException(m.statusInvalid);
     }
 
     book.statusId = status.id;

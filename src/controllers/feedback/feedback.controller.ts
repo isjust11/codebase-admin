@@ -19,6 +19,8 @@ import { RequirePermission } from '../../decorators/require-permissions.decorato
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { Response } from 'express';
 import { FeedbackStatus } from '../../entities/feedback.entity';
+import { Locale } from 'src/decorators/locale.decorator';
+import { SupportedLocale } from 'src/constants/messages';
 
 @Controller('feedback')
 @UseGuards(JwtAuthGuard)
@@ -122,9 +124,9 @@ export class FeedbackController extends BaseController {
 
   @Get(':id')
   @RequirePermission('READ', 'feedback')
-  async findOne(@Res() res: Response, @Param('id') id: string) {
+  async findOne(@Res() res: Response, @Param('id') id: string, @Locale() locale: SupportedLocale) {
     try {
-      const data = await this.feedbackService.findOne(this.decode(id));
+      const data = await this.feedbackService.findOne(this.decode(id), locale);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -137,12 +139,13 @@ export class FeedbackController extends BaseController {
     @Param('id') id: string,
     @Res() res: Response,
     @Body() updateFeedbackDto: UpdateFeedbackDto,
+    @Locale() locale: SupportedLocale,
     @Request() req,
   ) {
     try {
       const data = await this.feedbackService.update(this.decode(id), {
         ...updateFeedbackDto,
-      });
+      }, locale);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -155,9 +158,10 @@ export class FeedbackController extends BaseController {
     @Param('id') id: string,
     @Res() res: Response,
     @Body('status') status: FeedbackStatus,
+    @Locale() locale: SupportedLocale,
   ) {
     try {
-      const data = await this.feedbackService.updateStatus(this.decode(id), status);
+      const data = await this.feedbackService.updateStatus(this.decode(id), status, locale);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -170,9 +174,10 @@ export class FeedbackController extends BaseController {
     @Param('id') id: string,
     @Res() res: Response,
     @Body('assignedToId') assignedToId: number,
+    @Locale() locale: SupportedLocale,
   ) {
     try {
-      const data = await this.feedbackService.assignToUser(this.decode(id), assignedToId);
+      const data = await this.feedbackService.assignToUser(this.decode(id), assignedToId, locale);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -181,9 +186,9 @@ export class FeedbackController extends BaseController {
 
   @Delete(':id')
   @RequirePermission('DELETE', 'feedback')
-  async remove(@Res() res: Response, @Param('id') id: string) {
+  async remove(@Res() res: Response, @Param('id') id: string, @Locale() locale: SupportedLocale) {
     try {
-      await this.feedbackService.remove(this.decode(id));
+      await this.feedbackService.remove(this.decode(id), locale);
       return this.success(res, { message: 'Feedback deleted successfully' });
     } catch (error) {
       return this.error(res, error);

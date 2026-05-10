@@ -22,6 +22,8 @@ import {
   IncrementUsageDto,
 } from '../../dtos/user-subscription.dto';
 import { SubscriptionStatus } from '../../entities/user-subscription.entity';
+import { Locale } from 'src/decorators/locale.decorator';
+import { SupportedLocale } from 'src/constants/messages';
 
 @Controller('subscription')
 @UseGuards(JwtAuthGuard, PermissionGuard)
@@ -66,6 +68,7 @@ export class UserSubscriptionController extends BaseController {
   async createSubscriptionPlan(
     @Request() req: any,
     @Body() body: { planId: string; },
+    @Locale() locale: SupportedLocale,
     @Res() res: Response,
   ) {
     try {
@@ -81,7 +84,7 @@ export class UserSubscriptionController extends BaseController {
         planId: planId,
         status: SubscriptionStatus.ACTIVE,
       };
-      const result = await this.subscriptionService.create(userId, dto);
+      const result = await this.subscriptionService.create(userId, dto, locale);
       return this.success(res, result, 201);
     } catch (error) {
       this.error(res, error);
@@ -108,6 +111,7 @@ export class UserSubscriptionController extends BaseController {
   async subscribe(
     @Request() req: any,
     @Body() dto: CreateUserSubscriptionDto,
+    @Locale() locale: SupportedLocale,
     @Res() res: Response,
   ) {
     try {
@@ -115,7 +119,7 @@ export class UserSubscriptionController extends BaseController {
       if (!userId) {
         return this.error(res, { status: 401, message: 'Unauthorized' });
       }
-      const result = await this.subscriptionService.create(userId, dto);
+      const result = await this.subscriptionService.create(userId, dto, locale);
       return this.success(res, result, 201);
     } catch (error) {
       this.error(res, error);
@@ -197,13 +201,13 @@ export class UserSubscriptionController extends BaseController {
   @Get('admin/:id')
   @RequirePermission('READ', 'user_subscription')
   @UseGuards(JwtAuthGuard, PermissionGuard)
-  async adminGetById(@Param('id') id: string, @Res() res: Response) {
+  async adminGetById(@Param('id') id: string, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
       const numId = this.decode(id);
       if (Number.isNaN(numId)) {
         return this.error(res, { status: 400, message: 'Invalid id' });
       }
-      const result = await this.subscriptionService.findById(numId);
+      const result = await this.subscriptionService.findById(numId, locale);
       return this.success(res, result);
     } catch (error) {
       this.error(res, error);
@@ -217,6 +221,7 @@ export class UserSubscriptionController extends BaseController {
   async adminUpdateStatus(
     @Param('id') id: string,
     @Body() dto: UpdateUserSubscriptionDto,
+    @Locale() locale: SupportedLocale,
     @Res() res: Response,
   ) {
     try {
@@ -227,7 +232,7 @@ export class UserSubscriptionController extends BaseController {
       if (!dto.status) {
         return this.error(res, { status: 400, message: 'Status is required' });
       }
-      const result = await this.subscriptionService.updateStatus(numId, dto.status);
+      const result = await this.subscriptionService.updateStatus(numId, dto.status, locale);
       return this.success(res, result);
     } catch (error) {
       this.error(res, error);

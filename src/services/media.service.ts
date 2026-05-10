@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { getMessages, SupportedLocale } from 'src/constants/messages';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Media } from '../entities/media.entity';
@@ -53,12 +54,12 @@ export class MediaService {
     return medias;
   }
 
-  async findById(id: number, userId: number): Promise<Media> {
+  async findById(id: number, userId: number, locale: SupportedLocale = 'vi'): Promise<Media> {
     const media = await this.mediaRepository.findOne({
       where: { id, userId },
     });
     if (!media) {
-      throw new NotFoundException(`Media with ID ${id} not found`);
+      throw new NotFoundException(getMessages(locale).multiImage.notFound);
     }
     if (media.filename) {
       media.url = await this.buildPublicUrl(media.filename);
@@ -71,19 +72,19 @@ export class MediaService {
     return this.mediaRepository.save(media);
   }
 
-  async update(id: number, updateMediaDto: UpdateMediaDto, userId: number): Promise<Media> {
-    const media = await this.findById(id, userId);
+  async update(id: number, updateMediaDto: UpdateMediaDto, userId: number, locale: SupportedLocale = 'vi'): Promise<Media> {
+    const media = await this.findById(id, userId, locale);
     Object.assign(media, updateMediaDto);
     return this.mediaRepository.save(media);
   }
 
-  async remove(id: number, userId: number): Promise<void> {
-    const media = await this.findById(id, userId);
+  async remove(id: number, userId: number, locale: SupportedLocale = 'vi'): Promise<void> {
+    const media = await this.findById(id, userId, locale);
     await this.mediaRepository.remove(media);
   }
 
-  async updateMediaFile(id: number, file: Express.Multer.File, user: User): Promise<Media> {
-    const media = await this.findById(id, user.id);
+  async updateMediaFile(id: number, file: Express.Multer.File, user: User, locale: SupportedLocale = 'vi'): Promise<Media> {
+    const media = await this.findById(id, user.id, locale);
     const oldFilename = media.filename;
 
     if (oldFilename) {

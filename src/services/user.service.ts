@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { getMessages, SupportedLocale } from 'src/constants/messages';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Like, Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
@@ -162,10 +163,10 @@ export class UserService {
     return freeSubscriptionPlan;
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
+  async update(id: number, updateUserDto: UpdateUserDto, locale: SupportedLocale = 'vi'): Promise<User> {
     const user = await this.findById(id);
     if (!user) {
-      throw new NotFoundException(`Không tìm thấy tài khoản với ID ${id}`);
+      throw new NotFoundException(getMessages(locale).auth.userNotFound);
     }
     Object.assign(user, updateUserDto);
 
@@ -240,10 +241,10 @@ export class UserService {
     return this.userRepository.save(user);
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: number, locale: SupportedLocale = 'vi'): Promise<void> {
     const result = await this.userRepository.delete(id);
     if (result.affected === 0) {
-      throw new NotFoundException(`Không tìm thấy tài khoản với ID ${id}`);
+      throw new NotFoundException(getMessages(locale).auth.userNotFound);
     }
   }
 
@@ -285,19 +286,19 @@ export class UserService {
     return this.userRepository.findOne({ where: { verificationToken: token } });
   }
 
-  async blockUser(id: number): Promise<User> {
+  async blockUser(id: number, locale: SupportedLocale = 'vi'): Promise<User> {
     const user = await this.findById(id);
     if (!user) {
-      throw new NotFoundException(`Không tìm thấy tài khoản với ID ${id}`);
+      throw new NotFoundException(getMessages(locale).auth.userNotFound);
     }
     user.isBlocked = true;
     return this.userRepository.save(user);
   }
 
-  async unblockUser(id: number): Promise<User> {
+  async unblockUser(id: number, locale: SupportedLocale = 'vi'): Promise<User> {
     const user = await this.findById(id);
     if (!user) {
-      throw new NotFoundException(`Không tìm thấy tài khoản với ID ${id}`);
+      throw new NotFoundException(getMessages(locale).auth.userNotFound);
     }
     user.isBlocked = false;
     return this.userRepository.save(user);

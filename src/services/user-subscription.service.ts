@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { getMessages, SupportedLocale } from 'src/constants/messages';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserSubscription, SubscriptionStatus } from '../entities/user-subscription.entity';
@@ -59,20 +60,20 @@ export class UserSubscriptionService {
   }
 
   /** Tạo đăng ký mới (user chọn gói → pending_payment hoặc trial) */
-  async create(userId: number, dto: CreateUserSubscriptionDto): Promise<UserSubscription> {
+  async create(userId: number, dto: CreateUserSubscriptionDto, locale: SupportedLocale = 'vi'): Promise<UserSubscription> {
     const plan = await this.planRepository.findOne({ where: { id: dto.planId } });
     if (!plan) {
-      throw new NotFoundException('Plan not found');
+      throw new NotFoundException(getMessages(locale).subscription.planNotFound);
     }
     if (!plan.isActive) {
-      throw new BadRequestException('Plan is not available');
+      throw new BadRequestException(getMessages(locale).subscription.planNotAvailable);
     }
 
     const status = dto.status ?? SubscriptionStatus.PENDING_PAYMENT;
     const isFree = status === SubscriptionStatus.FREE;
     const userSubscription = await this.subscriptionRepository.findOne({ where: { userId, planId: plan.id } });
     if (userSubscription) {
-      throw new BadRequestException('User already has a subscription for this plan');
+      throw new BadRequestException(getMessages(locale).subscription.alreadySubscribed);
     }
     const now = new Date();
     const sub = this.subscriptionRepository.create({
@@ -101,13 +102,14 @@ export class UserSubscriptionService {
     subscriptionId: number,
     paymentId: number,
     durationMonths = 1,
+    locale: SupportedLocale = 'vi'
   ): Promise<UserSubscription> {
     const sub = await this.subscriptionRepository.findOne({
       where: { id: subscriptionId },
       relations: ['plan'],
     });
     if (!sub) {
-      throw new NotFoundException('Subscription not found');
+      throw new NotFoundException(getMessages(locale).subscription.subscriptionNotFound);
     }
 
     const now = new Date();
@@ -240,13 +242,13 @@ export class UserSubscriptionService {
     return { data, total };
   }
 
-  async findById(id: number): Promise<UserSubscription> {
+  async findById(id: number, locale: SupportedLocale = 'vi'): Promise<UserSubscription> {
     const sub = await this.subscriptionRepository.findOne({
       where: { id },
       relations: ['plan', 'user', 'payment'],
     });
     if (!sub) {
-      throw new NotFoundException('Subscription not found');
+      throw new NotFoundException(getMessages(locale).subscription.subscriptionNotFound);
     }
     return sub;
   }
@@ -255,8 +257,9 @@ export class UserSubscriptionService {
   async updateStatus(
     id: number,
     status: SubscriptionStatus,
+    locale: SupportedLocale = 'vi'
   ): Promise<UserSubscription> {
-    const sub = await this.findById(id);
+    const sub = await this.findById(id, locale);
     sub.status = status;
     return this.subscriptionRepository.save(sub);
   }

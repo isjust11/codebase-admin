@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { getMessages, SupportedLocale } from 'src/constants/messages';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository, Like } from 'typeorm';
 import { Role } from '../entities/role.entity';
@@ -71,10 +72,10 @@ export class RoleService {
     return this.roleRepository.save(role);
   }
 
-  async update(id: number, updateRoleDto: RoleDto): Promise<Role> {
+  async update(id: number, updateRoleDto: RoleDto, locale: SupportedLocale = 'vi'): Promise<Role> {
     const role = await this.findById(id);
     if (!role) {
-      throw new NotFoundException(`Role with ID ${id} not found`);
+      throw new NotFoundException(getMessages(locale).role.notFound);
     }
 
     if (updateRoleDto.name) {
@@ -112,30 +113,30 @@ export class RoleService {
     return this.roleRepository.save(role);
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: number, locale: SupportedLocale = 'vi'): Promise<void> {
     const result = await this.roleRepository.delete(id);
     if (result.affected === 0) {
-      throw new NotFoundException(`Role with ID ${id} not found`);
+      throw new NotFoundException(getMessages(locale).role.notFound);
     }
   }
 
-  async getFeaturesByRole(roleId: number) {
+  async getFeaturesByRole(roleId: number, locale: SupportedLocale = 'vi') {
     const role = await this.roleRepository.findOne({
       where: { id: roleId },
       relations: ['features','features.featureType'],
     });
 
     if (!role) {
-      throw new NotFoundException(`Role with ID ${roleId} not found`);
+      throw new NotFoundException(getMessages(locale).role.notFound);
     }
 
     return role.features;
   }
 
-  async assignFeatures(roleId: number, assignFeatureDto: AssignFeatureDto): Promise<Role> {
+  async assignFeatures(roleId: number, assignFeatureDto: AssignFeatureDto, locale: SupportedLocale = 'vi'): Promise<Role> {
     const role = await this.findById(roleId);
     if (!role) {
-      throw new NotFoundException(`Role with ID ${roleId} not found`);
+      throw new NotFoundException(getMessages(locale).role.notFound);
     }
 
     const features = await this.featureRepository.find({
@@ -232,20 +233,20 @@ export class RoleService {
   }
 
   // Lấy tất cả permissions của role
-  async getPermissionsByRole(roleId: number): Promise<Permission[]> {
+  async getPermissionsByRole(roleId: number, locale: SupportedLocale = 'vi'): Promise<Permission[]> {
     const role = await this.findById(roleId);
     if (!role) {
-      throw new NotFoundException(`Role with ID ${roleId} not found`);
+      throw new NotFoundException(getMessages(locale).role.notFound);
     }
 
     return role.permissions || [];
   }
 
   // Gán permissions cho role
-  async assignPermissions(roleId: number, assignPermissionDto: AssignPermissionDto): Promise<Role> {
+  async assignPermissions(roleId: number, assignPermissionDto: AssignPermissionDto, locale: SupportedLocale = 'vi'): Promise<Role> {
     const role = await this.findById(roleId);
     if (!role) {
-      throw new NotFoundException(`Role with ID ${roleId} not found`);
+      throw new NotFoundException(getMessages(locale).role.notFound);
     }
 
     // Giải mã các id permission từ base64
@@ -262,10 +263,10 @@ export class RoleService {
   }
 
   // Bỏ gán permissions khỏi role
-  async removePermissions(roleId: number, assignPermissionDto: AssignPermissionDto): Promise<Role> {
+  async removePermissions(roleId: number, assignPermissionDto: AssignPermissionDto, locale: SupportedLocale = 'vi'): Promise<Role> {
     const role = await this.findById(roleId);
     if (!role) {
-      throw new NotFoundException(`Role with ID ${roleId} not found`);
+      throw new NotFoundException(getMessages(locale).role.notFound);
     }
 
     // Giải mã các id permission từ base64
@@ -282,10 +283,10 @@ export class RoleService {
   }
 
   // Lấy thống kê permissions của role
-  async getPermissionStats(roleId: number): Promise<PermissionStatsDto> {
+  async getPermissionStats(roleId: number, locale: SupportedLocale = 'vi'): Promise<PermissionStatsDto> {
     const role = await this.findById(roleId);
     if (!role) {
-      throw new NotFoundException(`Role with ID ${roleId} not found`);
+      throw new NotFoundException(getMessages(locale).role.notFound);
     }
 
     const allPermissions = await this.permissionRepository.find({

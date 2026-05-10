@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import * as appleSignin from 'apple-signin-auth';
+import { getMessages, SupportedLocale } from 'src/constants/messages';
 
 export interface VerifiedUserData {
   platformId: string;
@@ -18,7 +19,8 @@ export class SocialTokenVerificationService {
   /**
    * Verify Google access token và lấy thông tin user
    */
-  async verifyGoogleToken(accessToken: string): Promise<VerifiedUserData> {
+  async verifyGoogleToken(accessToken: string, locale: SupportedLocale = 'vi'): Promise<VerifiedUserData> {
+    const m = getMessages(locale).social;
     try {
       const response = await axios.get(
         `https://www.googleapis.com/oauth2/v2/userinfo?access_token=${accessToken}`,
@@ -32,7 +34,7 @@ export class SocialTokenVerificationService {
       const userData = response.data;
 
       if (!userData.id || !userData.email) {
-        throw new UnauthorizedException('Invalid Google token or missing user data');
+        throw new UnauthorizedException(m.invalidGoogleToken);
       }
 
       return {
@@ -44,14 +46,16 @@ export class SocialTokenVerificationService {
       };
     } catch (error) {
       console.error('Google token verification error:', error);
-      throw new UnauthorizedException('Google token verification failed');
+      if (error instanceof UnauthorizedException) throw error;
+      throw new UnauthorizedException(m.googleVerificationFailed);
     }
   }
 
   /**
    * Verify Facebook access token và lấy thông tin user
    */
-  async verifyFacebookToken(accessToken: string): Promise<VerifiedUserData> {
+  async verifyFacebookToken(accessToken: string, locale: SupportedLocale = 'vi'): Promise<VerifiedUserData> {
+    const m = getMessages(locale).social;
     try {
       const response = await axios.get(
         `https://graph.facebook.com/me?fields=id,name,email,picture&access_token=${accessToken}`,
@@ -60,7 +64,7 @@ export class SocialTokenVerificationService {
       const userData = response.data;
 
       if (!userData.id || !userData.email) {
-        throw new UnauthorizedException('Invalid Facebook token or missing user data');
+        throw new UnauthorizedException(m.invalidFacebookToken);
       }
 
       return {
@@ -72,51 +76,52 @@ export class SocialTokenVerificationService {
       };
     } catch (error) {
       console.error('Facebook token verification error:', error);
-      throw new UnauthorizedException('Facebook token verification failed');
+      if (error instanceof UnauthorizedException) throw error;
+      throw new UnauthorizedException(m.facebookVerificationFailed);
     }
   }
 
   /**
    * Verify Apple identity token và lấy thông tin user
    */
-  async verifyAppleToken(identityToken: string): Promise<VerifiedUserData> {
+  async verifyAppleToken(identityToken: string, locale: SupportedLocale = 'vi'): Promise<VerifiedUserData> {
+    const m = getMessages(locale).social;
     try {
-      // Decode và verify ID Token từ Apple
       const { sub: platformId, email } = await appleSignin.verifyIdToken(identityToken, {
-        // App ID (Bundle ID) của bạn
         audience: 'com.hungvv.readbox',
         ignoreExpiration: false,
       });
 
       if (!platformId || !email) {
-        throw new UnauthorizedException('Token Apple không chứa ID hoặc Email');
+        throw new UnauthorizedException(m.invalidAppleToken);
       }
 
       return {
         platformId,
         email,
-        fullName: '', // Apple chỉ gửi tên ở lần đăng nhập đầu tiên qua client, không có trong token
+        fullName: '',
         platform: 'apple',
       };
     } catch (error) {
       console.error('Apple token verification error:', error);
-      throw new UnauthorizedException('Xác thực token Apple thất bại');
+      if (error instanceof UnauthorizedException) throw error;
+      throw new UnauthorizedException(m.appleVerificationFailed);
     }
   }
 
   /**
    * Verify token dựa trên platform
    */
-  async verifyToken(platform: 'google' | 'facebook' | 'apple', accessToken: string): Promise<VerifiedUserData> {
+  async verifyToken(platform: 'google' | 'facebook' | 'apple', accessToken: string, locale: SupportedLocale = 'vi'): Promise<VerifiedUserData> {
     switch (platform) {
       case 'google':
-        return this.verifyGoogleToken(accessToken);
+        return this.verifyGoogleToken(accessToken, locale);
       case 'facebook':
-        return this.verifyFacebookToken(accessToken);
+        return this.verifyFacebookToken(accessToken, locale);
       case 'apple':
-        return this.verifyAppleToken(accessToken);
+        return this.verifyAppleToken(accessToken, locale);
       default:
-        throw new UnauthorizedException('Nền tảng đăng nhập không được hỗ trợ');
+        throw new UnauthorizedException(getMessages(locale).social.unsupportedPlatform);
     }
   }
 }

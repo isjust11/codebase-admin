@@ -12,6 +12,8 @@ import { Response } from 'express';
 import { ConverterService } from '../../services/converter.service';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { PermissionGuard } from '../../guards/permission.guard';
+import { Locale } from 'src/decorators/locale.decorator';
+import { SupportedLocale, getMessages } from 'src/constants/messages';
 
 @Controller('converter')
 @UseGuards(JwtAuthGuard, PermissionGuard)
@@ -40,7 +42,7 @@ export class ConverterController {
         } else {
           callback(
             new BadRequestException(
-              'Chỉ chấp nhận file Word (.docx)',
+              'Only .docx or .doc files are supported',
             ),
             false,
           );
@@ -50,12 +52,13 @@ export class ConverterController {
   )
   async convertWordToPdf(
     @UploadedFile() file: Express.Multer.File,
+    @Locale() locale: SupportedLocale,
     @Res() res: Response,
   ) {
     try {
       // Kiểm tra file có tồn tại không
       if (!file) {
-        throw new BadRequestException('Vui lòng upload file Word');
+        throw new BadRequestException(getMessages(locale).converter.uploadRequired);
       }
 
       console.log('Processing file:', {
@@ -68,6 +71,7 @@ export class ConverterController {
       const pdfBuffer = await this.converterService.convertWordToPdf(
         file.buffer,
         file.originalname,
+        locale
       );
 
       // Tạo tên file PDF
@@ -89,7 +93,7 @@ export class ConverterController {
       
       // Xử lý lỗi và trả về response
       const statusCode = error.status || 500;
-      const message = error.message || 'Lỗi khi chuyển đổi file';
+      const message = error.message || getMessages(locale).converter.error;
 
       return res.status(statusCode).json({
         status: false,
@@ -120,7 +124,7 @@ export class ConverterController {
         } else {
           callback(
             new BadRequestException(
-              'Chỉ chấp nhận file Word (.doc, .docx)',
+              'Only .docx or .doc files are supported',
             ),
             false,
           );
@@ -130,11 +134,12 @@ export class ConverterController {
   )
   async convertWordToPdfPublic(
     @UploadedFile() file: Express.Multer.File,
+    @Locale() locale: SupportedLocale,
     @Res() res: Response,
   ) {
     try {
       if (!file) {
-        throw new BadRequestException('Vui lòng upload file Word');
+        throw new BadRequestException(getMessages(locale).converter.uploadRequired);
       }
 
       console.log('Processing file (public):', {
@@ -146,6 +151,7 @@ export class ConverterController {
       const pdfBuffer = await this.converterService.convertWordToPdf(
         file.buffer,
         file.originalname,
+        locale
       );
 
       const pdfFilename = this.converterService.generatePdfFilename(
@@ -164,7 +170,7 @@ export class ConverterController {
       console.error('Error in convertWordToPdfPublic:', error);
       
       const statusCode = error.status || 500;
-      const message = error.message || 'Lỗi khi chuyển đổi file';
+      const message = error.message || getMessages(locale).converter.error;
 
       return res.status(statusCode).json({
         status: false,

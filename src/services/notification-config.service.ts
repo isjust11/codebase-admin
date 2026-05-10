@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { getMessages, SupportedLocale } from 'src/constants/messages';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository, IsNull } from 'typeorm';
 import { NotificationConfig } from '../entities/notification-config.entity';
@@ -84,19 +85,19 @@ export class NotificationConfigService {
     return defaultValue;
   }
 
-  async update(id: number, data: Partial<NotificationConfig>) {
+  async update(id: number, data: Partial<NotificationConfig>, locale: SupportedLocale = 'vi') {
     const existing = await this.findOne(id);
-    if (!existing) throw new NotFoundException('Config not found');
+    if (!existing) throw new NotFoundException(getMessages(locale).notification.configNotFound);
     Object.assign(existing, data);
     return this.configRepo.save(existing);
   }
 
-  async remove(id: number) {
+  async remove(id: number, locale: SupportedLocale = 'vi') {
     const existing = await this.findOne(id);
-    if (!existing) throw new NotFoundException('Config not found');
+    if (!existing) throw new NotFoundException(getMessages(locale).notification.configNotFound);
     existing.isActive = false;
     if(existing.isDefault){
-      throw new BadRequestException('Default config cannot be deleted');
+      throw new BadRequestException(getMessages(locale).notification.defaultConfigCannotDelete);
     }
     await this.configRepo.delete(id);
   }

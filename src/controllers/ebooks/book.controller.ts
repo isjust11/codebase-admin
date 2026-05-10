@@ -30,6 +30,8 @@ import { RequirePermission } from 'src/decorators/require-permissions.decorator'
 import { RoleService } from 'src/services/role.service';
 import { RoleEnum } from 'src/enums/role.enum';
 import { CategoryCodeEnum } from 'src/enums/category-code.enum';
+import { Locale } from 'src/decorators/locale.decorator';
+import { SupportedLocale } from 'src/constants/messages';
 
 @ApiTags('Books')
 @Controller('books')
@@ -159,7 +161,7 @@ export class BookController extends BaseController {
   @Post()
   @ApiOperation({ summary: 'Tạo sách mới' })
   @HttpCode(HttpStatus.CREATED)
-  async createBook(@Body() createBookDto: CreateBookDto, @Request() req, @Res() res: Response) {
+  async createBook(@Body() createBookDto: CreateBookDto, @Request() req, @Locale() locale: SupportedLocale, @Res() res: Response) {
     const userId = req?.user?.id;
     this.logger.log(`[createBook] POST /books - userId=${userId}`);
 
@@ -168,7 +170,7 @@ export class BookController extends BaseController {
         createBookDto.categoryId = this.decode(createBookDto.category);
       }
 
-      const data = await this.bookService.createBook({ ...createBookDto, createById: userId });
+      const data = await this.bookService.createBook({ ...createBookDto, createById: userId }, locale);
       this.logger.log(`[createBook] Success - bookId=${(data as any)?.id ?? 'unknown'}`);
       return this.success(res, data);
     } catch (error) {
@@ -197,13 +199,13 @@ export class BookController extends BaseController {
 
   @Put(':id')
   @ApiOperation({ summary: 'Cập nhật sách' })
-  async updateBook(@Param('id') id: string, @Body() updateBookDto: UpdateBookDto, @Request() req, @Res() res: Response) {
+  async updateBook(@Param('id') id: string, @Body() updateBookDto: UpdateBookDto, @Request() req, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
       const bookId = this.decode(id);
       if (updateBookDto.category) {
         updateBookDto.categoryId = this.decode(updateBookDto.category);
       }
-      const data = await this.bookService.updateBook(bookId, { ...updateBookDto, createById: req?.user?.id });
+      const data = await this.bookService.updateBook(bookId, { ...updateBookDto, createById: req?.user?.id }, locale);
       return this.success(res, data);
     } catch (error) {
       if (error instanceof BadRequestException || error instanceof ForbiddenException) {
@@ -303,10 +305,10 @@ export class BookController extends BaseController {
   @Post(':id/approve')
   @RequirePermission('UPDATE', 'EBOOK')
   @ApiOperation({ summary: 'Duyệt sách' })
-  async approveBook(@Param('id') id: string, @Res() res: Response) {
+  async approveBook(@Param('id') id: string, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
       const bookId = this.decode(id);
-      const data = await this.bookService.updateStatus(bookId, CategoryCodeEnum.BOOK_STATUS_APPROVED);
+      const data = await this.bookService.updateStatus(bookId, CategoryCodeEnum.BOOK_STATUS_APPROVED, locale);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -316,10 +318,10 @@ export class BookController extends BaseController {
   @Post(':id/reject')
   @RequirePermission('UPDATE', 'EBOOK')
   @ApiOperation({ summary: 'Từ chối sách' })
-  async rejectBook(@Param('id') id: string, @Res() res: Response) {
+  async rejectBook(@Param('id') id: string, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
       const bookId = this.decode(id);
-      const data = await this.bookService.updateStatus(bookId, CategoryCodeEnum.BOOK_STATUS_REJECTED);
+      const data = await this.bookService.updateStatus(bookId, CategoryCodeEnum.BOOK_STATUS_REJECTED, locale);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -329,10 +331,10 @@ export class BookController extends BaseController {
   @Put(':id/status')
   @RequirePermission('UPDATE', 'EBOOK')
   @ApiOperation({ summary: 'Cập nhật trạng thái sách' })
-  async updateStatus(@Param('id') id: string, @Body('statusCode') statusCode: CategoryCodeEnum, @Res() res: Response) {
+  async updateStatus(@Param('id') id: string, @Body('statusCode') statusCode: CategoryCodeEnum, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
       const bookId = this.decode(id);
-      const data = await this.bookService.updateStatus(bookId, statusCode);
+      const data = await this.bookService.updateStatus(bookId, statusCode, locale);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -340,4 +342,3 @@ export class BookController extends BaseController {
   }
 
 }
-

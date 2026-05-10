@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { getMessages, SupportedLocale } from 'src/constants/messages';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Category } from '../entities/category.entity';
@@ -25,13 +26,14 @@ export class CategoryService {
     categoryTypeCode: string,
     sortBy?: string,
     sortType?: 'ASC' | 'DESC',
+    locale: SupportedLocale = 'vi'
   ): Promise<Category[]> {
     const categoryType = await this.categoryTypeRepository.findOne({
       where: { code: categoryTypeCode }
     });
 
     if (!categoryType) {
-      throw new NotFoundException('Category type not found');
+      throw new NotFoundException(getMessages(locale).category.typeNotFound);
     }
 
     const queryBuilder = this.categoryRepository

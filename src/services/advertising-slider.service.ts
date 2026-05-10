@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { getMessages, SupportedLocale } from 'src/constants/messages';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like, FindOptionsWhere, Between, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { AdvertisingSlider, SliderType, SliderPosition } from '../entities/advertising-slider.entity';
@@ -77,21 +78,21 @@ export class AdvertisingSliderService {
     });
   }
 
-  async findById(id: number): Promise<AdvertisingSlider> {
+  async findById(id: number, locale: SupportedLocale = 'vi'): Promise<AdvertisingSlider> {
     const slider = await this.advertisingSliderRepository.findOne({
       where: { id },
       relations: ['createdBy', 'updatedBy'],
     });
-
+ 
     if (!slider) {
-      throw new NotFoundException(`Advertising slider with ID ${id} not found`);
+      throw new NotFoundException(getMessages(locale).advertisingSlider.notFound);
     }
-
+ 
     return slider;
   }
-
-  async update(id: number, updateAdvertisingSliderDto: UpdateAdvertisingSliderDto): Promise<AdvertisingSlider> {
-    const slider = await this.findById(id);
+ 
+  async update(id: number, updateAdvertisingSliderDto: UpdateAdvertisingSliderDto, locale: SupportedLocale = 'vi'): Promise<AdvertisingSlider> {
+    const slider = await this.findById(id, locale);
 
     Object.assign(slider, {
       ...updateAdvertisingSliderDto,
@@ -100,8 +101,8 @@ export class AdvertisingSliderService {
     return await this.advertisingSliderRepository.save(slider);
   }
 
-  async remove(id: number): Promise<void> {
-    const slider = await this.findById(id);
+  async remove(id: number, locale: SupportedLocale = 'vi'): Promise<void> {
+    const slider = await this.findById(id, locale);
     await this.advertisingSliderRepository.remove(slider);
   }
 
@@ -161,14 +162,14 @@ export class AdvertisingSliderService {
     });
   }
 
-  async incrementViewCount(id: number): Promise<AdvertisingSlider> {
-    const slider = await this.findById(id);
+  async incrementViewCount(id: number, locale: SupportedLocale = 'vi'): Promise<AdvertisingSlider> {
+    const slider = await this.findById(id, locale);
     slider.viewCount += 1;
     return await this.advertisingSliderRepository.save(slider);
   }
 
-  async incrementClickCount(id: number): Promise<AdvertisingSlider> {
-    const slider = await this.findById(id);
+  async incrementClickCount(id: number, locale: SupportedLocale = 'vi'): Promise<AdvertisingSlider> {
+    const slider = await this.findById(id, locale);
     slider.clickCount += 1;
     
     // Update CTR (Click-through rate)
@@ -179,24 +180,24 @@ export class AdvertisingSliderService {
     return await this.advertisingSliderRepository.save(slider);
   }
 
-  async toggleActive(id: number): Promise<AdvertisingSlider> {
-    const slider = await this.findById(id);
+  async toggleActive(id: number, locale: SupportedLocale = 'vi'): Promise<AdvertisingSlider> {
+    const slider = await this.findById(id, locale);
     slider.isActive = !slider.isActive;
     return await this.advertisingSliderRepository.save(slider);
   }
 
-  async toggleFeatured(id: number): Promise<AdvertisingSlider> {
-    const slider = await this.findById(id);
+  async toggleFeatured(id: number, locale: SupportedLocale = 'vi'): Promise<AdvertisingSlider> {
+    const slider = await this.findById(id, locale);
     slider.isFeatured = !slider.isFeatured;
     return await this.advertisingSliderRepository.save(slider);
   }
 
-  async updateOrder(id: number, order: number): Promise<AdvertisingSlider> {
+  async updateOrder(id: number, order: number, locale: SupportedLocale = 'vi'): Promise<AdvertisingSlider> {
     if (order < 1) {
-      throw new BadRequestException('Order must be greater than 0');
+      throw new BadRequestException(getMessages(locale).advertisingSlider.orderInvalid);
     }
-
-    const slider = await this.findById(id);
+ 
+    const slider = await this.findById(id, locale);
     slider.order = order;
     return await this.advertisingSliderRepository.save(slider);
   }

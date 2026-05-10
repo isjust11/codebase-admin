@@ -8,6 +8,8 @@ import { RequirePermission } from 'src/decorators/require-permissions.decorator'
 import { PermissionGuard } from 'src/guards/permission.guard';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { Response } from 'express';
+import { Locale } from 'src/decorators/locale.decorator';
+import { SupportedLocale } from 'src/constants/messages';
 
 @Controller('feature')
 @UseGuards(JwtAuthGuard, PermissionGuard)
@@ -55,9 +57,9 @@ export class FeatureController extends BaseController {
 
     @Get(':id')
     @RequirePermission('READ', 'feature')
-    async findOne(@Param('id') id: string, @Res() res: Response) {
+    async findOne(@Param('id') id: string, @Locale() locale: SupportedLocale, @Res() res: Response) {
         try {
-            const result = await this.featureService.findOne(this.decode(id));
+            const result = await this.featureService.findOne(this.decode(id), locale);
             return this.success(res, result);
         } catch (error) {
             this.error(res, error);
@@ -66,9 +68,9 @@ export class FeatureController extends BaseController {
 
     @Put(':id')
     @RequirePermission('UPDATE', 'feature')
-    async update(@Param('id') id: string, @Body() updateFeatureDto: FeatureDto, @Res() res: Response) {
+    async update(@Param('id') id: string, @Body() updateFeatureDto: FeatureDto, @Locale() locale: SupportedLocale, @Res() res: Response) {
         try {
-            const result = await this.featureService.update(this.decode(id), updateFeatureDto);
+            const result = await this.featureService.update(this.decode(id), updateFeatureDto, locale);
             return this.success(res, result);
         } catch (error) {
             this.error(res, error);
@@ -77,9 +79,9 @@ export class FeatureController extends BaseController {
 
     @Delete(':id')
     @RequirePermission('DELETE', 'feature')
-    async remove(@Param('id') id: string, @Res() res: Response) {
+    async remove(@Param('id') id: string, @Locale() locale: SupportedLocale, @Res() res: Response) {
         try {
-            const result = await this.featureService.remove(this.decode(id));
+            const result = await this.featureService.remove(this.decode(id), locale);
             return this.success(res, result);
         } catch (error) {
             this.error(res, error);
@@ -88,9 +90,9 @@ export class FeatureController extends BaseController {
 
     @Post(':id/roles')
     @RequirePermission('UPDATE', 'feature')
-    async assignRoles(@Param('id') id: string, @Body() assignRoleDto: AssignRoleDto, @Res() res: Response) {
+    async assignRoles(@Param('id') id: string, @Body() assignRoleDto: AssignRoleDto, @Locale() locale: SupportedLocale, @Res() res: Response) {
         try {
-            const result = await this.featureService.assignRoles(this.decode(id), assignRoleDto);
+            const result = await this.featureService.assignRoles(this.decode(id), assignRoleDto, locale);
             return this.success(res, result);
         } catch (error) {
             this.error(res, error);
@@ -99,9 +101,9 @@ export class FeatureController extends BaseController {
 
     @Delete(':id/roles')
     @RequirePermission('UPDATE', 'feature')
-    async removeRoles(@Param('id') id: string, @Body() roleIds: number[], @Res() res: Response) {
+    async removeRoles(@Param('id') id: string, @Body() roleIds: number[], @Locale() locale: SupportedLocale, @Res() res: Response) {
         try {
-            const result = await this.featureService.removeRoles(this.decode(id), roleIds);
+            const result = await this.featureService.removeRoles(this.decode(id), roleIds, locale);
             return this.success(res, result);
         } catch (error) {
             this.error(res, error);

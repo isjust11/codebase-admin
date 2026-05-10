@@ -9,6 +9,8 @@ import { RequirePermission } from 'src/decorators/require-permissions.decorator'
 import { PermissionGuard } from 'src/guards/permission.guard';
 import { JwtAuthGuard, Public } from 'src/guards/jwt-auth.guard';
 import { ConfigService } from '@nestjs/config';
+import { Locale } from 'src/decorators/locale.decorator';
+import { SupportedLocale } from 'src/constants/messages';
 
 @Controller('media')
 @UseGuards(JwtAuthGuard, PermissionGuard)
@@ -33,8 +35,8 @@ export class MediaController extends BaseController {
 
   @Get(':id')
   @RequirePermission('READ', 'media')
-  async findOne(@Param('id') id: string, @Request() req): Promise<Media> {
-    return this.mediaService.findById(this.decode(id), req.user.id);
+  async findOne(@Param('id') id: string, @Locale() locale: SupportedLocale, @Request() req): Promise<Media> {
+    return this.mediaService.findById(this.decode(id), req.user.id, locale);
   }
 
   @Post('upload')
@@ -81,9 +83,10 @@ export class MediaController extends BaseController {
   async update(
     @Param('id') id: string,
     @Body() updateMediaDto: UpdateMediaDto,
+    @Locale() locale: SupportedLocale,
     @Request() req,
   ): Promise<Media> {
-    return this.mediaService.update(this.decode(id), updateMediaDto, req.user.id);
+    return this.mediaService.update(this.decode(id), updateMediaDto, req.user.id, locale);
   }
 
   @Delete(':filename')
@@ -110,4 +113,4 @@ export class MediaController extends BaseController {
     }
 
   }
-} 
+}

@@ -1,4 +1,5 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
+import { getMessages, SupportedLocale } from 'src/constants/messages';
 import * as mammoth from 'mammoth';
 import * as htmlPdf from 'html-pdf-node';
 import { Buffer } from 'buffer';
@@ -12,7 +13,7 @@ export class ConverterService {
    * @param filename Tên file gốc
    * @returns Buffer của file PDF
    */
-  async convertWordToPdf(buffer: Buffer, filename: string): Promise<Buffer> {
+  async convertWordToPdf(buffer: Buffer, filename: string, locale: SupportedLocale = 'vi'): Promise<Buffer> {
     try {
       const ext = path.extname(filename).toLowerCase();
   
@@ -48,19 +49,19 @@ export class ConverterService {
             msg.includes('Document is empty')
           ) {
             throw new BadRequestException(
-              'Chuyển đổi file .doc cần cài LibreOffice. Vui lòng cài LibreOffice (https://www.libreoffice.org) hoặc gửi file .docx thay vì .doc.',
+              getMessages(locale).converter.libreOfficeRequired,
             );
           }
           throw libreError;
         }
       }
 
-      throw new BadRequestException('Chỉ hỗ trợ file .docx hoặc .doc');
+      throw new BadRequestException(getMessages(locale).converter.unsupportedFormat);
     } catch (error: any) {
       if (error instanceof BadRequestException) throw error;
       console.error('Error converting Word to PDF:', error);
       throw new BadRequestException(
-        `Lỗi khi chuyển đổi file: ${error.message || 'Unknown error'}`,
+        `${getMessages(locale).converter.error}: ${error.message || 'Unknown error'}`,
       );
     }
   }

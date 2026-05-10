@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { getMessages, SupportedLocale } from 'src/constants/messages';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, Like, Repository } from 'typeorm';
 import { Page } from '../entities/page.entity';
@@ -38,7 +39,7 @@ export class PageService {
     };
   }
 
-  async create(createPageDto: CreatePageDto): Promise<Page> {
+  async create(createPageDto: CreatePageDto, locale: SupportedLocale = 'vi'): Promise<Page> {
 
     if (createPageDto.title) {
       createPageDto.slug = slugify(createPageDto.title, { lower: true, strict: true });
@@ -49,7 +50,7 @@ export class PageService {
     });
 
     if (existingPage) {
-      throw new ConflictException('Page with this slug already exists');
+      throw new ConflictException(getMessages(locale).page.slugAlreadyExists);
     }
 
     // Create page entity from DTO
@@ -77,29 +78,29 @@ export class PageService {
     });
   }
 
-  async findOne(id: number): Promise<Page> {
+  async findOne(id: number, locale: SupportedLocale = 'vi'): Promise<Page> {
     const page = await this.pageRepository.findOne({
       where: { id },
       relations: ['createdBy', 'updatedBy'],
     });
     if (!page) {
-      throw new NotFoundException('Page not found');
+      throw new NotFoundException(getMessages(locale).page.notFound);
     }
     return page;
   }
 
-  async findBySlug(slug: string): Promise<Page> {
+  async findBySlug(slug: string, locale: SupportedLocale = 'vi'): Promise<Page> {
     const page = await this.pageRepository.findOne({
       where: { slug }
     });
     if (!page) {
-      throw new NotFoundException('Page not found');
+      throw new NotFoundException(getMessages(locale).page.notFound);
     }
     return page;
   }
 
-  async update(id: number, updatePageDto: UpdatePageDto): Promise<Page> {
-    const page = await this.findOne(id);
+  async update(id: number, updatePageDto: UpdatePageDto, locale: SupportedLocale = 'vi'): Promise<Page> {
+    const page = await this.findOne(id, locale);
 
     // Check if slug is being updated and if it already exists
     if (updatePageDto.title) {
@@ -111,7 +112,7 @@ export class PageService {
       });
 
       if (existingPage) {
-        throw new ConflictException('Page with this slug already exists');
+        throw new ConflictException(getMessages(locale).page.slugAlreadyExists);
       }
     }
 
@@ -119,13 +120,13 @@ export class PageService {
     return await this.pageRepository.save(page);
   }
 
-  async remove(id: number): Promise<void> {
-    const page = await this.findOne(id);
+  async remove(id: number, locale: SupportedLocale = 'vi'): Promise<void> {
+    const page = await this.findOne(id, locale);
     await this.pageRepository.remove(page);
   }
 
-  async toggleActive(id: number): Promise<Page> {
-    const page = await this.findOne(id);
+  async toggleActive(id: number, locale: SupportedLocale = 'vi'): Promise<Page> {
+    const page = await this.findOne(id, locale);
     page.isActive = !page.isActive;
     return await this.pageRepository.save(page);
   }

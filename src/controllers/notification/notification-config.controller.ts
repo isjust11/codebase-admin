@@ -5,6 +5,8 @@ import { RequirePermission } from '../../decorators/require-permissions.decorato
 import { BaseController } from '../base/base.controller';
 import { NotificationConfigService } from '../../services/notification-config.service';
 import { Response } from 'express';
+import { Locale } from 'src/decorators/locale.decorator';
+import { SupportedLocale } from 'src/constants/messages';
 
 @Controller('notification-configs')
 @UseGuards(JwtAuthGuard, PermissionGuard)
@@ -101,9 +103,9 @@ export class NotificationConfigController extends BaseController {
 
   @Patch(':id')
   @RequirePermission('UPDATE', 'notification_config')
-  async update(@Param('id') id: string, @Body() body: any, @Res() res: Response) {
+  async update(@Param('id') id: string, @Body() body: any, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
-      const data = await this.service.update(this.decode(id), body);
+      const data = await this.service.update(this.decode(id), body, locale);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
@@ -113,15 +115,12 @@ export class NotificationConfigController extends BaseController {
   @Delete(':id')
   @RequirePermission('DELETE', 'notification_config')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id') id: string, @Res() res: Response) {
+  async remove(@Param('id') id: string, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
-      await this.service.remove(this.decode(id));
+      await this.service.remove(this.decode(id), locale);
       return this.success(res, null);
     } catch (error) {
       return this.error(res, error);
     }
   }
 }
-
-
-

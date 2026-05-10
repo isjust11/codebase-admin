@@ -21,6 +21,8 @@ import {
   CreateSubscriptionPlanDto,
   UpdateSubscriptionPlanDto,
 } from '../../dtos/subscription-plan.dto';
+import { Locale } from 'src/decorators/locale.decorator';
+import { SupportedLocale } from 'src/constants/messages';
 
 @Controller('subscription-plans')
 export class SubscriptionPlanController extends BaseController {
@@ -59,13 +61,13 @@ export class SubscriptionPlanController extends BaseController {
   /** Chi tiết một gói */
   @Get(':id')
   @UseGuards(JwtAuthGuard, PermissionGuard)
-  async getById(@Param('id') id: string, @Res() res: Response) {
+  async getById(@Param('id') id: string, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
       const numId = this.decode(id);
       if (Number.isNaN(numId)) {
         return this.error(res, { status: 400, message: 'Invalid id' });
       }
-      const result = await this.planService.findById(numId);
+      const result = await this.planService.findById(numId, locale);
       return this.success(res, result);
     } catch (error) {
       this.error(res, error);
@@ -95,6 +97,7 @@ export class SubscriptionPlanController extends BaseController {
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateSubscriptionPlanDto,
+    @Locale() locale: SupportedLocale,
     @Res() res: Response,
   ) {
     try {
@@ -102,7 +105,7 @@ export class SubscriptionPlanController extends BaseController {
       if (Number.isNaN(numId)) {
         return this.error(res, { status: 400, message: 'Invalid id' });
       }
-      const result = await this.planService.update(numId, dto);
+      const result = await this.planService.update(numId, dto, locale);
       return this.success(res, result);
     } catch (error) {
       this.error(res, error);
@@ -113,13 +116,13 @@ export class SubscriptionPlanController extends BaseController {
   @Delete(':id')
   @RequirePermission('DELETE', 'subscription_plan')
   @UseGuards(JwtAuthGuard, PermissionGuard)
-  async remove(@Param('id') id: string, @Res() res: Response) {
+  async remove(@Param('id') id: string, @Locale() locale: SupportedLocale, @Res() res: Response) {
     try {
       const numId = this.decode(id);
       if (Number.isNaN(numId)) {
         return this.error(res, { status: 400, message: 'Invalid id' });
       }
-      await this.planService.remove(numId);
+      await this.planService.remove(numId, locale);
       return this.success(res, { deleted: true });
     } catch (error) {
       this.error(res, error);
