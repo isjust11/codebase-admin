@@ -46,6 +46,12 @@ export class Book {
   @Column({ default: 'vi' })
   language: string;
 
+  @Column({ nullable: true })
+  countryCode: string;
+
+  @Column({ nullable: true })
+  region: string;
+
   @Column({ name: 'is_public', default: true })
   isPublic: boolean;
 

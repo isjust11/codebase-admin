@@ -3,6 +3,7 @@ import { getMessages, SupportedLocale } from 'src/constants/messages';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository } from 'typeorm';
 import { Book } from '../entities/book.entity';
+import { User } from '../entities/user.entity';
 import { CreateBookDto, UpdateBookDto } from 'src/dtos/book.dto';
 import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
 import { FilterType } from 'src/enums/filter-type.enum';
@@ -41,7 +42,8 @@ export class BookService {
     categoryId?: number,
     userId?: number,
     isSupperAdmin?: boolean,
-    statusCode?: string): Promise<PaginatedResponse<Book>> {
+    statusCode?: string,
+    user?: User): Promise<PaginatedResponse<Book>> {
     const { page, size, search } = filter;
     const skip = ((page || 1) - 1) * (size || 10);
     const take = size;
@@ -51,6 +53,16 @@ export class BookService {
       .leftJoinAndSelect('book.createBy', 'createBy');
     if (!isSupperAdmin) {
       query.where('book.isPublic = :isPublic', { isPublic: true });
+
+      // Geographic filtering
+      if (user) {
+        if (user.countryCode) {
+          query.andWhere('(book.countryCode IS NULL OR book.countryCode = :countryCode)', { countryCode: user.countryCode });
+        }
+        if (user.region) {
+          query.andWhere('(book.region IS NULL OR book.region = :region)', { region: user.region });
+        }
+      }
     }
     // Filter by statusCode (admin filtering by moderation status)
     if (statusCode) {

@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, Matches } from "class-validator";
+import { IsNotEmpty, IsOptional, IsString, Matches } from "class-validator";
 
 export class UpdateProfileDto {
 
@@ -36,4 +36,12 @@ export class UpdateProfileDto {
 
   @IsString()
   linkedinLink: string;
+
+  @IsString()
+  @IsOptional()
+  countryCode?: string;
+
+  @IsString()
+  @IsOptional()
+  region?: string;
 }

@@ -76,6 +76,16 @@ export class CreateBookDto {
   @IsNumber()
   @IsOptional()
   createById?: number;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  countryCode?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  region?: string;
 }
 
 export class UpdateBookDto {
@@ -157,5 +167,15 @@ export class UpdateBookDto {
   @IsNumber()
   @IsOptional()
   statusId?: number;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  countryCode?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  region?: string;
 }
 

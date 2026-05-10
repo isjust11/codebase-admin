@@ -17,6 +17,8 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Book } from '../../entities/book.entity';
+import { User } from '../../entities/user.entity';
 import { BookService } from 'src/services/book.service';
 import { CreateBookDto, UpdateBookDto } from 'src/dtos/book.dto';
 import { JwtAuthGuard, Public } from 'src/guards/jwt-auth.guard';
@@ -82,13 +84,14 @@ export class BookController extends BaseController {
         isSupperAdmin = role?.code === RoleEnum.SUPPER_ADMIN;
       }
       const categoryIdNumber = categoryId ? this.decode(categoryId) : undefined;
-      const data = await this.bookService.getPublicBooks(filter, filterType, categoryIdNumber, userId, isSupperAdmin);
+      const data = await this.bookService.getPublicBooks(filter, filterType, categoryIdNumber, userId, isSupperAdmin, undefined, req?.user);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
     }
   }
 
+  @Public()
   @Get('public')
   @ApiOperation({ summary: 'Lấy tất cả sách công khai' })
   async getPublicBooks(@Query('page') page: number,
@@ -113,7 +116,7 @@ export class BookController extends BaseController {
         isSupperAdmin = role?.code === RoleEnum.SUPPER_ADMIN;
       }
       const categoryIdNumber = categoryId ? this.decode(categoryId) : undefined;
-      const data = await this.bookService.getPublicBooks(filter, filterType, categoryIdNumber, userId, isSupperAdmin, statusCode);
+      const data = await this.bookService.getPublicBooks(filter, filterType, categoryIdNumber, userId, isSupperAdmin, statusCode, req?.user);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);

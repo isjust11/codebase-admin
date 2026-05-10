@@ -57,4 +57,11 @@ export class UpdateUserDto {
   @IsOptional()
   pinExpiresAt?: Date;
 
+  @IsString()
+  @IsOptional()
+  countryCode?: string;
+
+  @IsString()
+  @IsOptional()
+  region?: string;
 } 

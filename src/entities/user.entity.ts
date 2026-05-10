@@ -84,6 +84,12 @@ export class User {
   linkedinLink: string;
 
   @Column({ nullable: true })
+  countryCode: string;
+
+  @Column({ nullable: true })
+  region: string;
+
+  @Column({ nullable: true })
   isDeleted: boolean;
 
   @Column({ nullable: true })

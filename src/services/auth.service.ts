@@ -141,6 +141,8 @@ export class AuthService {
     user.instagramLink = updateProfileDto.instagramLink;
     user.twitterLink = updateProfileDto.twitterLink;
     user.linkedinLink = updateProfileDto.linkedinLink;
+    user.countryCode = updateProfileDto.countryCode ?? '';
+    user.region = updateProfileDto.region ?? '';
     user.updatedAt = new Date();
     const result = await this.userService.update(user.id, user);
     return result;
@@ -382,6 +384,8 @@ export class AuthService {
       isGoogleUser: user.isGoogleUser,
       isFacebookUser: user.isFacebookUser,
       isAdmin: user.isAdmin,
+      countryCode: user.countryCode,
+      region: user.region,
       roles: user.roles.map(role => role.id),
       permissions: permissions?.map(permission => permission?.code),
     };
@@ -452,6 +456,8 @@ export class AuthService {
       isGoogleUser: foundToken.user.isGoogleUser,
       isFacebookUser: foundToken.user.isFacebookUser,
       isAdmin: foundToken.user.isAdmin,
+      countryCode: foundToken.user.countryCode,
+      region: foundToken.user.region,
       roles: foundToken.user.roles.map(role => role.id),
       permissions: permissions?.map(permission => permission?.code),
     };
