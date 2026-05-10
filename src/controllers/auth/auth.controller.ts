@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, UseGuards, Request, Res, Query, UnauthorizedException, Delete, Param } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Request, Res, Query, UnauthorizedException, Delete, Param, Headers } from '@nestjs/common';
 import { AuthService } from '../../services/auth.service';
 import { LoginDto, RegisterDto, ResendEmailDto, ResetPasswordDto, VerifyPinDto, ResendPinDto } from '../../dtos/auth.dto';
 import { MobileSocialLoginDto } from '../../dtos/mobile-social-login.dto';
@@ -18,9 +18,15 @@ export class AuthController extends BaseController {
 
   @Public()
   @Post('login')
-  async login(@Body() loginDto: LoginDto, @Locale() locale: SupportedLocale, @Res() res: Response) {
+  async login(
+    @Body() loginDto: LoginDto, 
+    @Locale() locale: SupportedLocale, 
+    @Headers('x-region') region: string,
+    @Headers('x-country-code') countryCode: string,
+    @Res() res: Response
+  ) {
     try {
-      const result = await this.authService.login(loginDto, locale);
+      const result = await this.authService.login(loginDto, locale, region, countryCode);
       return this.success(res, result);
     } catch (error) {
       return this.error(res, error);
@@ -29,8 +35,16 @@ export class AuthController extends BaseController {
 
   @Public()
   @Post('register')
-  async register(@Body() registerDto: RegisterDto, @Locale() locale: SupportedLocale, @Res() res: Response) {
+  async register(
+    @Body() registerDto: RegisterDto, 
+    @Locale() locale: SupportedLocale, 
+    @Headers('x-region') region: string,
+    @Headers('x-country-code') countryCode: string,
+    @Res() res: Response
+  ) {
     try {
+      if (region) registerDto.region = region;
+      if (countryCode) registerDto.countryCode = countryCode;
       const result = await this.authService.register(registerDto, locale);
       return this.success(res, result);
     } catch (error) {
@@ -228,9 +242,15 @@ export class AuthController extends BaseController {
 
   @Public()
   @Post('mobile/social-login')
-  async mobileSocialLogin(@Body() mobileSocialLoginDto: MobileSocialLoginDto, @Locale() locale: SupportedLocale, @Res() res: Response) {
+  async mobileSocialLogin(
+    @Body() mobileSocialLoginDto: MobileSocialLoginDto, 
+    @Locale() locale: SupportedLocale, 
+    @Headers('x-region') region: string,
+    @Headers('x-country-code') countryCode: string,
+    @Res() res: Response
+  ) {
     try {
-      const result = await this.authService.mobileSocialLogin(mobileSocialLoginDto, locale);
+      const result = await this.authService.mobileSocialLogin(mobileSocialLoginDto, locale, region, countryCode);
       return this.success(res, result);
     } catch (error) {
       return this.error(res, error);

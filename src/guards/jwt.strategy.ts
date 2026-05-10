@@ -6,22 +6,30 @@ import { JwtPayload } from '../dtos/auth.dto';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  
+
   constructor(private userService: UserService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
       secretOrKey: process.env.JWT_SECRET || 'AyTUug0rjLJrLF5FJOdyaVdNkaZgugvp',
+      passReqToCallback: true,
     });
   }
 
-  async validate(payload: JwtPayload) {
+  async validate(req: any, payload: JwtPayload) {
     const user = await this.userService.findById(payload.sub);
-    
+
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
-    
+
+    const region = req.headers['x-region'];
+    const countryCode = req.headers['x-country-code'];
+
+    if (region && !user.region) {
+      await this.userService.update(user.id, { region, countryCode });
+    }
+
     return payload;
   }
 } 

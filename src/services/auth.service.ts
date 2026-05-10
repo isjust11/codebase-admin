@@ -197,7 +197,7 @@ export class AuthService {
     }
   }
 
-  async mobileSocialLogin(mobileSocialLoginDto: MobileSocialLoginDto, locale: SupportedLocale = 'vi') {
+  async mobileSocialLogin(mobileSocialLoginDto: MobileSocialLoginDto, locale: SupportedLocale = 'vi', region?: string, countryCode?: string) {
     try {
       const { platformId, email, fullName, picture, platform, accessToken, fcmToken, deviceId } = mobileSocialLoginDto;
       const m = getMessages(locale).auth;
@@ -229,6 +229,8 @@ export class AuthService {
           isFacebookUser: platform === 'facebook',
           isAppleUser: platform === 'apple',
           isEmailVerified: true,
+          countryCode: countryCode,
+          region: region,
         };
         user = await this.userService.create(registerDto);
       } else {
@@ -238,6 +240,11 @@ export class AuthService {
         user.isGoogleUser = platform === 'google';
         user.isFacebookUser = platform === 'facebook';
         user.isAppleUser = platform === 'apple';
+
+        if (region && !user.region) {
+          user.region = region ?? '';
+          user.countryCode = countryCode ?? '';
+        }
 
         await this.userService.update(user.id, user);
       }
@@ -260,12 +267,18 @@ export class AuthService {
     }
   }
 
-  async login(loginDto: LoginDto, locale: SupportedLocale = 'vi') {
+  async login(loginDto: LoginDto, locale: SupportedLocale = 'vi', region?: string, countryCode?: string) {
     const { username, password, fcmToken, platform, deviceId, appVersion } = loginDto;
     const user = await this.validateUser(username, password, locale);
 
     if (!user) {
       throw new BadRequestException(getMessages(locale).auth.invalidCredentials);
+    }
+
+    if (region && !user.region) {
+      await this.userService.update(user.id, { region, countryCode });
+      user.region = region ?? '';
+      user.countryCode = countryCode ?? '';
     }
 
     if (fcmToken) {

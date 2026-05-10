@@ -86,6 +86,8 @@ export class CreateBookDto {
   @IsString()
   @IsOptional()
   region?: string;
+
+  
 }
 
 export class UpdateBookDto {

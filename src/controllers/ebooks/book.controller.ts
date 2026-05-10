@@ -91,7 +91,6 @@ export class BookController extends BaseController {
     }
   }
 
-  @Public()
   @Get('public')
   @ApiOperation({ summary: 'Lấy tất cả sách công khai' })
   async getPublicBooks(@Query('page') page: number,
@@ -172,6 +171,10 @@ export class BookController extends BaseController {
       if (createBookDto?.category) {
         createBookDto.categoryId = this.decode(createBookDto.category);
       }
+
+      // add region code
+      createBookDto.region = req?.user?.region;
+      createBookDto.countryCode = req?.user?.countryCode;
 
       const data = await this.bookService.createBook({ ...createBookDto, createById: userId }, locale);
       this.logger.log(`[createBook] Success - bookId=${(data as any)?.id ?? 'unknown'}`);
@@ -304,7 +307,7 @@ export class BookController extends BaseController {
       return this.error(res, error);
     }
   }
-  
+
   @Post(':id/approve')
   @RequirePermission('UPDATE', 'EBOOK')
   @ApiOperation({ summary: 'Duyệt sách' })

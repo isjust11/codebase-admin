@@ -104,6 +104,14 @@ export class RegisterDto {
   @IsString()
   @IsOptional()
   fcmToken?: string;
+
+  @IsString()
+  @IsOptional()
+  countryCode?: string;
+
+  @IsString()
+  @IsOptional()
+  region?: string;
 }
 
 export class ResendEmailDto {
