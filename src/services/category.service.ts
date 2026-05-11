@@ -14,7 +14,7 @@ export class CategoryService {
     private categoryRepository: Repository<Category>,
     @InjectRepository(CategoryType)
     private categoryTypeRepository: Repository<CategoryType>,
-  ) {}
+  ) { }
 
   async findAll(): Promise<Category[]> {
     return this.categoryRepository.find({
@@ -49,6 +49,8 @@ export class CategoryService {
       'code',
       'name',
       'description',
+      'nameEN',
+      'descriptionEN',
       'isActive',
       'createdAt',
       'updatedAt',
@@ -70,14 +72,14 @@ export class CategoryService {
   }
 
   async findOne(id: number): Promise<Category | null> {
-    return this.categoryRepository.findOne({ 
+    return this.categoryRepository.findOne({
       where: { id },
       relations: ['type']
     });
   }
 
   async findByCode(code: string): Promise<Category | null> {
-    const category = this.categoryRepository.findOne({ 
+    const category = this.categoryRepository.findOne({
       where: { code }
     });
     return category;
@@ -85,10 +87,10 @@ export class CategoryService {
 
   async create(category: Partial<Category>): Promise<Category | null> {
     // Đảm bảo CategoryType tồn tại trước khi tạo Category
-      if (category.categoryTypeId && category.categoryTypeId !== 0) {
+    if (category.categoryTypeId && category.categoryTypeId !== 0) {
       await this.ensureCategoryTypeExists(category.categoryTypeId);
     }
-    
+
     const newCategory = this.categoryRepository.create(category);
     return this.categoryRepository.save(newCategory);
   }
@@ -140,7 +142,7 @@ export class CategoryService {
 
   async update(id: number, category: Partial<Category>): Promise<Category | null> {
     await this.categoryRepository.update(id, category);
-    return this.categoryRepository.findOne({ 
+    return this.categoryRepository.findOne({
       where: { id },
       relations: ['type']
     });
