@@ -14,7 +14,14 @@ export class Category {
   @Column({ nullable: true })
   description: string;
 
-  @Column({default:''})
+  // bổ sung thêm trường ngôn ngữ tiếng anh cho tên và mô tả
+  @Column({ nullable: true })
+  nameEN: string;
+
+  @Column({ nullable: true })
+  descriptionEN: string;
+
+  @Column({ default: '' })
   icon: string;
 
   @Column({
@@ -23,7 +30,7 @@ export class Category {
     default: 'lucide', // Default value, adjust as necessary
   })
   iconType: string; // Assuming this is a string, adjust as necessary
-  
+
   @Column({ nullable: true })
   iconSize: number;
 
@@ -33,10 +40,10 @@ export class Category {
   @Column({ default: true })
   isActive: boolean;
 
-  @Column({default: null})
+  @Column({ default: null })
   code: string;
 
-  @Column({default: true})
+  @Column({ default: true })
   allowEdit: boolean;
 
   @ManyToOne(() => CategoryType, (cat) => cat.categories)
@@ -53,19 +60,19 @@ export class Category {
   books: Book[];
 
   @Column({
-    default:0
+    default: 0
   })
   sortOrder: number;
 
   @Column({
-    default:false
+    default: false
   })
   isDefault: boolean;
-  
+
   @Column({ nullable: true })
   createBy: string;
 
- @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })

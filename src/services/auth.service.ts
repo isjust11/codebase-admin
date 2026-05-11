@@ -235,7 +235,8 @@ export class AuthService {
         user = await this.userService.create(registerDto);
       } else {
         user.platformId = platformId ?? '';
-        if (picture) user.picture = picture;
+
+        if (picture && picture != user.picture) user.picture = picture;
         if (fullName) user.fullName = fullName;
         user.isGoogleUser = platform === 'google';
         user.isFacebookUser = platform === 'facebook';
@@ -295,7 +296,7 @@ export class AuthService {
   async register(registerDto: RegisterDto, locale: SupportedLocale = 'vi') {
     const validateUser = await this.validateRegisterUser(registerDto, locale);
     const m = getMessages(locale).auth;
-    
+
     if (validateUser.code === RegisterCode.Ok) {
       const user = await this.userService.create({
         ...registerDto,
