@@ -7,16 +7,18 @@ import { GoogleDriveSyncController } from 'src/controllers/google-drive/google-d
 import { Media } from 'src/entities/media.entity';
 import { Book } from 'src/entities/book.entity';
 import { Category } from 'src/entities/category.entity';
+import { User } from 'src/entities/user.entity';
 import { AuthModule } from './auth.module';
+import { MediaService } from 'src/services/media.service';
 
 @Module({
   imports: [
     ScheduleModule.forRoot(),
     AuthModule,
-    TypeOrmModule.forFeature([Media, Book, Category]),
+    TypeOrmModule.forFeature([Media, Book, Category, User]),
   ],
   controllers: [GoogleDriveSyncController],
-  providers: [GoogleDriveService, GoogleDriveSyncService],
+  providers: [GoogleDriveService, GoogleDriveSyncService, MediaService],
   exports: [GoogleDriveService, GoogleDriveSyncService],
 })
-export class GoogleDriveModule {}
+export class GoogleDriveModule { }

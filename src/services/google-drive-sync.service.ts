@@ -8,6 +8,10 @@ import { Media } from '../entities/media.entity';
 import { Book } from '../entities/book.entity';
 import { Category } from '../entities/category.entity';
 import { CategoryCodeEnum } from 'src/enums/category-code.enum';
+import { MediaService } from './media.service';
+import { CreateBookDto } from 'src/dtos/book.dto';
+import { User } from '../entities/user.entity';
+import { RoleEnum } from 'src/enums/role.enum';
 
 @Injectable()
 export class GoogleDriveSyncService {
@@ -24,7 +28,10 @@ export class GoogleDriveSyncService {
     private readonly bookRepository: Repository<Book>,
     @InjectRepository(Category)
     private readonly categoryRepository: Repository<Category>,
-  ) {}
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    private readonly mediaService: MediaService,
+  ) { }
 
   /**
    * Cron job chạy mỗi 2 giờ để đồng bộ ebook mới từ Google Drive
@@ -83,6 +90,13 @@ export class GoogleDriveSyncService {
         where: { code: CategoryCodeEnum.BOOK_STATUS_PENDING },
       });
 
+      // Lấy tài khoản Super Admin để gán quyền sở hữu sách
+      const superAdmin = await this.userRepository.findOne({
+        where: { roles: { code: RoleEnum.SUPPER_ADMIN } },
+        relations: ['roles'],
+      });
+      const adminId = superAdmin?.id || 3; // Fallback về 3 nếu không tìm thấy
+
       for (const file of files) {
         try {
           // Kiểm tra đã tồn tại chưa (bằng googleDriveFileId)
@@ -119,19 +133,42 @@ export class GoogleDriveSyncService {
           media.url = file.webViewLink;
           media.googleDriveFileId = file.id;
           media.isDeleted = false;
+          media.userId = adminId;
           await this.mediaRepository.save(media);
-
-          // Tạo Book record từ thông tin Drive
-          const book = this.bookRepository.create({
+          const bookEntity: Partial<Book> = {
             title: bookTitle,
             author: this.extractAuthor(file.name),
             fileUrl: file.webViewLink,
             fileSize: file.size,
-            mimeType: file.mimeType,
             language: 'vi',
-            isPublic: false, // Mặc định private, admin duyệt trước khi public
+            isPublic: false,
+            createById: adminId,
+            categoryId: pendingStatus?.id,
             statusId: pendingStatus?.id,
-          } as any);
+            description: `Đồng bộ từ Google Drive: ${file.name}`,
+            publishedDate: file.modifiedTime,
+          };
+          // Tạo Book record từ thông tin Drive
+          const book = this.bookRepository.create(bookEntity);
+
+          // Xử lý Thumbnail nếu có
+          if (file.thumbnailLink) {
+            try {
+              const thumbnailBuffer = await this.googleDriveService.downloadThumbnail(file.thumbnailLink);
+              if (thumbnailBuffer) {
+                const coverMedia = await this.mediaService.uploadFromBuffer(
+                  thumbnailBuffer,
+                  `cover-${file.name}.jpg`,
+                  'image/jpeg',
+                  'book-covers',
+                  adminId
+                );
+                book.coverImageUrl = coverMedia.url;
+              }
+            } catch (thumbError) {
+              this.logger.warn(`[DriveSync] Failed to process thumbnail for ${file.name}: ${thumbError.message}`);
+            }
+          }
 
           await this.bookRepository.save(book);
 

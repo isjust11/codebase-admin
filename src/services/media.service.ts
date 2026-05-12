@@ -183,6 +183,48 @@ export class MediaService {
     }
   }
 
+  async uploadFromBuffer(buffer: Buffer, originalName: string, mimeType: string, folder: string = 'system', userId?: number): Promise<Media> {
+    const uniqueFilename = `${Date.now()}-${Math.round(Math.random() * 1e9)}-${originalName.replace(/\s+/g, '_')}`;
+    const key = userId ? `${folder}/${userId}/${uniqueFilename}` : `${folder}/${uniqueFilename}`;
+
+    await this.s3Client.send(new PutObjectCommand({
+      Bucket: this.bucketName,
+      Key: key,
+      Body: buffer,
+      ContentType: mimeType,
+      ACL: 'public-read',
+    }));
+
+    const publicUrl = await this.buildPublicUrl(key);
+
+    let width: number = 0;
+    let height: number = 0;
+    if (mimeType.startsWith('image/')) {
+      try {
+        const dimensions = imageSize(buffer);
+        width = dimensions.width || 0;
+        height = dimensions.height || 0;
+      } catch (error) {
+        console.error('Error getting image dimensions:', error);
+      }
+    }
+
+    const media = new Media();
+    media.filename = key;
+    media.originalName = originalName;
+    media.mimeType = mimeType;
+    media.size = buffer.length;
+    media.width = width;
+    media.height = height;
+    media.path = publicUrl;
+    media.url = publicUrl;
+    media.publicRelativePath = publicUrl;
+    if (userId) {
+      media.userId = userId;
+    }
+    return this.mediaRepository.save(media);
+  }
+
   async upload(file: Express.Multer.File, user: User): Promise<Media> {
     const uniqueFilename = `${Date.now()}-${Math.round(Math.random() * 1e9)}-${file.originalname.replace(/\s+/g, '_')}`;
     const key = `user-files/${user.id}/${uniqueFilename}`;

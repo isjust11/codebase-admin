@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { google, drive_v3 } from 'googleapis';
 import { Readable } from 'stream';
+import axios from 'axios';
 
 export interface DriveFileInfo {
   id: string;
@@ -10,6 +11,7 @@ export interface DriveFileInfo {
   size: number;
   webViewLink: string;
   webContentLink?: string;
+  thumbnailLink?: string; // Link ảnh bìa từ Google
   modifiedTime: Date;
 }
 
@@ -24,15 +26,23 @@ export class GoogleDriveService {
 
   private initializeDriveClient() {
     try {
-      const credentialsJson = this.configService.get<string>('GOOGLE_SERVICE_ACCOUNT_JSON');
-      if (!credentialsJson) {
-        this.logger.warn('[GoogleDrive] GOOGLE_SERVICE_ACCOUNT_JSON not configured. Drive sync will be disabled.');
+      const clientEmail = this.configService.get<string>('GOOGLE_CLIENT_EMAIL');
+      const privateKey = this.configService.get<string>('GOOGLE_PRIVATE_KEY');
+      const projectId = this.configService.get<string>('GOOGLE_PROJECT_ID');
+
+      if (!clientEmail || !privateKey || !projectId) {
+        this.logger.warn(
+          '[GoogleDrive] Google Service Account credentials not fully configured. Drive sync will be disabled.',
+        );
         return;
       }
 
-      const credentials = JSON.parse(credentialsJson);
       const auth = new google.auth.GoogleAuth({
-        credentials,
+        credentials: {
+          client_email: clientEmail,
+          private_key: privateKey.replace(/\\n/g, '\n'),
+        },
+        projectId: projectId,
         scopes: ['https://www.googleapis.com/auth/drive.readonly'],
       });
 
@@ -66,11 +76,14 @@ export class GoogleDriveService {
     ];
 
     const mimeTypeQuery = ebookMimeTypes.map(t => `mimeType='${t}'`).join(' or ');
-    let query = `'${folderId}' in parents and trashed=false and (${mimeTypeQuery})`;
+    const trimmedFolderId = folderId.trim();
+    let query = `'${trimmedFolderId}' in parents and trashed=false and (${mimeTypeQuery})`;
 
     if (modifiedAfter) {
       query += ` and modifiedTime > '${modifiedAfter.toISOString()}'`;
     }
+
+    this.logger.debug(`[GoogleDrive] Listing ebooks with query: ${query}`);
 
     const files: DriveFileInfo[] = [];
     let pageToken: string | undefined;
@@ -78,7 +91,7 @@ export class GoogleDriveService {
     do {
       const response = await this.driveClient.files.list({
         q: query,
-        fields: 'nextPageToken, files(id, name, mimeType, size, webViewLink, webContentLink, modifiedTime)',
+        fields: 'nextPageToken, files(id, name, mimeType, size, webViewLink, webContentLink, thumbnailLink, modifiedTime)',
         pageToken,
         pageSize: 100,
         supportsAllDrives: true,
@@ -91,7 +104,7 @@ export class GoogleDriveService {
 
         // Lọc thêm theo extension nếu mimeType không rõ ràng
         const ext = item.name.split('.').pop()?.toLowerCase();
-        if (!['epub', 'pdf', 'mobi', 'fb2', 'azw', 'azw3'].includes(ext || '')) continue;
+        if (!['epub', 'pdf', 'mobi', 'fb2'].includes(ext || '')) continue;
 
         files.push({
           id: item.id,
@@ -101,6 +114,7 @@ export class GoogleDriveService {
           webViewLink: item.webViewLink || '',
           webContentLink: item.webContentLink || '',
           modifiedTime: new Date(item.modifiedTime || Date.now()),
+          thumbnailLink: item.thumbnailLink ? item.thumbnailLink.replace('=s220', '=s600') : undefined, // Lấy ảnh to hơn (s600)
         });
       }
 
@@ -172,6 +186,19 @@ export class GoogleDriveService {
       });
     } catch (error) {
       this.logger.warn(`[GoogleDrive] makeFilePublic failed for ${fileId}: ${error.message}`);
+    }
+  }
+
+  /**
+   * Tải thumbnail từ Google Drive về Buffer
+   */
+  async downloadThumbnail(url: string): Promise<Buffer | null> {
+    try {
+      const response = await axios.get(url, { responseType: 'arraybuffer' });
+      return Buffer.from(response.data);
+    } catch (error) {
+      this.logger.error(`[GoogleDrive] Error downloading thumbnail: ${error.message}`);
+      return null;
     }
   }
 }
