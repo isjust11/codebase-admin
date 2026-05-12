@@ -33,6 +33,9 @@ export class Media {
   @Column({ nullable: true })
   url: string;
 
+  @Column({ nullable: true, unique: false, name: 'google_drive_file_id' })
+  googleDriveFileId?: string;
+
   @Column({ default: false })
   isDeleted: boolean;
 

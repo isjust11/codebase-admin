@@ -41,6 +41,7 @@ import { PaymentModule } from './modules/payment.module';
 import { SubscriptionPlan } from './entities/subscription-plan.entity';
 import { UserSubscription } from './entities/user-subscription.entity';
 import { GeminiModule } from './modules/gemini.module';
+import { GoogleDriveModule } from './modules/google-drive.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -116,6 +117,7 @@ import { GeminiModule } from './modules/gemini.module';
     SubscriptionModule,
     PaymentModule,
     GeminiModule,
+    GoogleDriveModule,
   ],
   controllers: [FcmController],
 })
