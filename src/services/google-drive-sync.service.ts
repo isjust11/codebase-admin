@@ -122,15 +122,20 @@ export class GoogleDriveSyncService {
             continue;
           }
 
+          // Dùng proxy endpoint trên backend thay vì URL trực tiếp Google Drive
+          // File trên Drive chỉ share cho Service Account, không public
+          // → Flutter app tải qua backend: /google-drive/download/{fileId}
+          const proxyDownloadUrl = `google-drive/download/${file.id}`;
+
           // Tạo Media record (do hệ thống tạo, không thuộc user cụ thể)
           const media = new Media();
           media.filename = file.name;
           media.originalName = file.name;
           media.mimeType = file.mimeType;
           media.size = file.size;
-          media.path = file.webViewLink;
-          media.publicRelativePath = file.webViewLink;
-          media.url = file.webViewLink;
+          media.path = proxyDownloadUrl;
+          media.publicRelativePath = proxyDownloadUrl;
+          media.url = proxyDownloadUrl;
           media.googleDriveFileId = file.id;
           media.isDeleted = false;
           media.userId = adminId;
@@ -138,7 +143,7 @@ export class GoogleDriveSyncService {
           const bookEntity: Partial<Book> = {
             title: bookTitle,
             author: this.extractAuthor(file.name),
-            fileUrl: file.webViewLink,
+            fileUrl: proxyDownloadUrl,
             fileSize: file.size,
             language: 'vi',
             isPublic: false,
