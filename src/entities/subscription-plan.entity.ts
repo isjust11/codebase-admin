@@ -27,6 +27,14 @@ export class SubscriptionPlan {
   @Column({ type: 'text', nullable: true })
   description: string;
 
+  /** Tên hiển thị tiếng anh */
+  @Column({ type: 'varchar', length: 128 })
+  nameEn: string;
+
+  /** Mô tả ngắn tiếng anh */
+  @Column({ type: 'text', nullable: true })
+  descriptionEn: string;
+
   /** Dung lượng lưu trữ (bytes). VD: 1GB = 1_073_741_824 */
   @Column({ type: 'bigint', default: 0 })
   storageLimitBytes: string;

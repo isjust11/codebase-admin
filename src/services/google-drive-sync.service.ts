@@ -9,9 +9,10 @@ import { Book } from '../entities/book.entity';
 import { Category } from '../entities/category.entity';
 import { CategoryCodeEnum } from 'src/enums/category-code.enum';
 import { MediaService } from './media.service';
-import { CreateBookDto } from 'src/dtos/book.dto';
 import { User } from '../entities/user.entity';
 import { RoleEnum } from 'src/enums/role.enum';
+import { GeminiService } from './gemini.service';
+import { CategoryType } from '../entities/category-type.entity';
 
 @Injectable()
 export class GoogleDriveSyncService {
@@ -30,7 +31,10 @@ export class GoogleDriveSyncService {
     private readonly categoryRepository: Repository<Category>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(CategoryType)
+    private readonly categoryTypeRepository: Repository<CategoryType>,
     private readonly mediaService: MediaService,
+    private readonly geminiService: GeminiService,
   ) { }
 
   /**
@@ -148,7 +152,7 @@ export class GoogleDriveSyncService {
             language: 'vi',
             isPublic: false,
             createById: adminId,
-            categoryId: pendingStatus?.id,
+            categoryId: await this.resolveCategory(bookTitle),
             statusId: pendingStatus?.id,
             description: `Đồng bộ từ Google Drive: ${file.name}`,
             publishedDate: file.modifiedTime,
@@ -228,5 +232,69 @@ export class GoogleDriveSyncService {
       isSyncing: this.isSyncing,
       lastSyncAt: this.lastSyncAt,
     };
+  }
+
+  /**
+   * Dùng Gemini AI để phân loại sách vào đúng danh mục.
+   * Nếu chưa có danh mục phù hợp → tự động tạo mới.
+   * @returns categoryId phù hợp
+   */
+  private async resolveCategory(bookTitle: string): Promise<number | undefined> {
+    try {
+      // Lấy tất cả danh mục loại sách (không phải status hay feature)
+      const bookCategories = await this.categoryRepository.find({
+        where: { isActive: true },
+        select: ['id', 'name', 'code'],
+      });
+
+      // Loại bỏ các category không phải loại sách (status, feature...)
+      const bookCategoryList = bookCategories
+        .filter((c) => !c.code?.startsWith('BOOK_STATUS') && !c.code?.startsWith('FEATURE'))
+        .map((c) => ({ id: c.id, name: c.name, code: c.code }));
+
+      const existingForGemini = bookCategoryList.map((c) => ({ name: c.name, code: c.code }));
+
+      // Nhờ Gemini phân loại
+      const classified = await this.geminiService.classifyBookCategory(bookTitle, existingForGemini);
+      this.logger.debug(`[DriveSync] Gemini classified "${bookTitle}" → ${classified.categoryName} (isNew: ${classified.isNew})`);
+
+      if (!classified.isNew) {
+        // Tìm category có tên trùng khớp
+        const matched = bookCategoryList.find(
+          (c) => c.name.toLowerCase() === classified.categoryName.toLowerCase(),
+        );
+        if (matched) return matched.id;
+      }
+
+      // Tạo mới category nếu Gemini đề xuất danh mục chưa có
+      const bookCategoryType = await this.categoryTypeRepository.findOne({
+        where: { isArticleType: false },
+        order: { id: 'ASC' },
+      });
+
+      const slug = classified.categoryNameEn.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+      const newCode = `BOOK_CATEGORY_${slug.toUpperCase()}`;
+
+      // Tránh tạo trùng nếu code đã tồn tại
+      const existingByCode = await this.categoryRepository.findOne({ where: { code: newCode } });
+      if (existingByCode) return existingByCode.id;
+
+      const newCategory = this.categoryRepository.create({
+        name: classified.categoryName,
+        nameEN: classified.categoryNameEn,
+        code: newCode,
+        isActive: true,
+        icon: 'BookOpen',
+        iconType: 'lucide',
+        categoryTypeId: bookCategoryType?.id ?? 1,
+      });
+
+      const saved = await this.categoryRepository.save(newCategory);
+      this.logger.log(`[DriveSync] Created new category: "${classified.categoryName}" (${newCode})`);
+      return saved.id;
+    } catch (error) {
+      this.logger.warn(`[DriveSync] resolveCategory failed for "${bookTitle}": ${error.message}`);
+      return undefined;
+    }
   }
 }

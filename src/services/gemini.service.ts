@@ -111,7 +111,7 @@ Văn bản: "${text}"`;
   async generateBookCover(title: string, author: string): Promise<string> {
     try {
       const prompt = `A professional and creative book cover design for a book titled "${title}" written by ${author}. High quality, elegant typography, modern design, digital art, no text spelling errors.`;
-      
+
       const response = await this.genAI.models.generateImages({
         model: 'imagen-4.0-generate-001',
         prompt: prompt,
@@ -133,6 +133,52 @@ Văn bản: "${text}"`;
       throw new InternalServerErrorException(
         `Lỗi khi gọi Gemini API: ${error.message || 'Unknown error'}`,
       );
+    }
+  }
+
+  /**
+   * Phân loại sách vào danh mục phù hợp dựa trên tên sách
+   * @param bookTitle Tên sách
+   * @param existingCategories Danh sách các danh mục đã có (name, code)
+   */
+  async classifyBookCategory(
+    bookTitle: string,
+    existingCategories: { name: string; code: string }[],
+  ): Promise<{ categoryName: string; categoryNameEn: string; isNew: boolean }> {
+    try {
+      const categoryList = existingCategories
+        .map((c) => `- ${c.name} (code: ${c.code})`)
+        .join('\n');
+
+      const prompt = `Bạn là chuyên gia phân loại sách. Dựa vào tên sách sau, chọn danh mục phù hợp nhất từ danh sách bên dưới.
+
+Tên sách: "${bookTitle}"
+
+Danh mục hiện có:
+${categoryList}
+
+Nếu phù hợp với một danh mục → trả về tên đó (chính xác như trong danh sách), isNew: false.
+Nếu KHÔNG có danh mục phù hợp → đề xuất tên mới ngắn gọn (1-3 từ tiếng Việt), isNew: true.
+
+Chỉ trả về JSON, không giải thích:
+{
+  "categoryName": "Tên danh mục tiếng Việt",
+  "categoryNameEn": "Category name in English",
+  "isNew": true
+}`;
+
+      const response = await this.genAI.models.generateContent({
+        model: this.modelName,
+        contents: prompt,
+        config: { responseMimeType: 'application/json' },
+      });
+
+      const text = (response.text ?? '').trim();
+      const jsonText = text.replace(/^```json\s*|\s*```$/g, '').trim();
+      return JSON.parse(jsonText);
+    } catch (error) {
+      console.error('GeminiService.classifyBookCategory error:', error);
+      return { categoryName: 'Khác', categoryNameEn: 'Other', isNew: false };
     }
   }
 }
