@@ -199,10 +199,16 @@ export class AuthService {
 
   async mobileSocialLogin(mobileSocialLoginDto: MobileSocialLoginDto, locale: SupportedLocale = 'vi', region?: string, countryCode?: string) {
     try {
-      const { platformId, email, fullName, picture, platform, accessToken, fcmToken, deviceId } = mobileSocialLoginDto;
+      const { platformId, email, fullName, picture, platform, accessToken, tokenType, nonce, fcmToken, deviceId } = mobileSocialLoginDto;
       const m = getMessages(locale).auth;
 
-      const verifiedData = await this.socialTokenVerificationService.verifyToken(platform as any, accessToken, locale);
+      const verifiedData = await this.socialTokenVerificationService.verifyToken(
+        platform as any,
+        accessToken,
+        locale,
+        tokenType,
+        nonce,
+      );
 
       if (verifiedData.platformId !== platformId) {
         throw new UnauthorizedException(m.platformIdMismatch);
