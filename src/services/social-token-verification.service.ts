@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import * as appleSignin from 'apple-signin-auth';
+import * as jose from 'jose';
 import { getMessages, SupportedLocale } from 'src/constants/messages';
 
 export interface VerifiedUserData {
@@ -52,7 +53,7 @@ export class SocialTokenVerificationService {
   }
 
   /**
-   * Verify Facebook access token và lấy thông tin user
+   * Verify Facebook Classic access token qua Graph API
    */
   async verifyFacebookToken(accessToken: string, locale: SupportedLocale = 'vi'): Promise<VerifiedUserData> {
     const m = getMessages(locale).social;
@@ -76,6 +77,52 @@ export class SocialTokenVerificationService {
       };
     } catch (error) {
       console.error('Facebook token verification error:', error);
+      if (error instanceof UnauthorizedException) throw error;
+      throw new UnauthorizedException(m.facebookVerificationFailed);
+    }
+  }
+
+  /**
+   * Verify Facebook Limited Login token (iOS 14.5+ ATT opt-out).
+   * Token là JWT được ký bởi Facebook, verify qua JWKS endpoint.
+   * Nonce bắt buộc để chống replay attack.
+   */
+  async verifyFacebookLimitedToken(
+    jwtToken: string,
+    nonce: string,
+    locale: SupportedLocale = 'vi',
+  ): Promise<VerifiedUserData> {
+    const m = getMessages(locale).social;
+    try {
+      const facebookAppId = this.configService.get<string>('FACEBOOK_APP_ID');
+
+      const JWKS = jose.createRemoteJWKSet(
+        new URL('https://www.facebook.com/.well-known/oauth/openid/jwks/'),
+      );
+
+      const { payload } = await jose.jwtVerify(jwtToken, JWKS, {
+        issuer: 'https://www.facebook.com',
+        audience: facebookAppId,
+      });
+
+      if (!payload.sub) {
+        throw new UnauthorizedException(m.facebookLimitedTokenInvalid);
+      }
+
+      // Kiểm tra nonce chống replay attack
+      if (nonce && payload['nonce'] !== nonce) {
+        throw new UnauthorizedException(m.facebookLimitedNonceMismatch);
+      }
+
+      return {
+        platformId: payload.sub,
+        email: (payload['email'] as string) || '',
+        fullName: (payload['name'] as string) || '',
+        picture: (payload['picture'] as string) || undefined,
+        platform: 'facebook',
+      };
+    } catch (error) {
+      console.error('Facebook Limited Login verification error:', error);
       if (error instanceof UnauthorizedException) throw error;
       throw new UnauthorizedException(m.facebookVerificationFailed);
     }
@@ -110,13 +157,23 @@ export class SocialTokenVerificationService {
   }
 
   /**
-   * Verify token dựa trên platform
+   * Verify token dựa trên platform.
+   * Với Facebook, truyền thêm tokenType ('classic' | 'limited') và nonce nếu là Limited Login.
    */
-  async verifyToken(platform: 'google' | 'facebook' | 'apple', accessToken: string, locale: SupportedLocale = 'vi'): Promise<VerifiedUserData> {
+  async verifyToken(
+    platform: 'google' | 'facebook' | 'apple',
+    accessToken: string,
+    locale: SupportedLocale = 'vi',
+    tokenType?: 'classic' | 'limited',
+    nonce?: string,
+  ): Promise<VerifiedUserData> {
     switch (platform) {
       case 'google':
         return this.verifyGoogleToken(accessToken, locale);
       case 'facebook':
+        if (tokenType === 'limited') {
+          return this.verifyFacebookLimitedToken(accessToken, nonce || '', locale);
+        }
         return this.verifyFacebookToken(accessToken, locale);
       case 'apple':
         return this.verifyAppleToken(accessToken, locale);

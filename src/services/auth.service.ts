@@ -199,10 +199,16 @@ export class AuthService {
 
   async mobileSocialLogin(mobileSocialLoginDto: MobileSocialLoginDto, locale: SupportedLocale = 'vi', region?: string, countryCode?: string) {
     try {
-      const { platformId, email, fullName, picture, platform, accessToken, fcmToken, deviceId } = mobileSocialLoginDto;
+      const { platformId, email, fullName, picture, platform, accessToken, tokenType, nonce, fcmToken, deviceId } = mobileSocialLoginDto;
       const m = getMessages(locale).auth;
 
-      const verifiedData = await this.socialTokenVerificationService.verifyToken(platform as any, accessToken, locale);
+      const verifiedData = await this.socialTokenVerificationService.verifyToken(
+        platform as any,
+        accessToken,
+        locale,
+        tokenType,
+        nonce,
+      );
 
       if (verifiedData.platformId !== platformId) {
         throw new UnauthorizedException(m.platformIdMismatch);
@@ -236,7 +242,7 @@ export class AuthService {
       } else {
         user.platformId = platformId ?? '';
 
-        if (picture && picture != user.picture) user.picture = picture;
+        if (picture ) user.picture = picture;
         if (fullName) user.fullName = fullName;
         user.isGoogleUser = platform === 'google';
         user.isFacebookUser = platform === 'facebook';
@@ -401,7 +407,6 @@ export class AuthService {
       countryCode: user.countryCode,
       region: user.region,
       roles: user.roles.map(role => role.id),
-      permissions: permissions?.map(permission => permission?.code),
     };
 
     const accessToken = this.jwtService.sign(payload);
@@ -473,7 +478,7 @@ export class AuthService {
       countryCode: foundToken.user.countryCode,
       region: foundToken.user.region,
       roles: foundToken.user.roles.map(role => role.id),
-      permissions: permissions?.map(permission => permission?.code),
+      // permissions: permissions?.map(permission => permission?.code),
     };
     foundToken.user.roles = foundToken.user.roles.map(role => ({ ...role, permissions: [] }));
     foundToken.user.permissions = permissions?.map(permission => permission?.code);

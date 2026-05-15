@@ -154,5 +154,4 @@ export class JwtPayload {
   countryCode: string;
   region: string;
   roles: number[];
-  permissions: string[];
 } 
