@@ -13,6 +13,12 @@ import { User } from '../entities/user.entity';
 import { RoleEnum } from 'src/enums/role.enum';
 import { GeminiService } from './gemini.service';
 import { CategoryType } from '../entities/category-type.entity';
+import { CategoryTypeEnum } from 'src/enums/category-type.enum';
+import * as pdf from 'pdf-parse';
+import { EPub } from 'epub2';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
 
 @Injectable()
 export class GoogleDriveSyncService {
@@ -157,6 +163,58 @@ export class GoogleDriveSyncService {
             description: `Đồng bộ từ Google Drive: ${file.name}`,
             publishedDate: file.modifiedTime,
           };
+
+          // --- TRÍCH XUẤT METADATA TỪ NỘI DUNG FILE ---
+          try {
+            this.logger.debug(`[DriveSync] Downloading buffer to extract metadata for: ${file.name}`);
+            const buffer = await this.googleDriveService.downloadFileBuffer(file.id);
+
+            if (file.mimeType === 'application/pdf') {
+              const pdfData = await (pdf as any)(buffer);
+              if (pdfData.info) {
+                if (pdfData.info.Title && pdfData.info.Title.trim()) {
+                  bookEntity.title = pdfData.info.Title.trim();
+                  this.logger.debug(`[DriveSync] Extracted PDF Title: "${bookEntity.title}"`);
+                }
+                if (pdfData.info.Author && pdfData.info.Author.trim()) {
+                  bookEntity.author = pdfData.info.Author.trim();
+                  this.logger.debug(`[DriveSync] Extracted PDF Author: "${bookEntity.author}"`);
+                }
+              }
+            } else if (file.mimeType === 'application/epub+zip') {
+              // EPub constructor expects a file path, so we write to a temp file
+              const tempPath = path.join(os.tmpdir(), `sync-${file.id}.epub`);
+              fs.writeFileSync(tempPath, buffer);
+
+              try {
+                const epub = new EPub(tempPath);
+                await new Promise<void>((resolve, reject) => {
+                  epub.on('end', () => resolve());
+                  epub.on('error', (err) => reject(err));
+                  epub.parse();
+                });
+
+                if (epub.metadata) {
+                  if (epub.metadata.title && epub.metadata.title.trim()) {
+                    bookEntity.title = epub.metadata.title.trim();
+                    this.logger.debug(`[DriveSync] Extracted EPUB Title: "${bookEntity.title}"`);
+                  }
+                  if (epub.metadata.creator && epub.metadata.creator.trim()) {
+                    bookEntity.author = epub.metadata.creator.trim();
+                    this.logger.debug(`[DriveSync] Extracted EPUB Author: "${bookEntity.author}"`);
+                  }
+                }
+              } finally {
+                // Clean up temp file
+                if (fs.existsSync(tempPath)) {
+                  fs.unlinkSync(tempPath);
+                }
+              }
+            }
+          } catch (metaError) {
+            this.logger.warn(`[DriveSync] Failed to extract internal metadata for ${file.name}: ${metaError.message}. Using filename instead.`);
+          }
+          // --------------------------------------------
           // Tạo Book record từ thông tin Drive
           const book = this.bookRepository.create(bookEntity);
 
@@ -241,18 +299,15 @@ export class GoogleDriveSyncService {
    */
   private async resolveCategory(bookTitle: string): Promise<number | undefined> {
     try {
+      const categoryType = await this.categoryTypeRepository.findOne({ where: { name: CategoryTypeEnum.BOOK_CATEGORY } });
+
       // Lấy tất cả danh mục loại sách (không phải status hay feature)
       const bookCategories = await this.categoryRepository.find({
-        where: { isActive: true },
+        where: { isActive: true, categoryTypeId: categoryType?.id },
         select: ['id', 'name', 'code'],
       });
 
-      // Loại bỏ các category không phải loại sách (status, feature...)
-      const bookCategoryList = bookCategories
-        .filter((c) => !c.code?.startsWith('BOOK_STATUS') && !c.code?.startsWith('FEATURE'))
-        .map((c) => ({ id: c.id, name: c.name, code: c.code }));
-
-      const existingForGemini = bookCategoryList.map((c) => ({ name: c.name, code: c.code }));
+      const existingForGemini = bookCategories.map((c) => ({ name: c.name, code: c.code }));
 
       // Nhờ Gemini phân loại
       const classified = await this.geminiService.classifyBookCategory(bookTitle, existingForGemini);
@@ -260,17 +315,12 @@ export class GoogleDriveSyncService {
 
       if (!classified.isNew) {
         // Tìm category có tên trùng khớp
-        const matched = bookCategoryList.find(
+        const matched = bookCategories.find(
           (c) => c.name.toLowerCase() === classified.categoryName.toLowerCase(),
         );
         if (matched) return matched.id;
       }
 
-      // Tạo mới category nếu Gemini đề xuất danh mục chưa có
-      const bookCategoryType = await this.categoryTypeRepository.findOne({
-        where: { isArticleType: false },
-        order: { id: 'ASC' },
-      });
 
       const slug = classified.categoryNameEn.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
       const newCode = `BOOK_CATEGORY_${slug.toUpperCase()}`;
@@ -284,9 +334,9 @@ export class GoogleDriveSyncService {
         nameEN: classified.categoryNameEn,
         code: newCode,
         isActive: true,
-        icon: 'BookOpen',
+        icon: 'bookOpen',
         iconType: 'lucide',
-        categoryTypeId: bookCategoryType?.id ?? 1,
+        categoryTypeId: categoryType?.id ?? 1,
       });
 
       const saved = await this.categoryRepository.save(newCategory);
