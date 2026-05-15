@@ -382,6 +382,43 @@ export class BookService {
     return this.bookRepository.save(book);
   }
 
+  async bulkDeleteBooks(
+    ids: number[],
+  ): Promise<{ success: number; failed: number; total: number }> {
+    let success = 0;
+    let failed = 0;
+    for (const id of ids) {
+      try {
+        const deleted = await this.deleteBook(id);
+        if (deleted) success++;
+        else failed++;
+      } catch (err) {
+        this.logger.warn(`[bulkDeleteBooks] id=${id}: ${err?.message}`);
+        failed++;
+      }
+    }
+    return { success, failed, total: ids.length };
+  }
+
+  async bulkUpdateStatus(
+    ids: number[],
+    statusCode: CategoryCodeEnum,
+    locale: SupportedLocale = 'vi',
+  ): Promise<{ success: number; failed: number; total: number }> {
+    let success = 0;
+    let failed = 0;
+    for (const id of ids) {
+      try {
+        await this.updateStatus(id, statusCode, locale);
+        success++;
+      } catch (err) {
+        this.logger.warn(`[bulkUpdateStatus] id=${id}: ${err?.message}`);
+        failed++;
+      }
+    }
+    return { success, failed, total: ids.length };
+  }
+
   async searchBooks(keyword: string): Promise<Book[]> {
     return this.bookRepository.find({
       where: [

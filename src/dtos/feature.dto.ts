@@ -27,7 +27,7 @@ export class FeatureDto {
   sortOrder?: any;
 
   @IsEnum(IconType)
-@IsOptional()
+  @IsOptional()
   iconType: IconType;
 
   @IsString()
