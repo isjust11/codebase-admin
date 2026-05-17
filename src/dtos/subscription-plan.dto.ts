@@ -19,6 +19,13 @@ export class CreateSubscriptionPlanDto {
   @IsString()
   description?: string;
 
+  @IsString()
+  nameEn: string;
+
+  @IsOptional()
+  @IsString()
+  descriptionEn?: string;
+
   @IsOptional()
   @IsNumber()
   @Min(0)
@@ -60,6 +67,14 @@ export class UpdateSubscriptionPlanDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsString()
+  nameEn?: string;
+
+  @IsOptional()
+  @IsString()
+  descriptionEn?: string;
 
   @IsOptional()
   @IsNumber()
