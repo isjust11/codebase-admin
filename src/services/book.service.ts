@@ -17,6 +17,7 @@ import { MediaService } from './media.service';
 import { InteractionType } from 'src/enums/interaction-type.enum';
 import { UserSubscriptionService } from './user-subscription.service';
 import { CategoryCodeEnum } from 'src/enums/category-code.enum';
+import { CategoryService } from './category.service';
 
 @Injectable()
 export class BookService {
@@ -31,6 +32,7 @@ export class BookService {
     private categoryRepository: Repository<Category>,
     private mediaService: MediaService,
     private userSubscriptionService: UserSubscriptionService,
+    private categoryService: CategoryService,
   ) { }
 
   async getAllBooks(): Promise<Book[]> {
@@ -89,7 +91,15 @@ export class BookService {
     }
 
     if (categoryId) {
-      query.andWhere('book.categoryId = :categoryId', { categoryId });
+      // Lấy toàn bộ id của nhánh: chính nó + con + cháu + chắt...
+      // Đảm bảo filter "Lập trình" vẫn ra sách thuộc "Web > JavaScript > React".
+      const branchIds = await this.categoryService.getDescendantIds(categoryId);
+      if (branchIds.length > 0) {
+        query.andWhere('book.categoryId IN (:...branchIds)', { branchIds });
+      } else {
+        // Không có nhánh nào → không trả book nào (tránh OR logic sai)
+        query.andWhere('1 = 0');
+      }
     }
 
     if (search) {
@@ -222,11 +232,13 @@ export class BookService {
 
     this.validateBookData(createBookDto, true, locale);
 
+    let parentCategoryId: number | null = null;
     if (createBookDto.categoryId) {
       const category = await this.categoryRepository.findOne({ where: { id: createBookDto.categoryId } });
       if (!category) {
         throw new BadRequestException(getMessages(locale).book.categoryNotFound);
       }
+      parentCategoryId = category.parentId ?? null;
     }
 
     let totalDataStorage = 0;
@@ -240,6 +252,7 @@ export class BookService {
       ...createBookDto,
       statusId: bookStatus ? bookStatus.id : undefined,
       category: createBookDto.category ? { id: createBookDto.categoryId } : undefined,
+      parentCategoryId: parentCategoryId ?? undefined,
     });
     const savedBook = await this.bookRepository.save(book);
 
@@ -291,6 +304,8 @@ export class BookService {
       }
       book.category = category;
       book.categoryId = category.id;
+      // Đồng bộ parent_category_id (denormalized) để filter sách theo nhóm danh mục cha.
+      book.parentCategoryId = category.parentId ?? null as any;
     }
     const savedBook = await this.bookRepository.save(book);
 

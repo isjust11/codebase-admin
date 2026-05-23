@@ -37,6 +37,15 @@ export class Category {
   @Column({ nullable: true })
   className: string;
 
+  // URL ảnh đại diện cho danh mục (ưu tiên hơn icon khi cả 2 đều có)
+  @Column({ nullable: true })
+  image: string;
+
+  // Màu chủ đạo của danh mục, lưu ở dạng HEX (#RRGGBB hoặc #RRGGBBAA)
+  // FE dùng để vẽ background/gradient cho card category.
+  @Column({ length: 9, nullable: true })
+  color: string;
+
   @Column({ default: true })
   isActive: boolean;
 
@@ -52,6 +61,19 @@ export class Category {
 
   @Column()
   categoryTypeId: number;
+
+  @ManyToOne(() => Category, (category) => category.children, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'parentId' })
+  parent: Category;
+
+  @Column({ nullable: true })
+  parentId: number;
+
+  @OneToMany(() => Category, (category) => category.parent)
+  children: Category[];
 
   @OneToMany(() => Feature, features => features.featureType)
   feature: Feature[];

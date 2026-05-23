@@ -55,18 +55,42 @@ export class Book {
   @Column({ name: 'is_public', default: true })
   isPublic: boolean;
 
+  // Danh mục lá (leaf) mà ebook thuộc về.
+  // Vd: với cây "Lập trình > Java", giá trị lưu ở đây là id của "Java".
+  // Khi cần lấy danh mục cha ("Lập trình"), join `category.parent` ở service.
   @Column({ name: 'category_id', nullable: true })
   categoryId: number;
 
-  @ManyToOne(() => Category, (category) => category.books, { eager: true })
+  @ManyToOne(() => Category, (category) => category.books, {
+    eager: true,
+    onDelete: 'SET NULL',
+  })
   @JoinColumn({ name: 'category_id' })
   category: Category;
 
-  // trạng thái đăng tải ebook (chờ duyệt 1| đã duyệt 2| từ chối 3)
+  // Snapshot danh mục cha (denormalized) → cho phép filter "tất cả sách Lập trình"
+  // mà không phải JOIN qua category.parent. Service phải tự đồng bộ trường này
+  // khi đổi `categoryId` hoặc khi parent của category bị thay đổi.
+  @Column({ name: 'parent_category_id', nullable: true })
+  parentCategoryId: number;
+
+  @ManyToOne(() => Category, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'parent_category_id' })
+  parentCategory: Category;
+
+  // Trạng thái đăng tải ebook (chờ duyệt 1 | đã duyệt 2 | từ chối 3).
+  // Cũng tham chiếu Category nhưng KHÔNG dùng inverse `category.books`
+  // để tránh xung đột với quan hệ `category` ở trên.
   @Column({ name: 'status_id', nullable: true })
   statusId: number;
 
-  @ManyToOne(() => Category, (category) => category.books, { eager: true })
+  @ManyToOne(() => Category, {
+    eager: true,
+    onDelete: 'SET NULL',
+  })
   @JoinColumn({ name: 'status_id' })
   status: Category;
 

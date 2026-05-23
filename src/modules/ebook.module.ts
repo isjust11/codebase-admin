@@ -10,6 +10,7 @@ import { NotificationModule } from './notification.module';
 import { Category } from 'src/entities/category.entity';
 import { MediaModule } from './media.module';
 import { SubscriptionModule } from './subscription.module';
+import { CategoryModule } from './category.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { SubscriptionModule } from './subscription.module';
     MediaModule,
     NotificationModule,
     SubscriptionModule,
+    CategoryModule,
     TypeOrmModule.forFeature([Book, UserInteraction, InteractionStats, Category]),
   ],
   controllers: [BookController],
