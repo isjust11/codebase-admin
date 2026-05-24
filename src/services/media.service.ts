@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { getMessages, SupportedLocale } from 'src/constants/messages';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -10,6 +10,33 @@ import imageSize from 'image-size';
 import { ConfigService } from '@nestjs/config';
 import { S3Client, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command, HeadObjectCommand, GetObjectCommand, DeleteObjectsCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+
+/**
+ * Subfolders cho phép khi upload system asset. Whitelist để tránh user lách
+ * đường dẫn (path traversal, ghi đè asset của module khác,...).
+ */
+export const ALLOWED_SYSTEM_SUBFOLDERS = [
+  'categories',
+  'icons',
+  'banners',
+  'placeholders',
+  'general',
+] as const;
+export type SystemSubfolder = (typeof ALLOWED_SYSTEM_SUBFOLDERS)[number];
+
+/**
+ * Loại file được phép cho system asset. Cho thêm svg/json so với upload thường
+ * vì admin cần upload các icon vector cho category.
+ */
+const ALLOWED_SYSTEM_EXTENSIONS = [
+  'svg',
+  'png',
+  'jpg',
+  'jpeg',
+  'webp',
+  'gif',
+  'json',
+];
 
 @Injectable()
 export class MediaService {
@@ -222,6 +249,84 @@ export class MediaService {
     if (userId) {
       media.userId = userId;
     }
+    return this.mediaRepository.save(media);
+  }
+
+  /**
+   * Upload tài nguyên dùng chung cho hệ thống (svg category, banner cố định,...).
+   * - Lưu dưới `system/<subfolder>/<filename>` — KHÔNG có userId trong path để
+   *   nhiều admin cùng quản lý chung 1 thư mục.
+   * - Vẫn ghi `userId` vào record Media để truy vết ai đã upload.
+   * - Cho phép thêm svg + json so với upload user thường.
+   * - Cache lâu (1 năm) vì asset hệ thống ít thay đổi.
+   */
+  async uploadSystemAsset(
+    file: Express.Multer.File,
+    subfolder: string,
+    uploader: User,
+  ): Promise<Media> {
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+
+    const folder = (subfolder || 'general').toLowerCase();
+    if (!ALLOWED_SYSTEM_SUBFOLDERS.includes(folder as SystemSubfolder)) {
+      throw new BadRequestException(
+        `Invalid subfolder "${folder}". Allowed: ${ALLOWED_SYSTEM_SUBFOLDERS.join(', ')}`,
+      );
+    }
+
+    const ext = file.originalname.split('.').pop()?.toLowerCase();
+    if (!ext || !ALLOWED_SYSTEM_EXTENSIONS.includes(ext)) {
+      throw new BadRequestException(
+        `File type ".${ext}" is not allowed for system upload. Allowed: ${ALLOWED_SYSTEM_EXTENSIONS.join(', ')}`,
+      );
+    }
+
+    const safeName = file.originalname.replace(/\s+/g, '_');
+    const uniqueFilename = `${Date.now()}-${Math.round(Math.random() * 1e9)}-${safeName}`;
+    const key = `system/${folder}/${uniqueFilename}`;
+
+    await this.s3Client.send(
+      new PutObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+        Body: file.buffer,
+        ContentType: file.mimetype || 'application/octet-stream',
+        ACL: 'public-read',
+        CacheControl: 'public, max-age=31536000, immutable',
+      }),
+    );
+
+    const publicUrl = await this.buildPublicUrl(key);
+
+    let width = 0;
+    let height = 0;
+    // SVG không đo bằng image-size được, bỏ qua. JSON không phải ảnh.
+    if (
+      file.mimetype.startsWith('image/') &&
+      file.mimetype !== 'image/svg+xml'
+    ) {
+      try {
+        const dim = imageSize(file.buffer);
+        width = dim.width || 0;
+        height = dim.height || 0;
+      } catch (error) {
+        console.error('Error getting image dimensions:', error);
+      }
+    }
+
+    const media = new Media();
+    media.filename = key;
+    media.originalName = file.originalname;
+    media.mimeType = file.mimetype || 'application/octet-stream';
+    media.size = file.size;
+    media.width = width;
+    media.height = height;
+    media.path = publicUrl;
+    media.url = publicUrl;
+    media.publicRelativePath = publicUrl;
+    media.userId = uploader.id;
     return this.mediaRepository.save(media);
   }
 

@@ -39,6 +39,30 @@ export class MediaController extends BaseController {
     return this.mediaService.findById(this.decode(id), req.user.id, locale);
   }
 
+  /**
+   * Upload tài nguyên hệ thống (svg category, banner, icon dùng chung,...).
+   * Yêu cầu quyền CREATE 'media' (mặc định chỉ admin có).
+   *
+   * Query: `subfolder` ∈ categories | icons | banners | placeholders | general
+   * Trả về Media có `publicRelativePath` để FE/Mobile lưu vào entity tương ứng
+   * (vd category.image).
+   */
+  @Post('upload-system')
+  @RequirePermission('CREATE', 'media')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadSystemAsset(
+    @UploadedFile()
+    file: Express.Multer.File,
+    @Query('subfolder') subfolder: string,
+    @Request() req,
+  ): Promise<Media> {
+    return this.mediaService.uploadSystemAsset(
+      file,
+      subfolder || 'general',
+      req.user,
+    );
+  }
+
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(
