@@ -107,6 +107,19 @@ export class PageController extends BaseController {
     return res.sendFile(filePath);
   }
 
+  // Serve static terms of use page (public)
+  @Public()
+  @Get('index.html')
+  async getIndex(@Res() res: Response) {
+    const path = require('path');
+    const fs = require('fs');
+    const filePath = path.join(__dirname, '..', '..', '..', '..', 'public', 'pages', 'index.html');
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ message: 'Index file not found' });
+    }
+    return res.sendFile(filePath);
+  }
+
   @Get(':id')
   @RequirePermission('READ', 'static_page')
   async findOne(@Res() res: Response, @Param('id') id: string, @Locale() locale: SupportedLocale) {
