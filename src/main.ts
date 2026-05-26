@@ -57,7 +57,7 @@ async function bootstrap() {
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
     prefix: '/uploads/',
   });
-
+  app.useStaticAssets(join(__dirname, '..', 'public'));
   // Swagger - chỉ bật khi development (tránh lộ API trên production)
   if (process.env.NODE_ENV !== 'production') {
     const config = new DocumentBuilder()
