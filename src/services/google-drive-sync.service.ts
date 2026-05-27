@@ -306,7 +306,7 @@ export class GoogleDriveSyncService {
         where: { isActive: true, categoryTypeId: categoryType?.id },
         select: ['id', 'name', 'code'],
       });
-
+      // thêm 
       const existingForGemini = bookCategories.map((c) => ({ name: c.name, code: c.code }));
 
       // Nhờ Gemini phân loại

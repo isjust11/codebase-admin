@@ -3,6 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { google, drive_v3 } from 'googleapis';
 import { Readable } from 'stream';
 import axios from 'axios';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export interface DriveFileInfo {
   id: string;
@@ -198,6 +200,65 @@ export class GoogleDriveService {
       return Buffer.from(response.data);
     } catch (error) {
       this.logger.error(`[GoogleDrive] Error downloading thumbnail: ${error.message}`);
+      return null;
+    }
+  }
+
+  /**
+   * Upload một file cục bộ lên Google Drive
+   * @param filePath Đường dẫn tới file cần upload
+   * @param folderId ID của thư mục trên Google Drive để lưu file
+   */
+  async uploadFile(filePath: string, folderId: string): Promise<DriveFileInfo | null> {
+    if (!this.driveClient) {
+      this.logger.warn('[GoogleDrive] Drive client not initialized. Cannot upload file.');
+      return null;
+    }
+
+    try {
+      const fileName = path.basename(filePath);
+      const ext = path.extname(fileName).toLowerCase();
+      
+      let mimeType = 'application/octet-stream';
+      if (ext === '.pdf') mimeType = 'application/pdf';
+      else if (ext === '.epub') mimeType = 'application/epub+zip';
+      else if (ext === '.mobi') mimeType = 'application/x-mobipocket-ebook';
+
+      const fileMetadata = {
+        name: fileName,
+        parents: [folderId],
+      };
+      
+      const media = {
+        mimeType: mimeType,
+        body: fs.createReadStream(filePath),
+      };
+
+      this.logger.log(`[GoogleDrive] Uploading ${fileName} to folder ${folderId}...`);
+      
+      const response = await this.driveClient.files.create({
+        requestBody: fileMetadata,
+        media: media,
+        fields: 'id, name, mimeType, size, webViewLink, webContentLink, modifiedTime',
+        supportsAllDrives: true,
+      });
+
+      const item = response.data;
+      if (!item.id || !item.name) return null;
+
+      this.logger.log(`[GoogleDrive] Successfully uploaded ${fileName} (ID: ${item.id})`);
+      
+      return {
+        id: item.id,
+        name: item.name,
+        mimeType: item.mimeType || mimeType,
+        size: parseInt(item.size || '0', 10),
+        webViewLink: item.webViewLink || '',
+        webContentLink: item.webContentLink || '',
+        modifiedTime: new Date(item.modifiedTime || Date.now()),
+      };
+    } catch (error) {
+      this.logger.error(`[GoogleDrive] Failed to upload file ${filePath}: ${error.message}`);
       return null;
     }
   }

@@ -21,6 +21,7 @@ import { Book } from '../../entities/book.entity';
 import { User } from '../../entities/user.entity';
 import { BookService } from 'src/services/book.service';
 import { CreateBookDto, UpdateBookDto } from 'src/dtos/book.dto';
+import { BulkBookIdsDto, BulkBookStatusDto } from 'src/dtos/book-bulk.dto';
 import { JwtAuthGuard, Public } from 'src/guards/jwt-auth.guard';
 import { BaseController } from '../base/base.controller';
 import { PermissionGuard } from 'src/guards/permission.guard';
@@ -46,6 +47,36 @@ export class BookController extends BaseController {
     private readonly roleService: RoleService
   ) {
     super();
+  }
+
+  @Post('bulk/delete')
+  @RequirePermission('DELETE', 'EBOOK')
+  @ApiOperation({ summary: 'Xóa nhiều sách' })
+  async bulkDelete(@Body() dto: BulkBookIdsDto, @Res() res: Response) {
+    try {
+      const ids = dto.ids.map((id) => this.decode(id));
+      const data = await this.bookService.bulkDeleteBooks(ids);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Post('bulk/status')
+  @RequirePermission('UPDATE', 'EBOOK')
+  @ApiOperation({ summary: 'Cập nhật trạng thái nhiều sách' })
+  async bulkUpdateStatus(
+    @Body() dto: BulkBookStatusDto,
+    @Locale() locale: SupportedLocale,
+    @Res() res: Response,
+  ) {
+    try {
+      const ids = dto.ids.map((id) => this.decode(id));
+      const data = await this.bookService.bulkUpdateStatus(ids, dto.statusCode, locale);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
   }
 
   @Get('admin/statistics')

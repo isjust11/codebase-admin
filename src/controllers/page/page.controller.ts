@@ -46,9 +46,9 @@ export class PageController extends BaseController {
   @Get()
   @RequirePermission('READ', 'static_page')
   async getByPage(@Res() res: Response,
-  @Query('page') page: number,
-  @Query('size') size: number,
-  @Query('search') search: string,
+    @Query('page') page: number,
+    @Query('size') size: number,
+    @Query('search') search: string,
   ) {
     try {
       const data = await this.pageService.findPagination({ page, size, search });
@@ -67,7 +67,59 @@ export class PageController extends BaseController {
       return this.error(res, error);
     }
   }
-  
+
+  // Serve static policy page (public)
+  @Public()
+  @Get('policy.html')
+  async getPolicy(@Res() res: Response) {
+    const path = require('path');
+    const fs = require('fs');
+    const filePath = path.join(__dirname, '..', '..', '..', '..', 'public', 'pages', 'policy.html');
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ message: 'Policy file not found' });
+    }
+    return res.sendFile(filePath);
+  }
+
+  // Serve static support page (public)
+  @Public()
+  @Get('support.html')
+  async getSupport(@Res() res: Response) {
+    const path = require('path');
+    const fs = require('fs');
+    const filePath = path.join(__dirname, '..', '..', '..', '..', 'public', 'pages', 'support.html');
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ message: 'Support file not found' });
+    }
+    return res.sendFile(filePath);
+  }
+
+  // Serve static terms of use page (public)
+  @Public()
+  @Get('terms.html')
+  async getTerms(@Res() res: Response) {
+    const path = require('path');
+    const fs = require('fs');
+    const filePath = path.join(__dirname, '..', '..', '..', '..', 'public', 'pages', 'terms.html');
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ message: 'Terms file not found' });
+    }
+    return res.sendFile(filePath);
+  }
+
+  // Serve static terms of use page (public)
+  @Public()
+  @Get('index.html')
+  async getIndex(@Res() res: Response) {
+    const path = require('path');
+    const fs = require('fs');
+    const filePath = path.join(__dirname, '..', '..', '..', '..', 'public', 'pages', 'index.html');
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ message: 'Index file not found' });
+    }
+    return res.sendFile(filePath);
+  }
+
   @Get(':id')
   @RequirePermission('READ', 'static_page')
   async findOne(@Res() res: Response, @Param('id') id: string, @Locale() locale: SupportedLocale) {
@@ -78,6 +130,8 @@ export class PageController extends BaseController {
       return this.error(res, error);
     }
   }
+
+
 
   @Patch(':id')
   @RequirePermission('UPDATE', 'static_page')

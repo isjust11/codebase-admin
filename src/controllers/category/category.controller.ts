@@ -50,6 +50,23 @@ export class CategoryController extends BaseController {
     }
   }
 
+  @Get('get-tree-by-category-type/:categoryTypeCode')
+  @RequirePermission('READ', 'category')
+  async getTreeByCategoryType(
+    @Param('categoryTypeCode') categoryTypeCode: string,
+    @Query('sortBy') sortBy: string,
+    @Query('sortType') sortType: 'ASC' | 'DESC',
+    @Locale() locale: SupportedLocale,
+    @Res() res: Response,
+  ) {
+    try {
+      const categories = await this.categoryService.findTreeByCategoryTypeCode(categoryTypeCode, sortBy, sortType, locale);
+      return this.success(res as any, categories);
+    } catch (error) {
+      return this.error(res as any, error);
+    }
+  }
+
   @Get()
   @RequirePermission('READ', 'category')
   async findAll(@Res() res: Response) {
@@ -78,6 +95,9 @@ export class CategoryController extends BaseController {
     category.createdAt = new Date();
     category.createBy = req?.user?.id; // Assuming req.user.id contains the ID of the user creating the category
     category.categoryTypeId = this.decode(category.categoryTypeId.toString());
+    if (category.parentId) {
+      category.parentId = this.decode(category.parentId.toString());
+    }
     try {
       const data = await this.categoryService.create(category);
       return this.success(res, data);
@@ -90,6 +110,9 @@ export class CategoryController extends BaseController {
   @RequirePermission('UPDATE', 'category')
   async update(@Param('id') id: string, @Body() category: Category, @Res() res: Response) {
     category.categoryTypeId = this.decode(category.categoryTypeId.toString());
+    if (category.parentId) {
+      category.parentId = this.decode(category.parentId.toString());
+    }
     try {
       const data = await this.categoryService.update(this.decode(id), category);
       return this.success(res, data);
