@@ -6,21 +6,38 @@ import { GoogleDriveSyncService } from 'src/services/google-drive-sync.service';
 import { GoogleDriveSyncController } from 'src/controllers/google-drive/google-drive-sync.controller';
 import { Media } from 'src/entities/media.entity';
 import { Book } from 'src/entities/book.entity';
+import { BookFile } from 'src/entities/book-file.entity';
+import { SyncState } from 'src/entities/sync-state.entity';
 import { Category } from 'src/entities/category.entity';
 import { User } from 'src/entities/user.entity';
 import { AuthModule } from './auth.module';
 import { MediaService } from 'src/services/media.service';
 import { CategoryType } from 'src/entities/category-type.entity';
 import { GeminiService } from 'src/services/gemini.service';
+import { BookFileService } from 'src/services/book-file.service';
 
 @Module({
   imports: [
     ScheduleModule.forRoot(),
     AuthModule,
-    TypeOrmModule.forFeature([Media, Book, Category, User, CategoryType]),
+    TypeOrmModule.forFeature([
+      Media,
+      Book,
+      BookFile,
+      SyncState,
+      Category,
+      User,
+      CategoryType,
+    ]),
   ],
   controllers: [GoogleDriveSyncController],
-  providers: [GoogleDriveService, GoogleDriveSyncService, MediaService, GeminiService],
-  exports: [GoogleDriveService, GoogleDriveSyncService],
+  providers: [
+    GoogleDriveService,
+    GoogleDriveSyncService,
+    MediaService,
+    GeminiService,
+    BookFileService,
+  ],
+  exports: [GoogleDriveService, GoogleDriveSyncService, BookFileService],
 })
 export class GoogleDriveModule { }

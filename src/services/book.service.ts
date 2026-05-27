@@ -3,6 +3,7 @@ import { getMessages, SupportedLocale } from 'src/constants/messages';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository } from 'typeorm';
 import { Book } from '../entities/book.entity';
+import { BookFile, EbookFormat } from '../entities/book-file.entity';
 import { User } from '../entities/user.entity';
 import { CreateBookDto, UpdateBookDto } from 'src/dtos/book.dto';
 import { PaginatedResponse, PaginationParams } from 'src/dtos/filter.dto';
@@ -18,6 +19,9 @@ import { InteractionType } from 'src/enums/interaction-type.enum';
 import { UserSubscriptionService } from './user-subscription.service';
 import { CategoryCodeEnum } from 'src/enums/category-code.enum';
 import { CategoryService } from './category.service';
+import { BookFileService } from './book-file.service';
+import { buildMatchKey } from 'src/utils/text-normalize.util';
+import { detectEbookFormat } from 'src/utils/ebook-format.util';
 
 @Injectable()
 export class BookService {
@@ -33,10 +37,11 @@ export class BookService {
     private mediaService: MediaService,
     private userSubscriptionService: UserSubscriptionService,
     private categoryService: CategoryService,
+    private bookFileService: BookFileService,
   ) { }
 
   async getAllBooks(): Promise<Book[]> {
-    return this.bookRepository.find({ relations: ['category'] });
+    return this.bookRepository.find({ relations: ['category', 'files'] });
   }
 
   async getPublicBooks(filter: PaginationParams,
@@ -52,7 +57,8 @@ export class BookService {
     const query = this.bookRepository.createQueryBuilder('book')
       .leftJoinAndSelect('book.category', 'category')
       .leftJoinAndSelect('book.status', 'status')
-      .leftJoinAndSelect('book.createBy', 'createBy');
+      .leftJoinAndSelect('book.createBy', 'createBy')
+      .leftJoinAndSelect('book.files', 'files');
     if (!isSupperAdmin) {
       query.where('book.isPublic = :isPublic', { isPublic: true });
 
@@ -119,7 +125,7 @@ export class BookService {
   async getBookById(id: number): Promise<Book | null> {
     return this.bookRepository.findOne({
       where: { id },
-      relations: ['category'],
+      relations: ['category', 'files'],
     });
   }
 
@@ -253,8 +259,25 @@ export class BookService {
       statusId: bookStatus ? bookStatus.id : undefined,
       category: createBookDto.category ? { id: createBookDto.categoryId } : undefined,
       parentCategoryId: parentCategoryId ?? undefined,
+      matchKey: buildMatchKey(createBookDto.title, createBookDto.author),
     });
     const savedBook = await this.bookRepository.save(book);
+
+    if (savedBook && createBookDto.fileUrl) {
+      try {
+        const filename = createBookDto.fileUrl.split('/').pop() || createBookDto.title;
+        const format = detectEbookFormat(filename, null);
+        await this.bookFileService.createInitialFile(savedBook.id, {
+          format,
+          fileUrl: createBookDto.fileUrl,
+          fileSize: totalDataStorage,
+          totalPages: createBookDto.totalPages ?? null,
+          source: 'upload',
+        });
+      } catch (err: any) {
+        this.logger.warn(`[createBook] Failed to register BookFile: ${err?.message}`);
+      }
+    }
 
     if (savedBook && totalDataStorage > 0) {
       await this.trackStorageInteraction(userId!, savedBook.id, totalDataStorage);
@@ -297,6 +320,9 @@ export class BookService {
     }
 
     Object.assign(book, updateBookDto);
+    if (updateBookDto.title !== undefined || updateBookDto.author !== undefined) {
+      book.matchKey = buildMatchKey(book.title, book.author);
+    }
     if (updateBookDto.categoryId) {
       const category = await this.categoryRepository.findOne({ where: { id: updateBookDto.categoryId } });
       if (!category) {
@@ -317,14 +343,31 @@ export class BookService {
   }
 
   async deleteBook(id: number): Promise<boolean> {
-    const book = await this.bookRepository.findOne({ where: { id } });
+    const book = await this.bookRepository.findOne({
+      where: { id },
+      relations: ['files'],
+    });
     if (!book) {
       return false;
     }
 
-    const fileUrl = book.fileUrl.split('/').pop();
-    if (fileUrl) {
-      await this.mediaService.deleteFile(fileUrl, book.createById);
+    // Xóa toàn bộ file vật lý ở tất cả định dạng (book_files sẽ tự CASCADE)
+    const filesToDelete: string[] = [];
+    if (book.files?.length) {
+      for (const f of book.files) {
+        const name = f.fileUrl?.split('/').pop();
+        if (name) filesToDelete.push(name);
+      }
+    } else if (book.fileUrl) {
+      const name = book.fileUrl.split('/').pop();
+      if (name) filesToDelete.push(name);
+    }
+    for (const fileUrl of filesToDelete) {
+      try {
+        await this.mediaService.deleteFile(fileUrl, book.createById);
+      } catch (err: any) {
+        this.logger.warn(`[deleteBook] Delete file failed: ${err?.message}`);
+      }
     }
     const coverImageUrl = book.coverImageUrl?.split('/').pop();
     if (coverImageUrl) {
@@ -441,29 +484,62 @@ export class BookService {
         { author: Like(`%${keyword}%`), isPublic: true },
         { createBy: { username: Like(`%${keyword}%`) } },
       ],
-      relations: ['category'],
+      relations: ['category', 'files'],
     });
   }
 
   async searchByTitle(title: string): Promise<Book[]> {
     return this.bookRepository.find({
       where: { title: Like(`%${title}%`), isPublic: true },
-      relations: ['category'],
+      relations: ['category', 'files'],
     });
   }
 
   async searchByAuthor(author: string): Promise<Book[]> {
     return this.bookRepository.find({
       where: { author: Like(`%${author}%`), isPublic: true },
-      relations: ['category'],
+      relations: ['category', 'files'],
     });
   }
 
   async getBooksByCategory(categoryId: number): Promise<Book[]> {
     return this.bookRepository.find({
       where: { categoryId },
-      relations: ['category'],
+      relations: ['category', 'files'],
     });
+  }
+
+  /**
+   * Lấy chi tiết tất cả file định dạng của 1 book (cho endpoint mobile chọn format).
+   */
+  async getFilesOfBook(bookId: number): Promise<BookFile[]> {
+    return this.bookFileService.listByBook(bookId);
+  }
+
+  /**
+   * Bổ sung thêm 1 định dạng mới cho book đã có (vd: thêm bản EPUB cho 1 cuốn đang là PDF).
+   */
+  async addFormat(
+    bookId: number,
+    params: { fileUrl: string; fileSize?: number; totalPages?: number; format?: string },
+    locale: SupportedLocale = 'vi',
+  ): Promise<BookFile> {
+    const book = await this.bookRepository.findOne({ where: { id: bookId } });
+    if (!book) throw new BadRequestException(getMessages(locale).book.bookNotFound);
+
+    const filename = params.fileUrl.split('/').pop() || book.title;
+    const format = (params.format as EbookFormat) || detectEbookFormat(filename, null);
+
+    const saved = await this.bookFileService.upsertFile({
+      bookId,
+      format,
+      fileUrl: params.fileUrl,
+      fileSize: params.fileSize ?? 0,
+      totalPages: params.totalPages ?? null,
+      source: 'upload',
+    });
+    await this.bookFileService.refreshPrimary(bookId);
+    return saved;
   }
 }
 

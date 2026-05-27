@@ -6,10 +6,13 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  OneToMany,
+  Index,
 } from 'typeorm';
 
 import { Category } from './category.entity';
 import { User } from './user.entity';
+import { BookFile } from './book-file.entity';
 
 @Entity('books')
 export class Book {
@@ -104,11 +107,24 @@ export class Book {
   @Column({ name: 'file_size', type: 'bigint', nullable: true, default: 0 })
   fileSize: number;
 
+  /**
+   * Khóa chuẩn hóa dùng để gom các định dạng khác nhau của cùng một sách
+   * khi đồng bộ từ Google Drive (xem `text-normalize.util.ts#buildMatchKey`).
+   * Ví dụ: cả "Sapiens.pdf" và "Sapiens - Yuval.epub" cùng cho ra
+   * matchKey `"sapiens|yuval"` → gom vào 1 Book.
+   */
+  @Column({ name: 'match_key', length: 255, nullable: true })
+  @Index('IDX_books_match_key')
+  matchKey: string | null;
+
+  /** Danh sách file vật lý của sách (1 sách – nhiều định dạng). */
+  @OneToMany(() => BookFile, (file) => file.book, { cascade: true })
+  files: BookFile[];
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
-
 }
 

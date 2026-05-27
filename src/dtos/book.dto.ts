@@ -1,5 +1,30 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsIn, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+
+const ALLOWED_FORMATS = ['pdf', 'epub', 'mobi', 'azw', 'azw3', 'fb2', 'other'] as const;
+
+export class AddBookFormatDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  fileUrl: string;
+
+  @ApiProperty({ required: false })
+  @IsNumber()
+  @IsOptional()
+  fileSize?: number;
+
+  @ApiProperty({ required: false })
+  @IsNumber()
+  @IsOptional()
+  totalPages?: number;
+
+  @ApiProperty({ required: false, enum: ALLOWED_FORMATS })
+  @IsString()
+  @IsIn(ALLOWED_FORMATS as unknown as string[])
+  @IsOptional()
+  format?: string;
+}
 
 export class CreateBookDto {
   @ApiProperty()

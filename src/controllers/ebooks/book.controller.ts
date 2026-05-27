@@ -20,7 +20,7 @@ import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { Book } from '../../entities/book.entity';
 import { User } from '../../entities/user.entity';
 import { BookService } from 'src/services/book.service';
-import { CreateBookDto, UpdateBookDto } from 'src/dtos/book.dto';
+import { AddBookFormatDto, CreateBookDto, UpdateBookDto } from 'src/dtos/book.dto';
 import { BulkBookIdsDto, BulkBookStatusDto } from 'src/dtos/book-bulk.dto';
 import { JwtAuthGuard, Public } from 'src/guards/jwt-auth.guard';
 import { BaseController } from '../base/base.controller';
@@ -359,6 +359,37 @@ export class BookController extends BaseController {
     try {
       const bookId = this.decode(id);
       const data = await this.bookService.updateStatus(bookId, CategoryCodeEnum.BOOK_STATUS_REJECTED, locale);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Public()
+  @Get(':id/files')
+  @ApiOperation({ summary: 'Lấy danh sách định dạng file của sách (pdf, epub, mobi…)' })
+  async getBookFiles(@Param('id') id: string, @Res() res: Response) {
+    try {
+      const bookId = this.decode(id);
+      const data = await this.bookService.getFilesOfBook(bookId);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Post(':id/files')
+  @RequirePermission('UPDATE', 'EBOOK')
+  @ApiOperation({ summary: 'Thêm 1 định dạng mới cho sách đã tồn tại' })
+  async addBookFormat(
+    @Param('id') id: string,
+    @Body() dto: AddBookFormatDto,
+    @Locale() locale: SupportedLocale,
+    @Res() res: Response,
+  ) {
+    try {
+      const bookId = this.decode(id);
+      const data = await this.bookService.addFormat(bookId, dto, locale);
       return this.success(res, data);
     } catch (error) {
       return this.error(res, error);

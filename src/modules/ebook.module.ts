@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BookService } from 'src/services/book.service';
+import { BookFileService } from 'src/services/book-file.service';
 import { AuthModule } from './auth.module';
 import { Book } from 'src/entities/book.entity';
+import { BookFile } from 'src/entities/book-file.entity';
 import { UserInteraction } from 'src/entities/user-interaction.entity';
 import { InteractionStats } from 'src/entities/interaction-stats.entity';
 import { BookController } from 'src/controllers/ebooks/book.controller';
@@ -19,10 +21,10 @@ import { CategoryModule } from './category.module';
     NotificationModule,
     SubscriptionModule,
     CategoryModule,
-    TypeOrmModule.forFeature([Book, UserInteraction, InteractionStats, Category]),
+    TypeOrmModule.forFeature([Book, BookFile, UserInteraction, InteractionStats, Category]),
   ],
   controllers: [BookController],
-  providers: [BookService],
-  exports: [BookService],
+  providers: [BookService, BookFileService],
+  exports: [BookService, BookFileService],
 })
 export class EbookModule { }

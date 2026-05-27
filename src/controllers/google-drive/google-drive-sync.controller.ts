@@ -38,7 +38,7 @@ export class GoogleDriveSyncController {
   @Get('status')
   @UseGuards(JwtAuthGuard, PermissionGuard)
   @RequirePermission('READ', 'media')
-  getStatus() {
+  async getStatus() {
     return this.googleDriveSyncService.getStatus();
   }
 
