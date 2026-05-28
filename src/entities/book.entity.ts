@@ -113,7 +113,7 @@ export class Book {
    * Ví dụ: cả "Sapiens.pdf" và "Sapiens - Yuval.epub" cùng cho ra
    * matchKey `"sapiens|yuval"` → gom vào 1 Book.
    */
-  @Column({ name: 'match_key', length: 255, nullable: true })
+  @Column({ name: 'match_key', type: 'varchar', length: 255, nullable: true })
   @Index('IDX_books_match_key')
   matchKey: string | null;
 

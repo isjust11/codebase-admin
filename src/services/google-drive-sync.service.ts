@@ -3,7 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
-import pLimit from 'p-limit';
+import pLimit = require('p-limit');
 import { GoogleDriveService, DriveFileInfo } from './google-drive.service';
 import { Media } from '../entities/media.entity';
 import { Book } from '../entities/book.entity';
@@ -81,7 +81,16 @@ export class GoogleDriveSyncService implements OnModuleInit {
     private readonly bookFileService: BookFileService,
   ) {}
 
-  async onModuleInit() {
+  /**
+   * Retrieve Google Drive folder ID based on optional region.
+   * Falls back to the default GOOGLE_DRIVE_FOLDER_ID.
+   */
+    private getFolderId(region?: string): string | undefined {
+      const envKey = region ? `GOOGLE_DRIVE_FOLDER_ID_${region.toUpperCase()}` : 'GOOGLE_DRIVE_FOLDER_ID';
+      return this.configService.get<string>(envKey) || this.configService.get<string>('GOOGLE_DRIVE_FOLDER_ID');
+    }
+
+   async onModuleInit() {
     // Backfill các Book đã có sẵn (chưa có entry trong book_files / chưa có matchKey)
     // → idempotent, an toàn để chạy mỗi lần boot.
     try {
@@ -102,12 +111,8 @@ export class GoogleDriveSyncService implements OnModuleInit {
     await this.syncFromDrive();
   }
 
-  async syncFromDrive(options?: { force?: boolean }): Promise<{
-    synced: number;
-    skipped: number;
-    errors: number;
-    details: string[];
-  }> {
+  async syncFromDrive(options?: { force?: boolean; region?: string }): Promise<{ synced: number; skipped: number; errors: number; details: string[] }> {
+
     if (this.isSyncing && !options?.force) {
       this.logger.warn('[DriveSync] Sync already in progress. Skipping.');
       return { synced: 0, skipped: 0, errors: 0, details: ['Sync already in progress'] };
@@ -117,7 +122,7 @@ export class GoogleDriveSyncService implements OnModuleInit {
       return { synced: 0, skipped: 0, errors: 0, details: ['Google Drive not configured'] };
     }
 
-    const folderId = this.configService.get<string>('GOOGLE_DRIVE_FOLDER_ID');
+    const folderId = this.getFolderId(options?.region);
     if (!folderId) {
       this.logger.warn('[DriveSync] GOOGLE_DRIVE_FOLDER_ID not set. Skipping.');
       return { synced: 0, skipped: 0, errors: 0, details: ['GOOGLE_DRIVE_FOLDER_ID not configured'] };
