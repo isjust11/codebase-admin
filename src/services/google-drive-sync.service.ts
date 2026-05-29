@@ -79,18 +79,18 @@ export class GoogleDriveSyncService implements OnModuleInit {
     private readonly mediaService: MediaService,
     private readonly geminiService: GeminiService,
     private readonly bookFileService: BookFileService,
-  ) {}
+  ) { }
 
   /**
    * Retrieve Google Drive folder ID based on optional region.
    * Falls back to the default GOOGLE_DRIVE_FOLDER_ID.
    */
-    private getFolderId(region?: string): string | undefined {
-      const envKey = region ? `GOOGLE_DRIVE_FOLDER_ID_${region.toUpperCase()}` : 'GOOGLE_DRIVE_FOLDER_ID';
-      return this.configService.get<string>(envKey) || this.configService.get<string>('GOOGLE_DRIVE_FOLDER_ID');
-    }
+  private getFolderId(region?: string): string | undefined {
+    const envKey = region ? `GOOGLE_DRIVE_FOLDER_ID_${region.toUpperCase()}` : 'GOOGLE_DRIVE_FOLDER_ID';
+    return this.configService.get<string>(envKey) || this.configService.get<string>('GOOGLE_DRIVE_FOLDER_ID');
+  }
 
-   async onModuleInit() {
+  async onModuleInit() {
     // Backfill các Book đã có sẵn (chưa có entry trong book_files / chưa có matchKey)
     // → idempotent, an toàn để chạy mỗi lần boot.
     try {
@@ -145,8 +145,8 @@ export class GoogleDriveSyncService implements OnModuleInit {
       const incomingIds = files.map((f) => f.id);
       const existingFiles = incomingIds.length
         ? await this.bookFileRepository.find({
-            where: { googleDriveFileId: In(incomingIds) },
-          })
+          where: { googleDriveFileId: In(incomingIds) },
+        })
         : [];
       const existingDriveIds = new Set(existingFiles.map((bf) => bf.googleDriveFileId));
 
@@ -514,16 +514,35 @@ export class GoogleDriveSyncService implements OnModuleInit {
 
     for (const book of orphanBooks) {
       try {
-        const filename = book.fileUrl?.split('/').pop() || book.title || 'book';
-        const format = detectEbookFormat(filename, null);
+        let filename = book.fileUrl?.split('/').pop() || book.title || 'book';
+        let mimeType: string | null = null;
+        let googleDriveFileId: string | null = null;
+
+        // Với file từ Google Drive, URL dạng 'google-drive/download/<driveFileId>'
+        // không chứa extension → cần tra Media record để lấy tên gốc và mimeType.
+        if (book.fileUrl?.startsWith('google-drive/download/')) {
+          googleDriveFileId = book.fileUrl.split('/').pop() || null;
+          if (googleDriveFileId) {
+            const media = await this.mediaRepository.findOne({
+              where: { googleDriveFileId },
+            });
+            if (media) {
+              filename = media.originalName || media.filename || filename;
+              mimeType = media.mimeType || null;
+            }
+          }
+        }
+
+        const format = detectEbookFormat(filename, mimeType);
 
         await this.bookFileService.upsertFile({
           bookId: book.id,
           format,
-          mimeType: null,
+          mimeType,
           fileUrl: book.fileUrl,
           fileSize: Number(book.fileSize ?? 0),
           source: book.fileUrl?.startsWith('google-drive/') ? 'drive' : 'upload',
+          googleDriveFileId,
           totalPages: (book as any).totalPages ?? null,
         });
         await this.bookFileService.refreshPrimary(book.id);
