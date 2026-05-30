@@ -129,6 +129,153 @@ export class BookService {
     });
   }
 
+  /**
+   * Base query builder cho các màn Discover.
+   * Đảm bảo: chỉ lấy book public + đã được duyệt + áp dụng geographic filter của user nếu có.
+   */
+  private buildDiscoverBaseQuery(user?: User) {
+    const query = this.bookRepository.createQueryBuilder('book')
+      .leftJoinAndSelect('book.category', 'category')
+      .leftJoinAndSelect('book.status', 'status')
+      .leftJoinAndSelect('book.createBy', 'createBy')
+      .leftJoinAndSelect('book.files', 'files')
+      .where('book.isPublic = :isPublic', { isPublic: true });
+
+    if (user) {
+      if (user.countryCode) {
+        query.andWhere('(book.countryCode IS NULL OR book.countryCode = :countryCode)', { countryCode: user.countryCode });
+      }
+      if (user.region) {
+        query.andWhere('(book.region IS NULL OR book.region = :region)', { region: user.region });
+      }
+    }
+    return query;
+  }
+
+  /**
+   * Section "Ebook mới": sort theo createdAt DESC.
+   * Dùng cho màn Discover, KHÔNG ảnh hưởng tới endpoint `/books/public` cũ.
+   */
+  async getNewestBooks(filter: PaginationParams, user?: User): Promise<PaginatedResponse<Book>> {
+    const { page, size } = filter;
+    const skip = ((page || 1) - 1) * (size || 10);
+    const take = size || 10;
+
+    const query = this.buildDiscoverBaseQuery(user)
+      .orderBy('book.createdAt', 'DESC');
+
+    const [data, total] = await query.skip(skip).take(take).getManyAndCount();
+    return {
+      data,
+      total,
+      page: page ?? 1,
+      size: size ?? 10,
+      totalPages: Math.ceil(total / (size || 10)),
+    };
+  }
+
+  /**
+   * Section "Ebook được yêu thích": sort theo số lượt favorite DESC.
+   * Đếm trên bảng user_interaction (interactionType = favorite) cho mỗi book,
+   * tie-break bằng createdAt DESC để book mới được ưu tiên khi cùng số fav.
+   */
+  async getPopularBooks(filter: PaginationParams, user?: User): Promise<PaginatedResponse<Book>> {
+    const { page, size } = filter;
+    const skip = ((page || 1) - 1) * (size || 10);
+    const take = size || 10;
+
+    const query = this.buildDiscoverBaseQuery(user)
+      .leftJoin(
+        'user_interaction',
+        'fav',
+        'fav.targetId = book.id AND fav.targetType = :favTargetType AND fav.interactionType = :favType',
+        { favTargetType: InteractionTarget.BOOK, favType: InteractionType.FAVORITE }
+      )
+      .addSelect('COUNT(fav.id)', 'favCount')
+      .groupBy('book.id')
+      .addGroupBy('category.id')
+      .addGroupBy('status.id')
+      .addGroupBy('createBy.id')
+      .addGroupBy('files.id')
+      .orderBy('favCount', 'DESC')
+      .addOrderBy('book.createdAt', 'DESC');
+
+    // getManyAndCount với GROUP BY trả về count sai → đếm tổng riêng.
+    const data = await query.offset(skip).limit(take).getRawAndEntities()
+      .then((res) => res.entities);
+    const totalQuery = this.buildDiscoverBaseQuery(user);
+    const total = await totalQuery.getCount();
+
+    return {
+      data,
+      total,
+      page: page ?? 1,
+      size: size ?? 10,
+      totalPages: Math.ceil(total / (size || 10)),
+    };
+  }
+
+  /**
+   * Section "Gợi ý cho bạn": dựa trên các category mà user đã từng tương tác
+   * (đọc / favorite / view). Nếu user chưa có lịch sử (guest hoặc mới) → fallback
+   * về danh sách popular để vẫn có nội dung gợi ý hợp lý.
+   */
+  async getRecommendedBooks(filter: PaginationParams, userId?: number, user?: User): Promise<PaginatedResponse<Book>> {
+    const { page, size } = filter;
+    const skip = ((page || 1) - 1) * (size || 10);
+    const take = size || 10;
+
+    let categoryIds: number[] = [];
+    let interactedBookIds: number[] = [];
+
+    if (userId) {
+      const raws = await this.userInteractionRepository
+        .createQueryBuilder('i')
+        .innerJoin('books', 'b', 'b.id = i.targetId')
+        .select('b.category_id', 'categoryId')
+        .addSelect('b.id', 'bookId')
+        .distinct(true)
+        .where('i.userId = :userId', { userId })
+        .andWhere('i.targetType = :targetType', { targetType: InteractionTarget.BOOK })
+        .andWhere('i.interactionType IN (:...types)', {
+          types: [InteractionType.READING, InteractionType.FAVORITE, InteractionType.VIEW],
+        })
+        .getRawMany();
+
+      categoryIds = Array.from(new Set(raws.map((r) => Number(r.categoryId)).filter((v) => !Number.isNaN(v) && v > 0)));
+      interactedBookIds = Array.from(new Set(raws.map((r) => Number(r.bookId)).filter((v) => !Number.isNaN(v) && v > 0)));
+    }
+
+    // Fallback: chưa có lịch sử → dùng popular để tránh trả rỗng.
+    if (categoryIds.length === 0) {
+      return this.getPopularBooks(filter, user);
+    }
+
+    const query = this.buildDiscoverBaseQuery(user)
+      .andWhere('book.categoryId IN (:...categoryIds)', { categoryIds });
+
+    // Loại các book user đã tương tác để gợi ý mới mẻ hơn (nếu có).
+    if (interactedBookIds.length > 0) {
+      query.andWhere('book.id NOT IN (:...interactedBookIds)', { interactedBookIds });
+    }
+    query.orderBy('book.createdAt', 'DESC');
+
+    const [data, total] = await query.skip(skip).take(take).getManyAndCount();
+
+    // Nếu không còn book nào (đã đọc hết trong category yêu thích) → fallback popular.
+    if (total === 0) {
+      return this.getPopularBooks(filter, user);
+    }
+
+    return {
+      data,
+      total,
+      page: page ?? 1,
+      size: size ?? 10,
+      totalPages: Math.ceil(total / (size || 10)),
+    };
+  }
+
   private validateBookData(dto: CreateBookDto | UpdateBookDto, isCreate: boolean, locale: SupportedLocale = 'vi'): void {
     const m = getMessages(locale).book;
     if (isCreate) {

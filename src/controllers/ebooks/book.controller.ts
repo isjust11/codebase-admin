@@ -153,6 +153,69 @@ export class BookController extends BaseController {
     }
   }
 
+  @Get('discover/newest')
+  @ApiOperation({ summary: 'Discover - Ebook mới (sort theo createdAt desc)' })
+  async getDiscoverNewest(
+    @Query('page') page: number,
+    @Query('size') size: number,
+    @Request() req: any,
+    @Res() res: Response,
+  ) {
+    try {
+      const filter: PaginationParams = {
+        page: page || 1,
+        size: size || 10,
+        search: '',
+      };
+      const data = await this.bookService.getNewestBooks(filter, req?.user);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Get('discover/popular')
+  @ApiOperation({ summary: 'Discover - Ebook được yêu thích nhiều nhất' })
+  async getDiscoverPopular(
+    @Query('page') page: number,
+    @Query('size') size: number,
+    @Request() req: any,
+    @Res() res: Response,
+  ) {
+    try {
+      const filter: PaginationParams = {
+        page: page || 1,
+        size: size || 10,
+        search: '',
+      };
+      const data = await this.bookService.getPopularBooks(filter, req?.user);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Get('discover/recommended')
+  @ApiOperation({ summary: 'Discover - Gợi ý cho bạn (dựa theo lịch sử tương tác)' })
+  async getDiscoverRecommended(
+    @Query('page') page: number,
+    @Query('size') size: number,
+    @Request() req: any,
+    @Res() res: Response,
+  ) {
+    try {
+      const filter: PaginationParams = {
+        page: page || 1,
+        size: size || 10,
+        search: '',
+      };
+      const data = await this.bookService.getRecommendedBooks(filter, req?.user?.id, req?.user);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
   @Get()
   @ApiOperation({ summary: 'Lấy tất cả sách (cần đăng nhập)' })
   async getAllBooks(@Res() res: Response) {
