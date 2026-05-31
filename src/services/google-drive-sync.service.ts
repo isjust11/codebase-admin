@@ -17,11 +17,35 @@ import { RoleEnum } from 'src/enums/role.enum';
 import { GeminiService } from './gemini.service';
 import { CategoryType } from '../entities/category-type.entity';
 import { CategoryTypeEnum } from 'src/enums/category-type.enum';
-import * as pdf from 'pdf-parse';
+import { PDFParse } from 'pdf-parse';
 import { EPub } from 'epub2';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import LanguageDetect = require('languagedetect');
+
+const lngDetector = new LanguageDetect();
+
+function detectLanguageCode(text: string): string | undefined {
+  if (!text || text.trim().length < 20) return undefined;
+  const results = lngDetector.detect(text, 1);
+  if (results && results.length > 0) {
+    const langName = results[0][0];
+    const map: Record<string, string> = {
+      vietnamese: 'vi',
+      english: 'en',
+      french: 'fr',
+      spanish: 'es',
+      german: 'de',
+      chinese: 'zh',
+      japanese: 'ja',
+      korean: 'ko',
+    };
+    return map[langName] || undefined;
+  }
+  return undefined;
+}
+
 import {
   buildMatchKey,
   guessAuthorFromFilename,
@@ -41,6 +65,7 @@ interface ExtractedMetadata {
   title?: string;
   author?: string;
   totalPages?: number;
+  language?: string;
 }
 
 interface ProcessedFile {
@@ -270,10 +295,23 @@ export class GoogleDriveSyncService implements OnModuleInit {
     const meta: ExtractedMetadata = {};
     try {
       if (format === EbookFormat.PDF) {
-        const pdfData = await (pdf as any)(buffer);
-        if (pdfData?.info?.Title?.trim()) meta.title = pdfData.info.Title.trim();
-        if (pdfData?.info?.Author?.trim()) meta.author = pdfData.info.Author.trim();
-        if (typeof pdfData?.numpages === 'number') meta.totalPages = pdfData.numpages;
+        const parser = new PDFParse({ data: buffer });
+        const info = await parser.getInfo();
+        if (info.info?.Title?.trim()) meta.title = info.info.Title.trim();
+        if (info.info?.Author?.trim()) {
+          const authors = info.info.Author.trim().split(/[,;]+/).map(a => a.trim());
+          meta.author = authors.length ? authors[0] : null;
+        }
+        if (typeof info.total === 'number') meta.totalPages = info.total;
+
+        if (info.info?.Language?.trim()) {
+          meta.language = info.info.Language.trim().substring(0, 2).toLowerCase();
+        } else {
+          const textRes = await parser.getText();
+          if (textRes?.text) {
+            meta.language = detectLanguageCode(textRes.text.substring(0, 5000));
+          }
+        }
       } else if (format === EbookFormat.EPUB) {
         const tempPath = path.join(os.tmpdir(), `sync-${Date.now()}-${Math.random().toString(36).slice(2)}.epub`);
         fs.writeFileSync(tempPath, buffer);
@@ -286,6 +324,22 @@ export class GoogleDriveSyncService implements OnModuleInit {
           });
           if (epub.metadata?.title?.trim()) meta.title = epub.metadata.title.trim();
           if (epub.metadata?.creator?.trim()) meta.author = epub.metadata.creator.trim();
+
+          if (epub.metadata?.language?.trim()) {
+            meta.language = epub.metadata.language.trim().substring(0, 2).toLowerCase();
+          }
+          if (!meta.language && epub.flow && epub.flow.length > 0) {
+            const chapterId = epub.flow[Math.min(2, epub.flow.length - 1)]?.id || epub.flow[0]?.id;
+            if (chapterId) {
+              const text = await new Promise<string>((resolve) => {
+                epub.getChapter(chapterId, (err, text) => resolve(text || ''));
+              });
+              if (text) {
+                const plainText = text.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+                meta.language = detectLanguageCode(plainText.substring(0, 5000));
+              }
+            }
+          }
         } finally {
           if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
         }
@@ -356,14 +410,15 @@ export class GoogleDriveSyncService implements OnModuleInit {
         author: repAuthor,
         matchKey,
         fileUrl: '',
-        fileSize: 0,
-        language: 'vi',
+        fileSize: representative.drive.size || 0,
+        language: representative.metadata.language?.trim() || 'unknown',
         isPublic: false,
         createById: ctx.adminId,
         statusId: ctx.pendingStatusId,
         description: `Đồng bộ từ Google Drive`,
         publishedDate: representative.drive.modifiedTime,
         categoryId: await this.resolveCategory(repTitle),
+        syncStatus: 1
       };
 
       // Thumbnail (chỉ tải 1 lần cho cả group)
@@ -505,6 +560,7 @@ export class GoogleDriveSyncService implements OnModuleInit {
       .leftJoin(BookFile, 'bf', 'bf.book_id = book.id')
       .where('book.file_url IS NOT NULL AND book.file_url <> :empty', { empty: '' })
       .andWhere('bf.id IS NULL')
+      .andWhere('book.sync_status = 0')
       .limit(500);
 
     const orphanBooks = await qb.getMany();
@@ -549,10 +605,14 @@ export class GoogleDriveSyncService implements OnModuleInit {
 
         if (!book.matchKey) {
           book.matchKey = buildMatchKey(book.title, book.author);
-          await this.bookRepository.save(book);
         }
+        book.syncStatus = 1;
+        await this.bookRepository.save(book);
       } catch (err: any) {
         this.logger.warn(`[DriveSync] Backfill failed for book#${book.id}: ${err?.message}`);
+        // Skip retrying this failed book
+        book.syncStatus = 1;
+        await this.bookRepository.save(book).catch(() => { });
       }
     }
   }

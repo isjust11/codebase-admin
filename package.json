@@ -57,6 +57,7 @@
     "html-pdf-node": "^1.0.8",
     "image-size": "^2.0.2",
     "jose": "^6.2.3",
+    "languagedetect": "^2.0.0",
     "libreoffice-convert": "^1.8.1",
     "mammoth": "^1.11.0",
     "moment": "^2.30.1",

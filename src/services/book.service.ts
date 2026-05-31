@@ -59,8 +59,9 @@ export class BookService {
       .leftJoinAndSelect('book.status', 'status')
       .leftJoinAndSelect('book.createBy', 'createBy')
       .leftJoinAndSelect('book.files', 'files');
+    query.where('files.id IS NOT NULL');
     if (!isSupperAdmin) {
-      query.where('book.isPublic = :isPublic', { isPublic: true });
+      query.andWhere('book.isPublic = :isPublic', { isPublic: true });
 
       // Geographic filtering
       if (user) {
@@ -111,6 +112,10 @@ export class BookService {
     if (search) {
       query.andWhere('(book.title LIKE :search OR book.author LIKE :search)', { search: `%${search}%` });
     }
+
+    if (filter.orderBy) {
+      query.orderBy(`book.${filter.orderBy}`, 'DESC');
+    }
     const [data, total] = await query.skip(skip).take(take).getManyAndCount();
 
     return {
@@ -139,7 +144,8 @@ export class BookService {
       .leftJoinAndSelect('book.status', 'status')
       .leftJoinAndSelect('book.createBy', 'createBy')
       .leftJoinAndSelect('book.files', 'files')
-      .where('book.isPublic = :isPublic', { isPublic: true });
+      .where('book.isPublic = :isPublic', { isPublic: true })
+      .andWhere('files.id IS NOT NULL');
 
     if (user) {
       if (user.countryCode) {

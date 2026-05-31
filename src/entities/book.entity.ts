@@ -107,6 +107,10 @@ export class Book {
   @Column({ name: 'file_size', type: 'bigint', nullable: true, default: 0 })
   fileSize: number;
 
+  // column is sync backfill 1:done 0:waiting
+  @Column({ name: 'sync_status', type: 'tinyint', default: 0 })
+  syncStatus: number;
+
   /**
    * Khóa chuẩn hóa dùng để gom các định dạng khác nhau của cùng một sách
    * khi đồng bộ từ Google Drive (xem `text-normalize.util.ts#buildMatchKey`).
