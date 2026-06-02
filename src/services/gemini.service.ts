@@ -147,25 +147,14 @@ Văn bản: "${text}"`;
   ): Promise<{ categoryName: string; categoryNameEn: string; isNew: boolean }> {
     try {
       const categoryList = existingCategories
-        .map((c) => `- ${c.name} (code: ${c.code})`)
-        .join('\n');
+        .map((c) => `${c.name}|${c.code}`)
+        .join(', ');
 
-      const prompt = `Bạn là chuyên gia phân loại sách. Dựa vào tên sách sau, chọn danh mục phù hợp nhất từ danh sách bên dưới.
-
-Tên sách: "${bookTitle}"
-
-Danh mục hiện có:
-${categoryList}
-
-Nếu phù hợp với một danh mục → trả về tên đó (chính xác như trong danh sách), isNew: false.
-Nếu KHÔNG có danh mục phù hợp → đề xuất tên mới ngắn gọn (1-3 từ tiếng Việt), isNew: true.
-
-Chỉ trả về JSON, không giải thích:
-{
-  "categoryName": "Tên danh mục tiếng Việt",
-  "categoryNameEn": "Category name in English",
-  "isNew": true
-}`;
+      const prompt = `Classify book "${bookTitle}" into best matching category.
+      Categories: [${categoryList}]
+      If match found: return exact name, isNew:false.
+      If no match: suggest new short Vietnamese name (1-3 words), isNew:true.
+      JSON only: {"categoryName":"vi","categoryNameEn":"en","isNew":bool}`;
 
       const response = await this.genAI.models.generateContent({
         model: this.modelName,
