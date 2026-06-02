@@ -132,6 +132,8 @@ export class BookController extends BaseController {
     @Query('filterType') filterType?: FilterType,
     @Query('categoryId') categoryId?: string,
     @Query('statusCode') statusCode?: string,
+    @Query('orderBy') orderBy?: string,
+    @Query('orderByType') orderByType?: string,
   ) {
     const userId = req?.user?.id;
     let isSupperAdmin = false;
@@ -140,6 +142,8 @@ export class BookController extends BaseController {
         page: page || 1,
         size: size || 10,
         search: search || '',
+        orderBy: orderBy || 'createdAt',
+        orderByType: orderByType || 'desc',
       };
       if (req?.user?.roles.length > 0) {
         const role = await this.roleService.findById(req?.user?.roles[0]);

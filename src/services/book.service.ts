@@ -205,7 +205,6 @@ export class BookService {
       .addGroupBy('files.id')
       .orderBy('favCount', 'DESC')
       .addOrderBy('book.createdAt', 'DESC');
-
     // getManyAndCount với GROUP BY trả về count sai → đếm tổng riêng.
     const data = await query.offset(skip).limit(take).getRawAndEntities()
       .then((res) => res.entities);

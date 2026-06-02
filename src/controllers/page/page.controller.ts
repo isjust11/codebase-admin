@@ -106,6 +106,18 @@ export class PageController extends BaseController {
     }
     return res.sendFile(filePath);
   }
+  // revoke consent page
+  @Public()
+  @Get('revoke-consent.html')
+  async getRevokeConsent(@Res() res: Response) {
+    const path = require('path');
+    const fs = require('fs');
+    const filePath = path.join(__dirname, '..', '..', '..', '..', 'public', 'pages', 'revoke-consent.html');
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ message: 'Revoke consent file not found' });
+    }
+    return res.sendFile(filePath);
+  }
 
   // Serve static terms of use page (public)
   @Public()
