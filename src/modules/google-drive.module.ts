@@ -8,6 +8,7 @@ import { Media } from 'src/entities/media.entity';
 import { Book } from 'src/entities/book.entity';
 import { BookFile } from 'src/entities/book-file.entity';
 import { SyncState } from 'src/entities/sync-state.entity';
+import { SyncLog } from 'src/entities/sync-log.entity';
 import { Category } from 'src/entities/category.entity';
 import { User } from 'src/entities/user.entity';
 import { AuthModule } from './auth.module';
@@ -25,6 +26,7 @@ import { BookFileService } from 'src/services/book-file.service';
       Book,
       BookFile,
       SyncState,
+      SyncLog,
       Category,
       User,
       CategoryType,

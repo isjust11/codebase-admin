@@ -10,6 +10,7 @@ import { Book } from '../entities/book.entity';
 import { BookFile, EbookFormat } from '../entities/book-file.entity';
 import { Category } from '../entities/category.entity';
 import { SyncState } from '../entities/sync-state.entity';
+import { SyncLog, SyncLogAction, SyncLogStatus } from '../entities/sync-log.entity';
 import { CategoryCodeEnum } from 'src/enums/category-code.enum';
 import { MediaService } from './media.service';
 import { User } from '../entities/user.entity';
@@ -101,6 +102,8 @@ export class GoogleDriveSyncService implements OnModuleInit {
     private readonly categoryTypeRepository: Repository<CategoryType>,
     @InjectRepository(SyncState)
     private readonly syncStateRepository: Repository<SyncState>,
+    @InjectRepository(SyncLog)
+    private readonly syncLogRepository: Repository<SyncLog>,
     private readonly mediaService: MediaService,
     private readonly geminiService: GeminiService,
     private readonly bookFileService: BookFileService,
@@ -140,16 +143,19 @@ export class GoogleDriveSyncService implements OnModuleInit {
 
     if (this.isSyncing && !options?.force) {
       this.logger.warn('[DriveSync] Sync already in progress. Skipping.');
+      await this.saveLog(SyncLogAction.SYNC_DRIVE, SyncLogStatus.FAILED, 0, 0, 1, ['Sync already in progress']);
       return { synced: 0, skipped: 0, errors: 0, details: ['Sync already in progress'] };
     }
     if (!this.googleDriveService.isConfigured()) {
       this.logger.warn('[DriveSync] Google Drive not configured. Skipping sync.');
+      await this.saveLog(SyncLogAction.SYNC_DRIVE, SyncLogStatus.FAILED, 0, 0, 1, ['Google Drive not configured']);
       return { synced: 0, skipped: 0, errors: 0, details: ['Google Drive not configured'] };
     }
 
     const folderId = this.getFolderId(options?.region);
     if (!folderId) {
       this.logger.warn('[DriveSync] GOOGLE_DRIVE_FOLDER_ID not set. Skipping.');
+      await this.saveLog(SyncLogAction.SYNC_DRIVE, SyncLogStatus.FAILED, 0, 0, 1, ['GOOGLE_DRIVE_FOLDER_ID not configured']);
       return { synced: 0, skipped: 0, errors: 0, details: ['GOOGLE_DRIVE_FOLDER_ID not configured'] };
     }
 
@@ -230,6 +236,9 @@ export class GoogleDriveSyncService implements OnModuleInit {
       this.logger.log(
         `[DriveSync] Completed. synced=${result.synced} skipped=${result.skipped} errors=${result.errors}`,
       );
+
+      const status = result.errors === 0 ? SyncLogStatus.SUCCESS : (result.synced > 0 ? SyncLogStatus.PARTIAL : SyncLogStatus.FAILED);
+      await this.saveLog(SyncLogAction.SYNC_DRIVE, status, result.synced + result.skipped, result.synced, result.errors, result.details);
     } catch (error: any) {
       this.logger.error(`[DriveSync] Fatal error: ${error.message}`, error.stack);
       result.details.push(`[FATAL] ${error.message}`);
@@ -239,6 +248,7 @@ export class GoogleDriveSyncService implements OnModuleInit {
         totalErrors: result.errors,
         lastError: error.message,
       });
+      await this.saveLog(SyncLogAction.SYNC_DRIVE, SyncLogStatus.FAILED, result.synced + result.skipped, result.synced, result.errors, [...result.details, error.message]);
     } finally {
       this.isSyncing = false;
     }
@@ -617,17 +627,174 @@ export class GoogleDriveSyncService implements OnModuleInit {
     }
   }
 
+  /**
+   * Đồng bộ các thông tin còn thiếu như coverImageUrl, language cho các sách đã tồn tại.
+   */
+  async syncMissingBookInfo(limitCount: number = 50): Promise<{ processed: number; updated: number }> {
+    const qb = this.bookRepository
+      .createQueryBuilder('book')
+      .leftJoinAndSelect('book.files', 'file')
+      .where(
+        '((book.coverImageUrl IS NULL OR book.coverImageUrl = :empty) OR ' +
+        '(book.language IS NULL OR book.language = :unknown) OR ' +
+        '(book.author IS NULL OR book.author = :unknownAuthor) OR ' +
+        '(book.totalPages IS NULL) OR ' +
+        '(book.title IS NULL OR book.title = :empty) OR ' +
+        '(book.categoryId IS NULL))',
+        { empty: '', unknown: 'unknown', unknownAuthor: 'Unknown' }
+      )
+      .andWhere('(book.isMetaSynced = false OR book.isMetaSynced IS NULL)')
+      .limit(limitCount);
+
+    const books = await qb.getMany();
+    if (!books.length) return { processed: 0, updated: 0 };
+
+    this.logger.log(`[DriveSync] Found ${books.length} book(s) missing cover/language. Start syncing...`);
+
+    const superAdmin = await this.userRepository.findOne({
+      where: { roles: { code: RoleEnum.SUPPER_ADMIN } },
+      relations: ['roles'],
+    });
+    const adminId = superAdmin?.id || 3;
+    let updatedCount = 0;
+    let errorCount = 0;
+    const details: string[] = [];
+
+    for (const book of books) {
+      try {
+        let updated = false;
+        // Lấy file chính (nếu không có thì lấy file đầu tiên)
+        const primaryFile = book.files?.find((f) => f.isPrimary) || book.files?.[0];
+        
+        if (!primaryFile || !primaryFile.googleDriveFileId) {
+          this.logger.warn(`[DriveSync] Book#${book.id} has no valid Drive file to extract info.`);
+          // Đánh dấu để không lặp lại
+          book.isMetaSynced = true;
+          await this.bookRepository.save(book);
+          continue;
+        }
+
+        const driveFileId = primaryFile.googleDriveFileId;
+        const driveMeta = await this.googleDriveService.getFileMetadata(driveFileId);
+
+        // 1. Sync cover image
+        if (!book.coverImageUrl && driveMeta?.thumbnailLink) {
+          const thumbBuf = await this.googleDriveService.downloadThumbnail(driveMeta.thumbnailLink);
+          if (thumbBuf) {
+            const coverMedia = await this.mediaService.uploadFromBuffer(
+              thumbBuf,
+              `cover-${normalizeText(book.title) || 'book'}.jpg`,
+              'image/jpeg',
+              'book-covers',
+              adminId,
+            );
+            book.coverImageUrl = coverMedia.url;
+            updated = true;
+          }
+        }
+
+        // 2. Sync metadata từ nội dung file (cần tải nội dung)
+        const needsContentSync = 
+          !book.language || book.language === 'unknown' || 
+          !book.author || book.author === 'Unknown' || 
+          book.totalPages == null ||
+          !book.title || book.title === '';
+
+        if (needsContentSync) {
+          const buffer = await this.googleDriveService.downloadFileBuffer(driveFileId);
+          const meta = await this.extractMetadataFromBuffer(
+            buffer,
+            primaryFile.format as EbookFormat,
+            primaryFile.fileUrl?.split('/').pop() || book.title,
+          );
+
+          if (!book.language || book.language === 'unknown') {
+            if (meta.language) {
+              book.language = meta.language;
+            } else {
+              book.language = 'en'; 
+            }
+            updated = true;
+          }
+
+          if ((!book.author || book.author === 'Unknown') && meta.author) {
+            book.author = meta.author;
+            updated = true;
+          }
+
+          if ((!book.title || book.title === '') && meta.title) {
+            book.title = meta.title;
+            updated = true;
+          }
+
+          if (book.totalPages == null && meta.totalPages != null) {
+            book.totalPages = meta.totalPages;
+            primaryFile.totalPages = meta.totalPages;
+            await this.bookFileRepository.save(primaryFile);
+            updated = true;
+          }
+        }
+
+        if (!book.categoryId) {
+          const categoryId = await this.resolveCategory(book.title);
+          if (categoryId) {
+            book.categoryId = categoryId;
+            updated = true;
+          }
+        }
+
+        // Đánh dấu đã sync (dù có thay đổi hay không thì cũng đã process)
+        book.isMetaSynced = true;
+        
+        await this.bookRepository.save(book);
+        this.logger.log(`[DriveSync] Processed missing info for book#${book.id}`);
+        if (updated) updatedCount++;
+      } catch (err: any) {
+        this.logger.warn(`[DriveSync] Failed to sync missing info for book#${book.id}: ${err?.message}`);
+        errorCount++;
+        details.push(`Book#${book.id}: ${err?.message}`);
+      }
+    }
+
+    const status = errorCount === 0 ? SyncLogStatus.SUCCESS : (updatedCount > 0 ? SyncLogStatus.PARTIAL : SyncLogStatus.FAILED);
+    await this.saveLog(SyncLogAction.SYNC_MISSING_INFO, status, books.length, updatedCount, errorCount, details);
+
+    return { processed: books.length, updated: updatedCount };
+  }
+
   // ------------------------------------------------------------------
   // Helpers
   // ------------------------------------------------------------------
 
+  private async saveLog(action: SyncLogAction, status: SyncLogStatus, processed: number, updated: number, errors: number, detailsArr: string[]) {
+    try {
+      const log = this.syncLogRepository.create({
+        action,
+        status,
+        processed,
+        updated,
+        errors,
+        details: JSON.stringify(detailsArr.slice(0, 50)) // limit details to avoid too large text
+      });
+      await this.syncLogRepository.save(log);
+    } catch (err: any) {
+      this.logger.error(`Failed to save sync log: ${err?.message}`);
+    }
+  }
+
   private async resolveCategory(bookTitle: string): Promise<number | undefined> {
     try {
       const categoryType = await this.categoryTypeRepository.findOne({
-        where: { name: CategoryTypeEnum.BOOK_CATEGORY },
+        where: { code: CategoryTypeEnum.BOOK_CATEGORY },
       });
+
+      if (!categoryType) {
+        this.logger.warn(`[DriveSync] resolveCategory: Cannot find category type with code ${CategoryTypeEnum.BOOK_CATEGORY}`);
+        return undefined;
+      }
+
       const bookCategories = await this.categoryRepository.find({
-        where: { isActive: true, categoryTypeId: categoryType?.id },
+        where: { isActive: true, categoryTypeId: categoryType.id },
         select: ['id', 'name', 'code'],
       });
       const existingForGemini = bookCategories.map((c) => ({ name: c.name, code: c.code }));
@@ -657,7 +824,7 @@ export class GoogleDriveSyncService implements OnModuleInit {
         isActive: true,
         icon: 'bookOpen',
         iconType: 'lucide',
-        categoryTypeId: categoryType?.id ?? 1,
+        categoryTypeId: categoryType.id,
       });
       const saved = await this.categoryRepository.save(newCategory);
       this.logger.log(`[DriveSync] Created new category: "${classified.categoryName}" (${newCode})`);

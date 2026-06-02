@@ -111,6 +111,9 @@ export class Book {
   @Column({ name: 'sync_status', type: 'tinyint', default: 0 })
   syncStatus: number;
 
+  @Column({ name: 'is_meta_synced', default: false })
+  isMetaSynced: boolean;
+
   /**
    * Khóa chuẩn hóa dùng để gom các định dạng khác nhau của cùng một sách
    * khi đồng bộ từ Google Drive (xem `text-normalize.util.ts#buildMatchKey`).

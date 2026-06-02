@@ -155,7 +155,7 @@ export class GoogleDriveService {
     try {
       const response = await this.driveClient.files.get({
         fileId,
-        fields: 'id, name, mimeType, size, webViewLink, webContentLink, modifiedTime',
+        fields: 'id, name, mimeType, size, webViewLink, webContentLink, modifiedTime, thumbnailLink',
         supportsAllDrives: true,
       });
       const item = response.data;
@@ -168,6 +168,7 @@ export class GoogleDriveService {
         webViewLink: item.webViewLink || '',
         webContentLink: item.webContentLink || '',
         modifiedTime: new Date(item.modifiedTime || Date.now()),
+        thumbnailLink: item.thumbnailLink ? item.thumbnailLink.replace('=s220', '=s600') : undefined,
       };
     } catch (error) {
       this.logger.error(`[GoogleDrive] getFileMetadata error: ${error.message}`);

@@ -32,6 +32,22 @@ export class GoogleDriveSyncController {
   }
 
   /**
+   * POST /google-drive/sync-missing-info
+   * Kích hoạt đồng bộ các thông tin còn thiếu (coverImageUrl, language...)
+   */
+  @Post('sync-missing-info')
+  @UseGuards(JwtAuthGuard, PermissionGuard)
+  @RequirePermission('UPDATE', 'book')
+  @HttpCode(200)
+  async triggerSyncMissingInfo() {
+    const result = await this.googleDriveSyncService.syncMissingBookInfo(50); // limit 50 books per call
+    return {
+      message: 'Sync missing info completed',
+      ...result,
+    };
+  }
+
+  /**
    * GET /google-drive/status
    * Lấy trạng thái sync hiện tại
    */

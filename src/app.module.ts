@@ -35,6 +35,7 @@ import { TopicSubscription } from './entities/topic-subscription.entity';
 import { Book } from './entities/book.entity';
 import { BookFile } from './entities/book-file.entity';
 import { SyncState } from './entities/sync-state.entity';
+import { SyncLog } from './entities/sync-log.entity';
 import { EbookModule } from './modules/ebook.module';
 import { UserInteraction } from './entities/user-interaction.entity';
 import { ConverterModule } from './modules/converter.module';
@@ -80,6 +81,7 @@ import { GoogleDriveModule } from './modules/google-drive.module';
         Book,
         BookFile,
         SyncState,
+        SyncLog,
         UserInteraction,
         SubscriptionPlan,
         UserSubscription,
