@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thu Hồi Sự Đồng Ý - Readbox</title>
+  <meta name="description" content="Trang thu hồi sự đồng ý đối với việc thu thập dữ liệu và quảng cáo trên ứng dụng Readbox.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-bg: #ffffff;
+      --color-surface: #f8f9fc;
+      --color-surface-hover: #f0f2f7;
+      --color-text: #1a1d26;
+      --color-text-secondary: #5a6178;
+      --color-text-muted: #8b92a8;
+      --color-primary: #4f6ef7;
+      --color-primary-light: #eef1fe;
+      --color-border: #e4e7f0;
+      --color-accent: #7c5cf5;
+      --color-success: #22c55e;
+      --color-warning: #f59e0b;
+      --color-danger: #ef4444;
+      --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 6px 16px rgba(0, 0, 0, 0.04);
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-bg: #0f1117;
+        --color-surface: #1a1d28;
+        --color-surface-hover: #242836;
+        --color-text: #e8eaf0;
+        --color-text-secondary: #a0a8c0;
+        --color-text-muted: #6b7394;
+        --color-primary: #6b8aff;
+        --color-primary-light: #1e2548;
+        --color-border: #2a2e3e;
+        --color-accent: #9b7dff;
+        --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.2), 0 6px 16px rgba(0, 0, 0, 0.15);
+      }
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--color-bg);
+      color: var(--color-text);
+      line-height: 1.7;
+      font-size: 15px;
+      padding: 0;
+      margin: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #4f6ef7 0%, #7c5cf5 50%, #a855f7 100%);
+      padding: 48px 24px 40px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .header-icon {
+      width: 64px;
+      height: 64px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .header-icon svg {
+      width: 32px;
+      height: 32px;
+      fill: white;
+    }
+
+    .header h1 {
+      color: #ffffff;
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 14px;
+    }
+
+    .container {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 32px 20px 60px;
+    }
+
+    .card {
+      background: var(--color-surface);
+      border-radius: var(--radius);
+      padding: 32px;
+      border: 1px solid var(--color-border);
+      box-shadow: var(--shadow-card);
+      margin-bottom: 24px;
+    }
+
+    .card h2 {
+      font-size: 18px;
+      margin-bottom: 16px;
+      color: var(--color-text);
+    }
+
+    .card p {
+      color: var(--color-text-secondary);
+      margin-bottom: 20px;
+    }
+
+    .info-box {
+      background: rgba(239, 68, 68, 0.1);
+      border-left: 3px solid var(--color-danger);
+      padding: 16px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 24px;
+    }
+    
+    .info-box p {
+      margin-bottom: 0;
+      font-size: 14px;
+      color: var(--color-text);
+    }
+
+    .action-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--color-primary);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background 0.2s;
+      border: none;
+      cursor: pointer;
+      font-size: 15px;
+      width: 100%;
+    }
+
+    .action-button:hover {
+      background: #3b5bdb;
+    }
+
+    .instruction-steps {
+      margin-top: 32px;
+    }
+
+    .instruction-steps h3 {
+      font-size: 16px;
+      margin-bottom: 16px;
+    }
+
+    .step-item {
+      display: flex;
+      margin-bottom: 16px;
+    }
+
+    .step-number {
+      width: 24px;
+      height: 24px;
+      background: var(--color-primary-light);
+      color: var(--color-primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 12px;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+
+    .step-text {
+      color: var(--color-text-secondary);
+      font-size: 14.5px;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 24px 20px;
+      border-top: 1px solid var(--color-border);
+      margin-top: 40px;
+    }
+
+    .footer p {
+      color: var(--color-text-muted);
+      font-size: 13px;
+    }
+    
+    .footer a {
+        color: var(--color-primary);
+        text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-content">
+      <div class="header-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z"/></svg>
+      </div>
+      <h1>Thu Hồi Sự Đồng Ý</h1>
+      <p>Quản lý quyền riêng tư và dữ liệu của bạn trên Readbox</p>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="card">
+      <h2>Quản lý dữ liệu và quảng cáo</h2>
+      <p>Tại Readbox, chúng tôi tôn trọng quyền riêng tư của bạn. Bạn có quyền thu hồi sự đồng ý đã cung cấp trước đó liên quan đến việc thu thập dữ liệu cá nhân cho mục đích cá nhân hóa trải nghiệm và quảng cáo.</p>
+      
+      <div class="info-box">
+        <p><strong>Lưu ý:</strong> Việc thu hồi sự đồng ý có thể ảnh hưởng đến trải nghiệm cá nhân hóa của bạn trong ứng dụng, nhưng sẽ không ngăn cản bạn sử dụng các tính năng cơ bản của Readbox.</p>
+      </div>
+
+      <div class="instruction-steps">
+        <h3>Cách thu hồi sự đồng ý trực tiếp trong ứng dụng:</h3>
+        
+        <div class="step-item">
+          <div class="step-number">1</div>
+          <div class="step-text">Mở ứng dụng <strong>Readbox</strong> trên thiết bị của bạn.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-number">2</div>
+          <div class="step-text">Đi tới mục <strong>Hồ sơ</strong> (Profile) hoặc <strong>Cài đặt</strong> (Settings).</div>
+        </div>
+        <div class="step-item">
+          <div class="step-number">3</div>
+          <div class="step-text">Chọn <strong>Quyền riêng tư & Bảo mật</strong> (Privacy & Security).</div>
+        </div>
+        <div class="step-item">
+          <div class="step-number">4</div>
+          <div class="step-text">Tìm tùy chọn <strong>Quản lý đồng ý dữ liệu & quảng cáo</strong> và tắt các quyền bạn muốn thu hồi.</div>
+        </div>
+      </div>
+      
+      <div style="margin-top: 32px;">
+          <h3 style="font-size: 16px; margin-bottom: 12px;">Yêu cầu hỗ trợ xóa dữ liệu</h3>
+          <p style="margin-bottom: 16px;">Nếu bạn không thể truy cập ứng dụng hoặc muốn chúng tôi xóa toàn bộ dữ liệu của bạn khỏi hệ thống, vui lòng gửi yêu cầu qua email cho chúng tôi.</p>
+          <a href="mailto:support@readbox.vn?subject=Yêu cầu thu hồi đồng ý và xóa dữ liệu" class="action-button">Gửi Email Yêu Cầu Xóa Dữ Liệu</a>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <p>Xem thêm <a href="/pages/policy.html">Chính sách bảo mật</a> của chúng tôi.</p>
+      <p>© 2026 Readbox. Tất cả quyền được bảo lưu.</p>
+    </footer>
+  </div>
+
+</body>
+</html>
