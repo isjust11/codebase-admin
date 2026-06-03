@@ -46,7 +46,12 @@ export class SocialTokenVerificationService {
         platform: 'google',
       };
     } catch (error) {
-      console.error('Google token verification error:', error);
+      console.error('Google token verification error:', {
+        message: error?.message,
+        status: error?.response?.status,
+        data: error?.response?.data,
+        code: error?.code,
+      });
       if (error instanceof UnauthorizedException) throw error;
       throw new UnauthorizedException(m.googleVerificationFailed);
     }

@@ -36,7 +36,7 @@ async function bootstrap() {
       ? allowedOrigins
       : (process.env.NODE_ENV === 'production' ? false : '*'),
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Accept-Language', 'x-region', 'x-country-code'],
     credentials: true,
     exposedHeaders: ['Authorization'],
   };

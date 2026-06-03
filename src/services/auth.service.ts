@@ -266,7 +266,11 @@ export class AuthService {
 
       return this.generateToken(user);
     } catch (error) {
-      console.error('Error in mobileSocialLogin:', error);
+      console.error('Error in mobileSocialLogin:', {
+        message: error?.message,
+        status: error?.response?.status || error?.status,
+        stack: error?.stack?.split('\n').slice(0, 3).join('\n'),
+      });
       if (error instanceof BadRequestException) {
         throw error;
       }
