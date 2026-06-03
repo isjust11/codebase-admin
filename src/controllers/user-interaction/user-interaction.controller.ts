@@ -289,6 +289,31 @@ export class UserInteractionController extends BaseController {
     }
   }
 
+  @Post('report-broken-link/:targetType/:targetId')
+  @HttpCode(HttpStatus.CREATED)
+  async reportBrokenLink(
+    @Request() req: any,
+    @Param('targetType') targetType: string,
+    @Param('targetId') targetId: string,
+    @Body() body: { comment?: string },
+    @Locale() locale: SupportedLocale,
+    @Res() res: Response,
+  ) {
+    try {
+      const userId = req.user.id;
+      const targetIdNumber = this.decode(targetId);
+      const data = await this.userInteractionService.createInteraction(userId, {
+        interactionType: InteractionType.REPORT_BROKEN_LINK,
+        targetType: targetType as InteractionTarget,
+        targetId: targetIdNumber,
+        comment: body.comment, // Allows the user to provide details about the broken link
+      }, locale);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
   @Get('load-interaction/:targetType/:targetId')
   async loadInteraction(
     @Param('targetType') targetType: InteractionTarget,
