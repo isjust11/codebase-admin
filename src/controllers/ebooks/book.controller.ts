@@ -17,8 +17,6 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { Book } from '../../entities/book.entity';
-import { User } from '../../entities/user.entity';
 import { BookService } from 'src/services/book.service';
 import { AddBookFormatDto, CreateBookDto, UpdateBookDto } from 'src/dtos/book.dto';
 import { BulkBookIdsDto, BulkBookStatusDto } from 'src/dtos/book-bulk.dto';

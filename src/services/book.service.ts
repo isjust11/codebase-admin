@@ -71,6 +71,7 @@ export class BookService {
         if (user.region) {
           query.andWhere('(book.region IS NULL OR book.region = :region)', { region: user.region });
         }
+        query.andWhere('(book.language IS NULL OR book.language = en OR book.language = :language)', { language: user.region?.toLowerCase() });
       }
     }
     // Filter by statusCode (admin filtering by moderation status)
