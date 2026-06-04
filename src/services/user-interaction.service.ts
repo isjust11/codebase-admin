@@ -26,6 +26,7 @@ const NOTIFY_OWNER_TYPES: InteractionType[] = [
   InteractionType.DOWNLOAD,
   InteractionType.RATING,
   InteractionType.FOLLOW,
+  InteractionType.REPORT_BROKEN_LINK
 ];
 
 @Injectable()

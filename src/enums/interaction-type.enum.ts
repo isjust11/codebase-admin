@@ -18,4 +18,5 @@ export enum InteractionType {
   TTS = 'tts',
   CONVERT = 'convert',
   UPLOAD = 'upload',
+  REPORT_BROKEN_LINK = 'report_broken_link',
 }
