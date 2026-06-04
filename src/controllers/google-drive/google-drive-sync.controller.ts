@@ -80,17 +80,18 @@ export class GoogleDriveSyncController {
         throw new NotFoundException(`File not found: ${fileId}`);
       }
 
-      // Download file content qua Service Account
-      const buffer = await this.googleDriveService.downloadFileBuffer(fileId);
+      // Tải file dưới dạng Stream để tránh tràn RAM và giảm độ trễ
+      const stream = await this.googleDriveService.downloadFileStream(fileId);
 
       res.set({
         'Content-Type': metadata.mimeType,
-        'Content-Length': buffer.length,
+        'Content-Length': metadata.size, // Lấy size từ metadata
         'Content-Disposition': `inline; filename="${encodeURIComponent(metadata.name)}"`,
         'Cache-Control': 'public, max-age=86400', // Cache 24h
       });
 
-      res.send(buffer);
+      // Pipe dữ liệu thẳng xuống client
+      stream.pipe(res);
     } catch (error) {
       this.logger.error(`[Download] Failed to proxy file ${fileId}: ${error.message}`);
       if (error instanceof NotFoundException) throw error;

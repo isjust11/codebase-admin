@@ -148,6 +148,20 @@ export class GoogleDriveService {
   }
 
   /**
+   * Tải nội dung file về dưới dạng Stream (để tối ưu memory khi tải file lớn)
+   */
+  async downloadFileStream(fileId: string): Promise<Readable> {
+    if (!this.driveClient) throw new Error('Drive client not initialized');
+
+    const response = await this.driveClient.files.get(
+      { fileId, alt: 'media', supportsAllDrives: true },
+      { responseType: 'stream' },
+    );
+
+    return response.data as Readable;
+  }
+
+  /**
    * Lấy metadata chi tiết của một file
    */
   async getFileMetadata(fileId: string): Promise<DriveFileInfo | null> {
