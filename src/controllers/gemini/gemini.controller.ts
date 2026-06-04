@@ -5,6 +5,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Req,
 } from '@nestjs/common';
 import { GeminiService } from '../../services/gemini.service';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
@@ -12,11 +13,14 @@ import { PermissionGuard } from '../../guards/permission.guard';
 import { LookupRequestDto } from '../../dtos/gemini/lookup-request.dto';
 import { TranslateRequestDto } from '../../dtos/gemini/translate-request.dto';
 import { GenerateBookCoverRequestDto } from '../../dtos/gemini/generate-book-cover-request.dto';
+import { BaseController } from '../base/base.controller';
 
 @Controller('ai')
 @UseGuards(JwtAuthGuard, PermissionGuard)
-export class GeminiController {
-  constructor(private readonly geminiService: GeminiService) {}
+export class GeminiController extends BaseController {
+  constructor(private readonly geminiService: GeminiService) {
+    super();
+  }
 
   /**
    * Tra cứu / giải thích từ hoặc khái niệm bằng AI
@@ -24,9 +28,15 @@ export class GeminiController {
    */
   @Post('lookup')
   @HttpCode(HttpStatus.OK)
-  async lookup(@Body() dto: LookupRequestDto) {
+  async lookup(
+    @Body() dto: LookupRequestDto,
+    @Req() req: Request,
+  ) {
+    // get language from header
+    const language = req.headers['x-custom-lang'] || 'vi';
     try {
-      const result = await this.geminiService.lookup(dto.query, dto.language);
+      const bookId = this.decode(dto.ebookId);
+      const result = await this.geminiService.lookup(dto.query, bookId, language);
       return {
         status: true,
         message: 'Tra cứu thành công',

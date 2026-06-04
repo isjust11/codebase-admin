@@ -107,10 +107,30 @@ export class UserInteractionService {
 
       // for reading progress, update the reading progress
       if (createDto.interactionType === InteractionType.READING) {
-        existingInteraction.metadata = createDto.metadata ? JSON.stringify(createDto.metadata) : null;
+        let currentMetadata: any = {};
+        try {
+          if (existingInteraction.metadata) {
+            currentMetadata = JSON.parse(existingInteraction.metadata);
+            // Migrate legacy flat metadata
+            if (currentMetadata.currentPage !== undefined || currentMetadata.progress !== undefined) {
+              const oldFormat = currentMetadata.format || 'pdf';
+              currentMetadata = {
+                [oldFormat]: { ...currentMetadata }
+              };
+            }
+          }
+        } catch (e) {
+          currentMetadata = {};
+        }
+
+        const incoming = createDto.metadata;
+        const format = incoming?.format || 'pdf';
+        currentMetadata[format] = incoming;
+
+        existingInteraction.metadata = JSON.stringify(currentMetadata);
         existingInteraction.updatedAt = new Date();
         existingInteraction.status = 1;
-        const processReading = createDto.metadata?.progress;
+        const processReading = incoming?.progress;
         if (processReading && processReading >= 1) {
           existingInteraction.status = 2;
         }
@@ -134,6 +154,16 @@ export class UserInteractionService {
       return existingInteraction;
     }
     // Create new interaction
+    let finalMetadata: string | null = null;
+    if (createDto.interactionType === InteractionType.READING && createDto.metadata) {
+      const format = createDto.metadata.format || 'pdf';
+      finalMetadata = JSON.stringify({
+        [format]: createDto.metadata
+      });
+    } else {
+      finalMetadata = createDto.metadata ? JSON.stringify(createDto.metadata) : null;
+    }
+
     const interaction = this.userInteractionRepository.create({
       userId,
       ...createDto,
@@ -142,7 +172,7 @@ export class UserInteractionService {
       downloadCount: createDto.interactionType === InteractionType.DOWNLOAD ? 1 : 0,
       readCount: createDto.interactionType === InteractionType.READ ? 1 : 0,
       shareCount: createDto.interactionType === InteractionType.SHARE ? 1 : 0,
-      metadata: createDto.metadata ? JSON.stringify(createDto.metadata) : null,
+      metadata: finalMetadata,
       status: 1,
     });
 

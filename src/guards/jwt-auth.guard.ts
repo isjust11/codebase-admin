@@ -43,8 +43,16 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   }
 }
 
-// Decorateur pour marquer les routes protégées par défaut mais qui peuvent être publiques
+// Decorator để đánh dấu route/controller là public (không cần auth)
+// Hỗ trợ cả class-level (@Public() trên controller) và method-level (@Public() trên method)
 export const Public = () => (target: any, key?: string, descriptor?: any) => {
-  Reflect.defineMetadata('isPublic', true, descriptor.value);
-  return descriptor;
-}; 
+  if (descriptor !== undefined) {
+    // Method decorator: target=prototype, key=methodName, descriptor=PropertyDescriptor
+    Reflect.defineMetadata('isPublic', true, descriptor.value);
+    return descriptor;
+  } else {
+    // Class decorator: target=class constructor, key & descriptor are undefined
+    Reflect.defineMetadata('isPublic', true, target);
+    return target;
+  }
+};

@@ -1,20 +1,35 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GoogleGenAI } from '@google/genai';
+import { BookService } from './book.service';
+import { Book } from 'src/entities/book.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class GeminiService {
   private readonly genAI: GoogleGenAI;
+  private readonly genAIAdmin: GoogleGenAI;
   private readonly modelName = 'gemini-2.5-flash-lite';
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(private readonly configService: ConfigService,
+    @InjectRepository(Book)
+    private readonly bookRepository: Repository<Book>,
+  ) {
     const apiKey = this.configService.get<string>('GEMINI_API_KEY');
+    const apiAdminKey = this.configService.get<string>('GEMINI_API_ADMIN_KEY');
     if (!apiKey) {
       throw new InternalServerErrorException(
         'GEMINI_API_KEY chưa được cấu hình trong biến môi trường.',
       );
     }
+    if (!apiAdminKey) {
+      throw new InternalServerErrorException(
+        'GEMINI_API_ADMIN_KEY chưa được cấu hình trong biến môi trường.',
+      );
+    }
     this.genAI = new GoogleGenAI({ apiKey });
+    this.genAIAdmin = new GoogleGenAI({ apiKey: apiAdminKey });
   }
 
   /**
@@ -22,24 +37,24 @@ export class GeminiService {
    * @param query Từ hoặc nội dung cần tra cứu
    * @param language Ngôn ngữ trả lời ('vi' hoặc 'en', mặc định 'vi')
    */
-  async lookup(query: string, language: string = 'vi'): Promise<string> {
+  async lookup(query: string, ebookId: number, language: string = 'vi'): Promise<string> {
     try {
-      const langInstruction =
-        language === 'en'
-          ? 'Please respond in English.'
-          : 'Hãy trả lời bằng tiếng Việt.';
 
-      const prompt = `${langInstruction}
+      const bookData = await this.bookRepository.findOneBy({ id: ebookId });
 
-Tra cứu và giải thích chi tiết về: "${query}"
+      const bookContext = bookData
+        ? `Book: "${bookData.title}"${bookData.author ? ` by ${bookData.author}` : ''}${bookData.description ? `\nSynopsis: ${bookData.description.slice(0, 200)}` : ''}`
+        : '';
 
-Nếu là từ vựng, hãy bao gồm:
-- Định nghĩa / ý nghĩa
-- Phiên âm (nếu có)
-- Ví dụ sử dụng
-- Từ đồng nghĩa / trái nghĩa (nếu có)
+      const replyLang = language === 'vi' ? 'Reply in Vietnamese.' : 'Reply in English.';
 
-Nếu là khái niệm hoặc câu hỏi, hãy giải thích rõ ràng, ngắn gọn và đầy đủ.`;
+      const prompt = `${replyLang}${bookContext ? `\nContext — ${bookContext}` : ''}
+
+Query: "${query}"
+
+If it's a word/phrase: give definition, pronunciation, a short example, and synonyms/antonyms if relevant.
+If it's a concept or question: give a clear, concise explanation.
+Keep the response brief and to the point.`;
 
       const response = await this.genAI.models.generateContent({
         model: this.modelName,
@@ -156,7 +171,7 @@ Văn bản: "${text}"`;
       If no match: suggest new short Vietnamese name (1-3 words), isNew:true.
       JSON only: {"categoryName":"vi","categoryNameEn":"en","isNew":bool}`;
 
-      const response = await this.genAI.models.generateContent({
+      const response = await this.genAIAdmin.models.generateContent({
         model: this.modelName,
         contents: prompt,
         config: { responseMimeType: 'application/json' },

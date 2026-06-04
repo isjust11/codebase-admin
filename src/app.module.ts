@@ -31,6 +31,7 @@ import { FeedbackModule } from './modules/feedback.module';
 import { Feedback } from './entities/feedback.entity';
 import { ConfigModule } from '@nestjs/config';
 import { FcmController } from './controllers/fcm/fcm.controller';
+import { DeepLinkController } from './controllers/deep-link/deep-link.controller';
 import { TopicSubscription } from './entities/topic-subscription.entity';
 import { Book } from './entities/book.entity';
 import { BookFile } from './entities/book-file.entity';
@@ -125,6 +126,6 @@ import { GoogleDriveModule } from './modules/google-drive.module';
     GeminiModule,
     GoogleDriveModule,
   ],
-  controllers: [FcmController],
+  controllers: [FcmController, DeepLinkController],
 })
 export class AppModule { }

@@ -1,0 +1,14 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "W76M42BX6R.com.hungvv.readbox",
+        "paths": [
+          "/book/*",
+          "/share/book/*"
+        ]
+      }
+    ]
+  }
+}
