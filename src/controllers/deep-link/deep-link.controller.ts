@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Res } from '@nestjs/common';
+import { Controller, Get, Param, Req, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { join } from 'path';
 import * as fs from 'fs';
@@ -44,17 +44,36 @@ export class DeepLinkController extends BaseController {
    * - Nếu chưa cài: trang HTML redirect về store
    */
   @Get('book/:id')
-  async bookDeepLink(@Param('id') id: string, @Res() res: Response) {
+  async bookDeepLink(@Param('id') id: string, @Res() res: Response, @Req() req: Request) {
+    const language = req.headers['custom-language']?.includes('vi-VN') ? 'vi' : 'en';
     const appSchemeUrl = `readbox://book/${id}`;
-    const iosStoreUrl = 'https://apps.apple.com/app/readbox/id000000000'; // TODO: thay App Store ID thật
+    const iosStoreUrl = 'https://apps.apple.com/vn/app/readbox/id6761289734'; // TODO: thay App Store ID thật
     const androidStoreUrl = 'https://play.google.com/store/apps/details?id=com.hungvv.readbox'; // TODO: thay khi publish
 
+    const texts = language === 'vi' ? {
+      title: 'Mở trong Readbox',
+      desc: 'Đang thử mở ứng dụng Readbox trên thiết bị của bạn...',
+      statusInit: 'Đang kết nối...',
+      statusFail: 'Không tìm thấy ứng dụng Readbox',
+      btnOpen: 'Mở ứng dụng',
+      btnIos: 'Tải trên App Store',
+      btnAndroid: 'Tải trên Google Play'
+    } : {
+      title: 'Open in Readbox',
+      desc: 'Trying to open the Readbox application on your device...',
+      statusInit: 'Connecting...',
+      statusFail: 'Readbox application not found',
+      btnOpen: 'Open App',
+      btnIos: 'Download on App Store',
+      btnAndroid: 'Download on Google Play'
+    };
+
     const html = `<!DOCTYPE html>
-<html lang="vi">
+<html lang="${language}">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mở trong Readbox</title>
+  <title>${texts.title}</title>
 
   <!-- iOS App Link -->
   <meta property="al:ios:url" content="${appSchemeUrl}" />
@@ -131,13 +150,13 @@ export class DeepLinkController extends BaseController {
 <body>
   <div class="card">
     <div class="icon">📚</div>
-    <h1>Mở trong Readbox</h1>
-    <p>Đang thử mở ứng dụng Readbox trên thiết bị của bạn...</p>
+    <h1>${texts.title}</h1>
+    <p>${texts.desc}</p>
     <div class="spinner"></div>
-    <div id="status">Đang kết nối...</div>
-    <a href="${appSchemeUrl}" class="btn btn-primary" id="openApp">Mở ứng dụng</a>
-    <a href="${iosStoreUrl}" class="btn btn-secondary" id="downloadIos" style="display:none">Tải trên App Store</a>
-    <a href="${androidStoreUrl}" class="btn btn-secondary" id="downloadAndroid" style="display:none">Tải trên Google Play</a>
+    <div id="status">${texts.statusInit}</div>
+    <a href="${appSchemeUrl}" class="btn btn-primary" id="openApp">${texts.btnOpen}</a>
+    <a href="${iosStoreUrl}" class="btn btn-secondary" id="downloadIos" style="display:none">${texts.btnIos}</a>
+    <a href="${androidStoreUrl}" class="btn btn-secondary" id="downloadAndroid" style="display:none">${texts.btnAndroid}</a>
   </div>
 
   <script>
@@ -155,7 +174,7 @@ export class DeepLinkController extends BaseController {
     // Nếu sau 2.5s vẫn ở đây → app chưa cài → hiện nút store
     const timer = setTimeout(() => {
       document.querySelector('.spinner').style.display = 'none';
-      document.getElementById('status').textContent = 'Không tìm thấy ứng dụng Readbox';
+      document.getElementById('status').textContent = '${texts.statusFail}';
     }, 2500);
 
     // Nếu page bị blur (app mở thành công) → cancel timer
