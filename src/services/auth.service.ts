@@ -242,7 +242,7 @@ export class AuthService {
       } else {
         user.platformId = platformId ?? '';
 
-        if (picture ) user.picture = picture;
+        if (picture) user.picture = picture;
         if (fullName) user.fullName = fullName;
         user.isGoogleUser = platform === 'google';
         user.isFacebookUser = platform === 'facebook';
@@ -286,7 +286,7 @@ export class AuthService {
       throw new BadRequestException(getMessages(locale).auth.invalidCredentials);
     }
 
-    if (region && !user.region) {
+    if (user.region !== region || user.countryCode !== countryCode) {
       await this.userService.update(user.id, { region, countryCode });
       user.region = region ?? '';
       user.countryCode = countryCode ?? '';

@@ -21,7 +21,7 @@ export const TEST_USER = {
 export const DEFAULT_HEADERS = {
   'Content-Type': 'application/json',
   'Accept-Language': 'vi',
-  'x-region': 'VN',
+  'x-region': 'vi-VN',
   'x-country-code': 'VN',
 };
 

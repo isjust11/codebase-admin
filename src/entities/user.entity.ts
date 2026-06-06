@@ -115,6 +115,13 @@ export class User {
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
   updatedAt: Date;
 
+ get getLanguage(): string {
+    if (this.region) {
+      return this.region.split('-')[0].toLowerCase();
+    }
+    return 'en';
+  }
+
   // @Column({ type: 'json', nullable: true })
   permissions: string[];
 

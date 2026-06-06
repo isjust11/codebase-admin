@@ -68,10 +68,7 @@ export class BookService {
         if (user.countryCode) {
           query.andWhere('(book.countryCode IS NULL OR book.countryCode = :countryCode)', { countryCode: user.countryCode });
         }
-        if (user.region) {
-          query.andWhere('(book.region IS NULL OR book.region = :region)', { region: user.region });
-        }
-        query.andWhere('(book.language IS NULL OR book.language = :defaultLanguage OR book.language = :language)', { language: user.region?.toLowerCase(), defaultLanguage: 'en' });
+        query.andWhere('(book.language IS NULL OR book.language = :defaultLanguage OR book.language = :language)', { language: user.getLanguage, defaultLanguage: 'en' });
       }
     }
     // Filter by statusCode (admin filtering by moderation status)
@@ -111,7 +108,8 @@ export class BookService {
     }
 
     if (search) {
-      query.andWhere('(book.title LIKE :search OR book.author LIKE :search)', { search: `%${search}%` });
+      const matchKey = buildMatchKey(search);
+      query.andWhere('book.matchKey LIKE :matchKey', { matchKey: `%${matchKey}%` });
     }
 
     if (filter.orderBy) {
