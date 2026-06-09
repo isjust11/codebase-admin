@@ -319,6 +319,8 @@ export class UserInteractionService {
       .take(limit)
       .orderBy('interaction.updatedAt', 'DESC')
       .leftJoinAndSelect('interaction.book', 'book')
+      .leftJoinAndSelect('book.files', 'files')
+      .leftJoinAndSelect('book.category', 'category')
       .getManyAndCount();
 
     return {
