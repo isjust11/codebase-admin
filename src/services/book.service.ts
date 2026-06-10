@@ -20,7 +20,7 @@ import { UserSubscriptionService } from './user-subscription.service';
 import { CategoryCodeEnum } from 'src/enums/category-code.enum';
 import { CategoryService } from './category.service';
 import { BookFileService } from './book-file.service';
-import { buildMatchKey } from 'src/utils/text-normalize.util';
+import { buildMatchKey, normalizeText } from 'src/utils/text-normalize.util';
 import { detectEbookFormat } from 'src/utils/ebook-format.util';
 
 @Injectable()
@@ -109,8 +109,8 @@ export class BookService {
     }
 
     if (search) {
-      const matchKey = buildMatchKey(search);
-      query.andWhere('book.matchKey LIKE :matchKey', { matchKey: `%${matchKey}%` });
+      const normalizedSearch = normalizeText(search);
+      query.andWhere('book.matchKey LIKE :search', { search: `%${normalizedSearch}%` });
     }
 
     if (filter.orderBy) {

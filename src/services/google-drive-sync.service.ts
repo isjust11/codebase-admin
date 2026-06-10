@@ -81,6 +81,8 @@ interface ExtractedMetadata {
   author?: string;
   totalPages?: number;
   language?: string;
+  coverBuffer?: Buffer;
+  coverMimeType?: string;
 }
 
 interface ProcessedFile {
@@ -350,6 +352,22 @@ export class GoogleDriveSyncService implements OnModuleInit {
           if (epub.metadata?.title?.trim()) meta.title = epub.metadata.title.trim();
           if (epub.metadata?.creator?.trim()) meta.author = epub.metadata.creator.trim();
 
+          if (epub.metadata?.cover) {
+            try {
+              const coverData = await new Promise<{ buffer: Buffer, mimeType: string }>((res, rej) => {
+                epub.getImage(epub.metadata.cover, (err, buffer, mimeType) => {
+                  if (err) rej(err);
+                  else if (buffer && mimeType) res({ buffer, mimeType });
+                  else rej(new Error('Missing cover buffer or mimeType'));
+                });
+              });
+              meta.coverBuffer = coverData.buffer;
+              meta.coverMimeType = coverData.mimeType;
+            } catch (coverErr: any) {
+              this.logger.debug(`[DriveSync] Could not extract cover from EPUB ${filename}: ${coverErr?.message}`);
+            }
+          }
+
           if (epub.metadata?.language?.trim()) {
             meta.language = epub.metadata.language.trim().substring(0, 2).toLowerCase();
           }
@@ -450,6 +468,9 @@ export class GoogleDriveSyncService implements OnModuleInit {
       const thumbnailLink = items
         .map((it) => it.drive.thumbnailLink)
         .find((t) => !!t);
+
+      const coverItem = items.find(it => it.metadata.coverBuffer);
+
       if (thumbnailLink) {
         try {
           const thumbBuf = await this.googleDriveService.downloadThumbnail(thumbnailLink);
@@ -466,6 +487,22 @@ export class GoogleDriveSyncService implements OnModuleInit {
         } catch (thumbErr: any) {
           this.logger.warn(
             `[DriveSync] Failed to process thumbnail: ${thumbErr?.message}`,
+          );
+        }
+      } else if (coverItem?.metadata.coverBuffer) {
+        try {
+          const ext = coverItem.metadata.coverMimeType?.split('/')[1] || 'jpg';
+          const coverMedia = await this.mediaService.uploadFromBuffer(
+            coverItem.metadata.coverBuffer,
+            `cover-${normalizeText(repTitle) || 'book'}.${ext}`,
+            coverItem.metadata.coverMimeType || 'image/jpeg',
+            'book-covers',
+            ctx.adminId,
+          );
+          draft.coverImageUrl = coverMedia.url;
+        } catch (coverErr: any) {
+          this.logger.warn(
+            `[DriveSync] Failed to upload EPUB cover: ${coverErr?.message}`,
           );
         }
       }
@@ -715,13 +752,30 @@ export class GoogleDriveSyncService implements OnModuleInit {
           book.totalPages == null ||
           !book.title || book.title === '';
 
-        if (needsContentSync) {
+        if (needsContentSync || (!book.coverImageUrl && primaryFile.format === EbookFormat.EPUB)) {
           const buffer = await this.googleDriveService.downloadFileBuffer(driveFileId);
           const meta = await this.extractMetadataFromBuffer(
             buffer,
             primaryFile.format as EbookFormat,
             primaryFile.fileUrl?.split('/').pop() || book.title,
           );
+
+          if (!book.coverImageUrl && meta.coverBuffer) {
+            try {
+              const ext = meta.coverMimeType?.split('/')[1] || 'jpg';
+              const coverMedia = await this.mediaService.uploadFromBuffer(
+                meta.coverBuffer,
+                `cover-${normalizeText(book.title) || 'book'}.${ext}`,
+                meta.coverMimeType || 'image/jpeg',
+                'book-covers',
+                adminId,
+              );
+              book.coverImageUrl = coverMedia.url;
+              updated = true;
+            } catch (err: any) {
+              this.logger.warn(`[DriveSync] Failed to upload missing EPUB cover: ${err?.message}`);
+            }
+          }
 
           if (!book.language || book.language === 'unknown') {
             if (meta.language) {
