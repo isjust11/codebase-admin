@@ -20,6 +20,20 @@ import { CategoryType } from '../entities/category-type.entity';
 import { CategoryTypeEnum } from 'src/enums/category-type.enum';
 import { PDFParse } from 'pdf-parse';
 import { EPub } from 'epub2';
+
+// Monkey patch EPub.prototype.walkNavMap to prevent uncaught exceptions on malformed EPUBs
+// Some EPUBs have malformed navLabels that crash the xml2js parser, which causes the whole process to crash.
+const originalWalkNavMap = (EPub.prototype as any).walkNavMap;
+if (originalWalkNavMap) {
+  (EPub.prototype as any).walkNavMap = function (...args: any[]) {
+    try {
+      return originalWalkNavMap.apply(this, args);
+    } catch (error) {
+      console.warn(`[DriveSync] Skipped malformed TOC in EPUB file: ${this.originalFilename || this.filename}`);
+      return [];
+    }
+  };
+}
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -327,6 +341,7 @@ export class GoogleDriveSyncService implements OnModuleInit {
         fs.writeFileSync(tempPath, buffer);
         try {
           const epub = new EPub(tempPath);
+          (epub as any).originalFilename = filename;
           await new Promise<void>((resolve, reject) => {
             epub.on('end', () => resolve());
             epub.on('error', (err) => reject(err));

@@ -39,10 +39,19 @@ export function guessAuthorFromFilename(filename: string): string | null {
  * Trích phần tựa sách từ tên file (loại bỏ phần " - Author" cuối, loại bỏ extension).
  */
 export function guessTitleFromFilename(filename: string): string {
-  const base = filename.replace(/\.[^.]+$/, '');
+  let base = filename.replace(/\.[^.]+$/, '');
+
+  // Remove Sachvui.com domain
+  base = base.replace(/sachvui\.com/ig, '');
+
   const parts = base.split(/\s+[-–—]\s+/);
+  let title = '';
   if (parts.length >= 2) {
-    return parts.slice(0, -1).join(' - ').trim();
+    title = parts.slice(0, -1).join(' ');
+  } else {
+    title = base;
   }
-  return base.trim();
+
+  // Replace hyphens with spaces and remove extra spaces
+  return title.replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
 }
