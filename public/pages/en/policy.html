@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy & Personal Data Protection - Readbox</title>
+  <meta name="description"
+    content="Privacy policy and personal data protection of the Readbox application. Learn how we collect, use, and protect your data.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-bg: #ffffff;
+      --color-surface: #f8f9fc;
+      --color-surface-hover: #f0f2f7;
+      --color-text: #1a1d26;
+      --color-text-secondary: #5a6178;
+      --color-text-muted: #8b92a8;
+      --color-primary: #4f6ef7;
+      --color-primary-light: #eef1fe;
+      --color-border: #e4e7f0;
+      --color-accent: #7c5cf5;
+      --color-success: #22c55e;
+      --color-warning: #f59e0b;
+      --color-info: #3b82f6;
+      --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 6px 16px rgba(0, 0, 0, 0.04);
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-bg: #0f1117;
+        --color-surface: #1a1d28;
+        --color-surface-hover: #242836;
+        --color-text: #e8eaf0;
+        --color-text-secondary: #a0a8c0;
+        --color-text-muted: #6b7394;
+        --color-primary: #6b8aff;
+        --color-primary-light: #1e2548;
+        --color-border: #2a2e3e;
+        --color-accent: #9b7dff;
+        --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.2), 0 6px 16px rgba(0, 0, 0, 0.15);
+      }
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--color-bg);
+      color: var(--color-text);
+      line-height: 1.7;
+      font-size: 15px;
+      padding: 0;
+      margin: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ===== Header ===== */
+    .header {
+      background: linear-gradient(135deg, #4f6ef7 0%, #7c5cf5 50%, #a855f7 100%);
+      padding: 48px 24px 40px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 30% 70%, rgba(255, 255, 255, 0.08) 0%, transparent 60%),
+        radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.06) 0%, transparent 60%);
+      animation: float 20s ease-in-out infinite;
+    }
+
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translate(0, 0) rotate(0deg);
+      }
+
+      50% {
+        transform: translate(-2%, 2%) rotate(1deg);
+      }
+    }
+
+    .header-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .header-icon {
+      width: 64px;
+      height: 64px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .header-icon svg {
+      width: 32px;
+      height: 32px;
+      fill: white;
+    }
+
+    .header h1 {
+      color: #ffffff;
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+
+    .header p {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 14px;
+      font-weight: 400;
+    }
+
+    /* ===== Main Container ===== */
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 24px 20px 60px;
+    }
+
+    .note {
+      font-size: 13px;
+      color: #2e18f5;
+    }
+
+    /* ===== Update Info ===== */
+    .update-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 18px;
+      background: var(--color-primary-light);
+      border-radius: var(--radius-sm);
+      margin-bottom: 28px;
+      border: 1px solid var(--color-border);
+    }
+
+    .update-info svg {
+      width: 18px;
+      height: 18px;
+      fill: var(--color-primary);
+      flex-shrink: 0;
+    }
+
+    .update-info span {
+      font-size: 13px;
+      color: var(--color-text-secondary);
+    }
+
+    .update-info strong {
+      color: var(--color-primary);
+      font-weight: 600;
+    }
+
+    /* ===== Table of Contents ===== */
+    .toc {
+      background: var(--color-surface);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 32px;
+      border: 1px solid var(--color-border);
+    }
+
+    .toc-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--color-text);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toc-title svg {
+      width: 18px;
+      height: 18px;
+      fill: var(--color-primary);
+    }
+
+    .toc ol {
+      list-style: none;
+      counter-reset: toc-counter;
+      padding: 0;
+    }
+
+    .toc li {
+      counter-increment: toc-counter;
+      margin-bottom: 6px;
+    }
+
+    .toc li a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      text-decoration: none;
+      color: var(--color-text-secondary);
+      font-size: 14px;
+      font-weight: 450;
+      transition: all 0.2s ease;
+    }
+
+    .toc li a:hover {
+      background: var(--color-surface-hover);
+      color: var(--color-primary);
+    }
+
+    .toc li a::before {
+      content: counter(toc-counter, decimal-leading-zero);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      min-width: 22px;
+    }
+
+    /* ===== Section Styles ===== */
+    .section {
+      margin-bottom: 32px;
+      scroll-margin-top: 20px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--color-border);
+    }
+
+    .section-number {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .section h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--color-text);
+      letter-spacing: -0.01em;
+    }
+
+    .section h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--color-text);
+      margin-top: 20px;
+      margin-bottom: 10px;
+    }
+
+    .section p {
+      color: var(--color-text-secondary);
+      margin-bottom: 12px;
+      font-size: 14.5px;
+      line-height: 1.75;
+    }
+
+    .section ul,
+    .section ol {
+      padding-left: 20px;
+      margin-bottom: 14px;
+    }
+
+    .section li {
+      color: var(--color-text-secondary);
+      font-size: 14.5px;
+      line-height: 1.75;
+      margin-bottom: 6px;
+      padding-left: 4px;
+    }
+
+    .section li::marker {
+      color: var(--color-primary);
+    }
+
+    /* ===== Info Card ===== */
+    .info-card {
+      background: var(--color-surface);
+      border-radius: var(--radius-sm);
+      padding: 18px 20px;
+      margin: 16px 0;
+      border-left: 3px solid var(--color-primary);
+    }
+
+    .info-card.warning {
+      border-left-color: var(--color-warning);
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.06), var(--color-surface));
+    }
+
+    .info-card.success {
+      border-left-color: var(--color-success);
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.06), var(--color-surface));
+    }
+
+    .info-card p {
+      margin-bottom: 0;
+      font-size: 14px;
+    }
+
+    .info-card .card-title {
+      font-weight: 600;
+      color: var(--color-text);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+    }
+
+    /* ===== Data Table ===== */
+    .data-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin: 16px 0;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      border: 1px solid var(--color-border);
+      font-size: 13.5px;
+    }
+
+    .data-table th {
+      background: var(--color-surface);
+      color: var(--color-text);
+      font-weight: 600;
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .data-table td {
+      padding: 11px 16px;
+      color: var(--color-text-secondary);
+      border-bottom: 1px solid var(--color-border);
+      vertical-align: top;
+    }
+
+    .data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .data-table tr:hover td {
+      background: var(--color-surface-hover);
+    }
+
+    /* ===== Badge ===== */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .badge-required {
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+    }
+
+    .badge-optional {
+      background: rgba(34, 197, 94, 0.1);
+      color: #22c55e;
+    }
+
+    /* ===== Contact Card ===== */
+    .contact-card {
+      background: linear-gradient(135deg, var(--color-primary-light), var(--color-surface));
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      margin-top: 24px;
+      border: 1px solid var(--color-border);
+      text-align: center;
+    }
+
+    .contact-card h3 {
+      margin-top: 0;
+      margin-bottom: 8px;
+      color: var(--color-text);
+      font-size: 17px;
+    }
+
+    .contact-card p {
+      color: var(--color-text-secondary);
+      font-size: 14px;
+      margin-bottom: 18px;
+    }
+
+    .contact-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 10px 0;
+      color: var(--color-primary);
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .contact-item svg {
+      width: 18px;
+      height: 18px;
+      fill: var(--color-primary);
+    }
+
+    .contact-item a {
+      color: var(--color-primary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    /* ===== Footer ===== */
+    .footer {
+      text-align: center;
+      padding: 24px 20px;
+      border-top: 1px solid var(--color-border);
+      margin-top: 20px;
+    }
+
+    .footer p {
+      color: var(--color-text-muted);
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .footer .brand {
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ===== Animations ===== */
+    .section {
+      opacity: 0;
+      transform: translateY(16px);
+      animation: fadeInUp 0.5s ease forwards;
+    }
+
+    .section:nth-child(1) {
+      animation-delay: 0.05s;
+    }
+
+    .section:nth-child(2) {
+      animation-delay: 0.1s;
+    }
+
+    .section:nth-child(3) {
+      animation-delay: 0.15s;
+    }
+
+    .section:nth-child(4) {
+      animation-delay: 0.2s;
+    }
+
+    .section:nth-child(5) {
+      animation-delay: 0.25s;
+    }
+
+    .section:nth-child(6) {
+      animation-delay: 0.3s;
+    }
+
+    .section:nth-child(7) {
+      animation-delay: 0.35s;
+    }
+
+    .section:nth-child(8) {
+      animation-delay: 0.4s;
+    }
+
+    .section:nth-child(9) {
+      animation-delay: 0.45s;
+    }
+
+    .section:nth-child(10) {
+      animation-delay: 0.5s;
+    }
+
+    .section:nth-child(11) {
+      animation-delay: 0.55s;
+    }
+
+    @keyframes fadeInUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 480px) {
+      .header {
+        padding: 36px 20px 32px;
+      }
+
+      .header h1 {
+        font-size: 21px;
+      }
+
+      .container {
+        padding: 20px 16px 48px;
+      }
+
+      .section h2 {
+        font-size: 16px;
+      }
+
+      .data-table {
+        font-size: 12.5px;
+      }
+
+      .data-table th,
+      .data-table td {
+        padding: 9px 12px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div class="header-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path
+            d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z" />
+        </svg>
+      </div>
+      <h1>Privacy Policy & Personal Data Protection</h1>
+      <p>Readbox App — Smart Reading Platform</p>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- Update Info -->
+    <div class="update-info">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <path
+          d="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" />
+      </svg>
+      <span>Last updated: <strong>June 12, 2026</strong> · Version 1.0</span>
+    </div>
+
+    <!-- Table of Contents -->
+    <nav class="toc">
+      <div class="toc-title">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z" />
+        </svg>
+        Table of Contents
+      </div>
+      <ol>
+        <li><a href="#s1">General Introduction</a></li>
+        <li><a href="#s2">Data We Collect</a></li>
+        <li><a href="#s3">Purposes of Data Processing</a></li>
+        <li><a href="#s4">Legal Basis for Data Processing</a></li>
+        <li><a href="#s5">Third-Party Data Sharing</a></li>
+        <li><a href="#s6">Data Security</a></li>
+        <li><a href="#s7">Data Retention and Deletion</a></li>
+        <li><a href="#s8">User Rights</a></li>
+        <li><a href="#s9">Cookies & Tracking Technologies</a></li>
+        <li><a href="#s10">Children's Privacy</a></li>
+        <li><a href="#s11">Policy Changes</a></li>
+        <li><a href="#s12">Contact Us</a></li>
+      </ol>
+    </nav>
+
+    <!-- Section 1: General Introduction -->
+    <section class="section" id="s1">
+      <div class="section-header">
+        <div class="section-number">01</div>
+        <h2>General Introduction</h2>
+      </div>
+      <p>
+        Welcome to <strong>Readbox</strong> — the smart reading application that helps you discover, read, and manage
+        your personal book library. We are committed to protecting your privacy and personal data.
+      </p>
+      <p>
+        This policy explains how we collect, use, store, and protect your personal information when you use the
+        Readbox application on iOS, Android platforms, and related services.
+      </p>
+      <div class="info-card">
+        <div class="card-title">Data Sources</div>
+        <p>Book sources on Readbox are aggregated from various open-source platforms, user contributions, and the
+          internet.
+          Therefore, Readbox is not responsible for the copyright of the book content.</p>
+        <p>However, if you are the copyright owner and find that your content is being used without authorization,
+          please
+          contact us via email at <a href="mailto:support@readbox.vn">support@readbox.vn</a> so we can remove the
+          content.
+        </p>
+        <small class="note">
+          If you have the financial means, please purchase books to support the authors and publishers.
+        </small>
+      </div>
+      <div class="info-card">
+        <div class="card-title">Important Note</div>
+        <p>By using the Readbox application, you agree to the terms described in this policy. If you do not agree,
+          please discontinue using the application.</p>
+      </div>
+    </section>
+
+    <!-- Section 2: Data We Collect -->
+    <section class="section" id="s2">
+      <div class="section-header">
+        <div class="section-number">02</div>
+        <h2>Data We Collect</h2>
+      </div>
+
+      <h3>2.1. Information You Provide Directly</h3>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Data Type</th>
+            <th>Details</th>
+            <th>Required</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Account Information</td>
+            <td>Full name, email, avatar, date of birth</td>
+            <td><span class="badge badge-required">Required</span></td>
+          </tr>
+          <tr>
+            <td>Social Login</td>
+            <td>Information from Google, Facebook, Apple ID</td>
+            <td><span class="badge badge-optional">Optional</span></td>
+          </tr>
+          <tr>
+            <td>Payment Information</td>
+            <td>Subscription transaction history (processed via PayOS)</td>
+            <td><span class="badge badge-optional">Optional</span></td>
+          </tr>
+          <tr>
+            <td>User Content</td>
+            <td>Uploaded books, notes, bookmarks, highlights</td>
+            <td><span class="badge badge-optional">Optional</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>2.2. Automatically Collected Information</h3>
+      <ul>
+        <li><strong>Device Information:</strong> Device model, operating system, app version, unique device identifiers
+        </li>
+        <li><strong>Usage Data:</strong> App opening frequency, reading duration, read books, reading progress</li>
+        <li><strong>Location Information:</strong> We do <strong>not</strong> collect your precise location data</li>
+        <li><strong>Notification Token (FCM):</strong> Used to send push notifications for new books and app updates
+        </li>
+      </ul>
+
+      <h3>2.3. Biometric Data</h3>
+      <p>
+        Readbox supports biometric authentication (fingerprint, Face ID) to unlock the app. Biometric data is processed
+        entirely on your device and is <strong>never</strong> sent to our servers.
+      </p>
+    </section>
+
+    <!-- Section 3: Purposes of Data Processing -->
+    <section class="section" id="s3">
+      <div class="section-header">
+        <div class="section-number">03</div>
+        <h2>Purposes of Data Processing</h2>
+      </div>
+      <p>We use your data for the following purposes:</p>
+      <ul>
+        <li><strong>Service Provision:</strong> Creating and managing accounts, syncing book library, saving reading
+          progress</li>
+        <li><strong>Experience Improvement:</strong> Recommending relevant books based on reading history and
+          preferences</li>
+        <li><strong>AI Features:</strong> Utilizing Gemini AI for vocabulary lookups, translations, and reading
+          comprehension support</li>
+        <li><strong>Notifications:</strong> Sending updates about new books, app updates, and subscription offers</li>
+        <li><strong>Document Conversion:</strong> Converting book formats (PDF, EPUB, etc.) to ensure compatibility with
+          the app</li>
+        <li><strong>Payment:</strong> Processing Premium subscription transactions</li>
+        <li><strong>Security:</strong> Detecting and preventing fraudulent activities and unauthorized access</li>
+        <li><strong>Legal Compliance:</strong> Meeting legal requirements as necessary</li>
+      </ul>
+
+      <div class="info-card success">
+        <div class="card-title">✅ Our Commitment</div>
+        <p>We do <strong>not</strong> sell your personal data to third parties or use it for targeted advertising.</p>
+      </div>
+    </section>
+
+    <!-- Section 4: Legal Basis for Data Processing -->
+    <section class="section" id="s4">
+      <div class="section-header">
+        <div class="section-number">04</div>
+        <h2>Legal Basis for Data Processing</h2>
+      </div>
+      <p>We process your personal data based on the following legal grounds:</p>
+      <ul>
+        <li><strong>Consent:</strong> When you register an account and accept this policy</li>
+        <li><strong>Contract Performance:</strong> To deliver the reading services and features you request</li>
+        <li><strong>Legitimate Interests:</strong> To improve service quality and ensure system safety</li>
+        <li><strong>Legal Obligations:</strong> To comply with Vietnamese and international data protection laws</li>
+      </ul>
+      <p>
+        This policy complies with <strong>Decree No. 13/2023/ND-CP</strong> on personal data protection by the
+        Government
+        of Vietnam, as well as equivalent regulations under applicable laws.
+      </p>
+    </section>
+
+    <!-- Section 5: Third-Party Data Sharing -->
+    <section class="section" id="s5">
+      <div class="section-header">
+        <div class="section-number">05</div>
+        <h2>Third-Party Data Sharing</h2>
+      </div>
+      <p>We may share your data with the following third parties, only to the extent necessary:</p>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Partner</th>
+            <th>Purpose</th>
+            <th>Shared Data</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Google (Firebase)</strong></td>
+            <td>Authentication, push notifications, analytics</td>
+            <td>Email, device token, anonymous usage data</td>
+          </tr>
+          <tr>
+            <td><strong>Google (Gemini AI)</strong></td>
+            <td>Vocabulary lookup, translation</td>
+            <td>Selected text snippets (does not contain personal information)</td>
+          </tr>
+          <tr>
+            <td><strong>Facebook</strong></td>
+            <td>Social login</td>
+            <td>Public profile info (if permitted)</td>
+          </tr>
+          <tr>
+            <td><strong>Apple</strong></td>
+            <td>Sign in with Apple ID</td>
+            <td>Email (can be hidden), name</td>
+          </tr>
+          <tr>
+            <td><strong>PayOS</strong></td>
+            <td>Subscription payment processing</td>
+            <td>Transaction code, amount (no card information stored)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="info-card warning">
+        <div class="card-title">⚠️ Note</div>
+        <p>We require all third-party partners to adhere to equivalent security standards. You may refer to the
+          individual
+          privacy policy of each partner.</p>
+      </div>
+    </section>
+
+    <!-- Section 6: Data Security -->
+    <section class="section" id="s6">
+      <div class="section-header">
+        <div class="section-number">06</div>
+        <h2>Data Security</h2>
+      </div>
+      <p>We implement various security measures to protect your data:</p>
+
+      <h3>🔐 Technical Measures</h3>
+      <ul>
+        <li><strong>Transit Encryption:</strong> All data is encrypted using TLS/SSL during transit</li>
+        <li><strong>Storage Encryption:</strong> Passwords are stored in hashed format (bcrypt) and cannot be
+          reverse-decrypted</li>
+        <li><strong>JWT Authentication:</strong> JSON Web Tokens with expiration times are used to secure login sessions
+        </li>
+        <li><strong>Biometric Authentication:</strong> Support for fingerprint and Face ID for additional account
+          protection</li>
+        <li><strong>CORS Protection:</strong> Only allows access from approved origins</li>
+      </ul>
+
+      <h3>🛡️ Organizational Measures</h3>
+      <ul>
+        <li>Role-Based Access Control (RBAC)</li>
+        <li>Monitoring and logging system access</li>
+        <li>Regular security assessments</li>
+        <li>Security awareness training for staff</li>
+      </ul>
+
+      <div class="info-card success">
+        <div class="card-title">🔒 Maximum Security</div>
+        <p>We <strong>never</strong> store plain-text passwords, payment card information, or biometric data on our
+          servers.</p>
+      </div>
+    </section>
+
+    <!-- Section 7: Data Retention and Deletion -->
+    <section class="section" id="s7">
+      <div class="section-header">
+        <div class="section-number">07</div>
+        <h2>Data Retention and Deletion</h2>
+      </div>
+
+      <h3>7.1. Retention Period</h3>
+      <ul>
+        <li><strong>Account Data:</strong> Retained for as long as you use the services</li>
+        <li><strong>Reading History:</strong> Retained to sync progress across devices</li>
+        <li><strong>Payment Data:</strong> Retained as required by law (up to 5 years)</li>
+        <li><strong>System Logs:</strong> Automatically deleted after 90 days</li>
+      </ul>
+
+      <h3>7.2. Data Deletion</h3>
+      <p>When you request to delete your account:</p>
+      <ul>
+        <li>Personal data will be deleted within <strong>30 days</strong></li>
+        <li>Uploaded books and documents will be permanently deleted</li>
+        <li>Certain data may be retained in an anonymized format for aggregate statistical purposes</li>
+        <li>Data required to be retained by law will be stored separately and securely</li>
+      </ul>
+    </section>
+
+    <!-- Section 8: User Rights -->
+    <section class="section" id="s8">
+      <div class="section-header">
+        <div class="section-number">08</div>
+        <h2>User Rights</h2>
+      </div>
+      <p>You have the following rights regarding your personal data:</p>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Right</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Right to Access</strong></td>
+            <td>View and download a copy of your personal data</td>
+          </tr>
+          <tr>
+            <td><strong>Right to Rectification</strong></td>
+            <td>Update or modify inaccurate personal information</td>
+          </tr>
+          <tr>
+            <td><strong>Right to Erasure</strong></td>
+            <td>Request deletion of your account and all associated data</td>
+          </tr>
+          <tr>
+            <td><strong>Right to Restrict Processing</strong></td>
+            <td>Request a temporary pause on data processing under certain conditions</td>
+          </tr>
+          <tr>
+            <td><strong>Right to Data Portability</strong></td>
+            <td>Receive your data in a structured, commonly used format</td>
+          </tr>
+          <tr>
+            <td><strong>Right to Object</strong></td>
+            <td>Object to data processing for specific purposes</td>
+          </tr>
+          <tr>
+            <td><strong>Right to Withdraw Consent</strong></td>
+            <td>Withdraw consent at any time (does not affect the lawfulness of processing prior to withdrawal)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>
+        To exercise the above rights, please contact us via email or through the <strong>"Support Center"</strong>
+        section in the application. We will respond within <strong>15 business days</strong>.
+      </p>
+    </section>
+
+    <!-- Section 9: Cookies & Tracking Technologies -->
+    <section class="section" id="s9">
+      <div class="section-header">
+        <div class="section-number">09</div>
+        <h2>Cookies & Tracking Technologies</h2>
+      </div>
+      <p>
+        As a mobile application, Readbox <strong>does not use traditional cookies</strong>. However, we utilize
+        similar technologies to improve your experience:
+      </p>
+      <ul>
+        <li><strong>Firebase Analytics:</strong> Collects anonymous usage data to analyze and improve the application
+        </li>
+        <li><strong>Firebase Cloud Messaging:</strong> Manages push notification tokens</li>
+        <li><strong>Shared Preferences / UserDefaults:</strong> Stores local settings and preferences on your device
+        </li>
+      </ul>
+      <p>You can manage your notification preferences in the <strong>Settings</strong> section of the app.</p>
+    </section>
+
+    <!-- Section 10: Children's Privacy -->
+    <section class="section" id="s10">
+      <div class="section-header">
+        <div class="section-number">10</div>
+        <h2>Children's Privacy</h2>
+      </div>
+      <p>
+        Readbox is not directed at children under the age of <strong>13</strong>. We do not knowingly collect personal
+        data from children.
+      </p>
+      <p>
+        If you are a parent or guardian and discover that your child has provided us with personal information, please
+        contact us immediately so we can delete that data.
+      </p>
+      <p>
+        For children between <strong>13 and 16</strong> years old, using the application requires the consent and
+        supervision of a parent or legal guardian.
+      </p>
+    </section>
+
+    <!-- Section 11: Policy Changes -->
+    <section class="section" id="s11">
+      <div class="section-header">
+        <div class="section-number">11</div>
+        <h2>Policy Changes</h2>
+      </div>
+      <p>
+        We may update this policy from time to time to reflect changes in our operations or legal requirements.
+        When significant changes occur:
+      </p>
+      <ul>
+        <li>We will send notifications via the application</li>
+        <li>The update date will be clearly stated at the top of the page</li>
+        <li>You will be requested to review and re-accept the policy if material changes are made</li>
+      </ul>
+      <p>Continued use of the application after policy updates constitutes your acceptance of the changes.</p>
+    </section>
+
+    <!-- Section 12: Contact Us -->
+    <section class="section" id="s12">
+      <div class="section-header">
+        <div class="section-number">12</div>
+        <h2>Contact Us</h2>
+      </div>
+      <p>
+        If you have any questions, requests, or complaints regarding this privacy policy, please contact us at:
+      </p>
+      <div class="contact-card">
+        <h3>Readbox - Data Privacy Department</h3>
+        <p>We are ready to support you at any time</p>
+        <div class="contact-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path
+              d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
+          </svg>
+          <a href="mailto:support@readbox.vn">support@readbox.vn</a>
+        </div>
+        <div class="contact-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path
+              d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+          </svg>
+          <span>Vietnam</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>© 2026 <span class="brand">Readbox</span>. All rights reserved.</p>
+      <p>Smart Reading Platform 📚</p>
+    </footer>
+
+  </div>
+
+</body>
+
+</html>

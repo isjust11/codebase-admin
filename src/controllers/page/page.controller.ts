@@ -59,7 +59,7 @@ export class PageController extends BaseController {
   }
   @Public()
   @Get('slug/:slug')
-  async findBySlug(@Res() res: Response, @Param('slug') slug: string, @Locale() locale: SupportedLocale) {
+  async findBySlug(@Res() res: Response, @Param('slug') slug: string, @Locale() locale: SupportedLocale,) {
     try {
       const data = await this.pageService.findBySlug(slug, locale);
       return this.success(res, data);
@@ -71,10 +71,12 @@ export class PageController extends BaseController {
   // Serve static policy page (public)
   @Public()
   @Get('policy.html')
-  async getPolicy(@Res() res: Response) {
+  async getPolicy(@Res() res: Response, @Locale() locale: SupportedLocale) {
+    console.log(locale);
+
     const path = require('path');
     const fs = require('fs');
-    const filePath = path.join(__dirname, '..', '..', '..', '..', 'public', 'pages', 'policy.html');
+    const filePath = path.join(__dirname, '..', '..', '..', '..', 'public', 'pages', locale, 'policy.html');
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ message: 'Policy file not found' });
     }
