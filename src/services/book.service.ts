@@ -64,13 +64,13 @@ export class BookService {
       query.andWhere('book.isPublic = :isPublic', { isPublic: true });
 
       // Geographic filtering
-      // if (user) {
-      //   if (user.countryCode) {
-      //     query.andWhere('(book.countryCode IS NULL OR book.countryCode = :countryCode)', { countryCode: user.countryCode });
-      //   }
-      //   const language = user.region ? user.region.split('-')[0].toLowerCase() : 'en';
-      //   query.andWhere('(book.language IS NULL OR book.language = :defaultLanguage OR book.language = :language)', { language: language, defaultLanguage: 'en' });
-      // }
+      if (user) {
+        // if (user.countryCode) {
+        //   query.andWhere('(book.countryCode IS NULL OR book.countryCode = :countryCode)', { countryCode: user.countryCode });
+        // }
+        const language = user.region ? user.region.split('-')[0].toLowerCase() : 'en';
+        query.andWhere('(book.language IS NULL OR book.language = :defaultLanguage OR book.language = :language)', { language: language, defaultLanguage: 'en' });
+      }
     }
     // Filter by statusCode (admin filtering by moderation status)
     if (statusCode) {
