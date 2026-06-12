@@ -19,7 +19,6 @@ import { BookFileService } from 'src/services/book-file.service';
 
 @Module({
   imports: [
-    ScheduleModule.forRoot(),
     AuthModule,
     TypeOrmModule.forFeature([
       Media,
