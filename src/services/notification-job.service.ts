@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserInteraction } from '../entities/user-interaction.entity';
@@ -10,7 +10,6 @@ import { User } from '../entities/user.entity';
 import { FcmService } from './fcm.service';
 import { NotificationService } from './notification.service';
 import { InteractionType } from '../enums/interaction-type.enum';
-import { InteractionTarget } from '../enums/interaction-target.enum';
 import { NotificationType } from '../enums/notification.enum';
 import { SupportedLocale } from '../constants/messages';
 
@@ -18,7 +17,7 @@ import { SupportedLocale } from '../constants/messages';
 const INACTIVE_DAYS = 3;
 
 /** Số ebook hot gợi ý mỗi lần gửi */
-const HOT_BOOKS_LIMIT = 5;
+const HOT_BOOKS_LIMIT = 2;
 
 /** FCM multicast tối đa 500 tokens / batch */
 const FCM_BATCH_SIZE = 500;
@@ -100,6 +99,8 @@ export class NotificationJobService {
       .andWhere('i.status = 1')
       .andWhere('i.updatedAt < :cutoff', { cutoff: cutoffDate })
       .leftJoinAndSelect('i.book', 'book')
+      .orderBy('i.updatedAt', 'DESC')
+      .take(2)
       .getMany();
 
     if (interactions.length === 0) {
@@ -178,7 +179,7 @@ export class NotificationJobService {
       .createQueryBuilder('i')
       .select('i.bookId', 'bookId')
       .addSelect('COUNT(*)', 'cnt')
-      .where('i.interactionType = :type', { type: InteractionType.READ })
+      .where('i.interactionType = :type', { type: InteractionType.READING })
       .andWhere('i.updatedAt >= :since', { since: sevenDaysAgo })
       .andWhere('i.bookId IS NOT NULL')
       .groupBy('i.bookId')
@@ -249,6 +250,27 @@ export class NotificationJobService {
         } catch (err) {
           this.logger.warn(`[HotBooks] batch(lang=${lang}) failed: ${err?.message}`);
         }
+      }
+    }
+
+    // Lưu thông báo vào database cho từng user để hiển thị trong app
+    for (const u of users) {
+      try {
+        const lang = userLangMap.get(u.id) || 'en';
+        const content = getHotBooksContent(lang, bookTitles);
+        const data: Record<string, string> = {
+          bookIds: bookIdsStr,
+          type: NotificationType.HOT_BOOKS,
+        };
+        await this.notificationService.newNotification(
+          NotificationType.HOT_BOOKS,
+          data,
+          content.title,
+          content.body,
+          u.id,
+        );
+      } catch (err) {
+        this.logger.warn(`[HotBooks] Failed to save DB notification for user ${u.id}: ${err?.message}`);
       }
     }
 
