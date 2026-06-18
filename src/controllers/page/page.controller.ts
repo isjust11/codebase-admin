@@ -76,7 +76,7 @@ export class PageController extends BaseController {
 
     const path = require('path');
     const fs = require('fs');
-    const filePath = path.join(__dirname, '..', '..', '..', '..', 'public', 'pages', locale, 'policy.html');
+    const filePath = path.join(__dirname, '..', '..', '..', 'public', 'pages', locale, 'policy.html');
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ message: 'Policy file not found' });
     }
@@ -89,7 +89,7 @@ export class PageController extends BaseController {
   async getSupport(@Res() res: Response) {
     const path = require('path');
     const fs = require('fs');
-    const filePath = path.join(__dirname, '..', '..', '..', '..', 'public', 'pages', 'support.html');
+    const filePath = path.join(__dirname, '..', '..', '..', 'public', 'pages', 'support.html');
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ message: 'Support file not found' });
     }
@@ -102,7 +102,7 @@ export class PageController extends BaseController {
   async getTerms(@Res() res: Response) {
     const path = require('path');
     const fs = require('fs');
-    const filePath = path.join(__dirname, '..', '..', '..', '..', 'public', 'pages', 'terms.html');
+    const filePath = path.join(__dirname, '..', '..', '..', 'public', 'pages', 'terms.html');
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ message: 'Terms file not found' });
     }
@@ -114,7 +114,7 @@ export class PageController extends BaseController {
   async getRevokeConsent(@Res() res: Response) {
     const path = require('path');
     const fs = require('fs');
-    const filePath = path.join(__dirname, '..', '..', '..', '..', 'public', 'pages', 'revoke-consent.html');
+    const filePath = path.join(__dirname, '..', '..', '..', 'public', 'pages', 'revoke-consent.html');
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ message: 'Revoke consent file not found' });
     }
@@ -127,7 +127,7 @@ export class PageController extends BaseController {
   async getIndex(@Res() res: Response) {
     const path = require('path');
     const fs = require('fs');
-    const filePath = path.join(__dirname, '..', '..', '..', '..', 'public', 'pages', 'index.html');
+    const filePath = path.join(__dirname, '..', '..', '..', 'public', 'pages', 'index.html');
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ message: 'Index file not found' });
     }
