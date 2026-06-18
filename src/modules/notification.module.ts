@@ -29,12 +29,26 @@ import { TopicSubscriptionService } from '../services/topic-subscription.service
 import { NotificationConfigController } from '../controllers/notification/notification-config.controller';
 import { FcmTokenController } from '../controllers/notification/fcm-token.controller';
 import { NotificationController } from '../controllers/notification/notification.controller';
+import { NotificationJobService } from '../services/notification-job.service';
+import { UserInteraction } from '../entities/user-interaction.entity';
+import { InteractionStats } from '../entities/interaction-stats.entity';
+import { Book } from '../entities/book.entity';
+import { User } from '../entities/user.entity';
 
 @Module({
   imports:[
     AuthModule,
     CategoryModule,
-    TypeOrmModule.forFeature([Notification, NotificationConfig, FcmToken, TopicSubscription])
+    TypeOrmModule.forFeature([
+      Notification,
+      NotificationConfig,
+      FcmToken,
+      TopicSubscription,
+      UserInteraction,
+      InteractionStats,
+      Book,
+      User,
+    ])
   ],
   providers: [
     NotificationsGateway,
@@ -57,12 +71,13 @@ import { NotificationController } from '../controllers/notification/notification
     EventFilter,
     RoomFilter,
     MessageFilter,
+    NotificationJobService,
   ],
   controllers: [
     NotificationConfigController,
     FcmTokenController,
     NotificationController,
   ],
-  exports: [NotificationService, FcmService, FcmTokenService, TopicSubscriptionService],
+  exports: [NotificationService, FcmService, FcmTokenService, TopicSubscriptionService, NotificationJobService],
 })
 export class NotificationModule {} 

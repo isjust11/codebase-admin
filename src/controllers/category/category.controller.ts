@@ -34,7 +34,6 @@ export class CategoryController extends BaseController {
   }
 
   @Get('get-by-category-type/:categoryTypeCode')
-  @RequirePermission('READ', 'category')
   async getByCategoryType(
     @Param('categoryTypeCode') categoryTypeCode: string,
     @Query('sortBy') sortBy: string,
@@ -51,7 +50,6 @@ export class CategoryController extends BaseController {
   }
 
   @Get('get-tree-by-category-type/:categoryTypeCode')
-  @RequirePermission('READ', 'category')
   async getTreeByCategoryType(
     @Param('categoryTypeCode') categoryTypeCode: string,
     @Query('sortBy') sortBy: string,
