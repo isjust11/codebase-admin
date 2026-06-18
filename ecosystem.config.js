@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'codebase-admin',
-      script: 'dist/src/main.js',
+      script: 'dist/main.js',
       node_args: '--max-old-space-size=4096',
       instances: 1,
       autorestart: true,
