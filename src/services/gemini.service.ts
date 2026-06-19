@@ -185,4 +185,23 @@ Văn bản: "${text}"`;
       return { categoryName: 'Khác', categoryNameEn: 'Other', isNew: false };
     }
   }
+
+  /**
+   * Tạo nội dung bài đăng Facebook hấp dẫn
+   */
+  async generateFacebookPost(title: string, author: string): Promise<string> {
+    try {
+      const prompt = `Viết một caption Facebook ngắn gọn, lôi cuốn (dưới 40 từ) để giới thiệu sách "${title}"${author ? ` của ${author}` : ''}. Có dùng 1-2 emoji. Không cần hashtag. Dừng lại ở câu gợi mở.`;
+
+      const response = await this.genAIAdmin.models.generateContent({
+        model: this.modelName,
+        contents: prompt,
+      });
+
+      return (response.text ?? '').trim() || `📚 Sách hay chia sẻ: ${title}`;
+    } catch (error) {
+      console.error('GeminiService.generateFacebookPost error:', error);
+      return `📚 Sách hay chia sẻ: ${title}${author ? ` - Tác giả: ${author}` : ''}`;
+    }
+  }
 }

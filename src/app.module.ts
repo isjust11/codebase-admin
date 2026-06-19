@@ -47,6 +47,9 @@ import { UserSubscription } from './entities/user-subscription.entity';
 import { GeminiModule } from './modules/gemini.module';
 import { GoogleDriveModule } from './modules/google-drive.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { FacebookModule } from './modules/facebook.module';
+import { HomeController } from './controllers/home.controller';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -127,7 +130,9 @@ import { ScheduleModule } from '@nestjs/schedule';
     PaymentModule,
     GeminiModule,
     GoogleDriveModule,
+    FacebookModule,
+    TypeOrmModule.forFeature([Book]),
   ],
-  controllers: [FcmController, DeepLinkController],
+  controllers: [FcmController, DeepLinkController, HomeController],
 })
 export class AppModule { }
