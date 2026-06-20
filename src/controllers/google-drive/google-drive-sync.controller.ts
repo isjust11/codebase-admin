@@ -83,8 +83,16 @@ export class GoogleDriveSyncController {
       // Tải file dưới dạng Stream để tránh tràn RAM và giảm độ trễ
       const stream = await this.googleDriveService.downloadFileStream(fileId);
 
+      const name = metadata.name?.toLowerCase() ?? '';
+      let contentType = metadata.mimeType || 'application/octet-stream';
+      if (name.endsWith('.epub')) {
+        contentType = 'application/epub+zip';
+      } else if (name.endsWith('.pdf')) {
+        contentType = 'application/pdf';
+      }
+
       res.set({
-        'Content-Type': metadata.mimeType,
+        'Content-Type': contentType,
         'Content-Length': metadata.size, // Lấy size từ metadata
         'Content-Disposition': `inline; filename="${encodeURIComponent(metadata.name)}"`,
         'Cache-Control': 'public, max-age=86400', // Cache 24h

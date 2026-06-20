@@ -72,7 +72,7 @@
         }
 
         .nav-right a {
-            color: var(--ink-light);
+            color: white;
             text-decoration: none;
             font-size: 0.92rem;
             font-weight: 500;
@@ -80,7 +80,7 @@
         }
 
         .nav-right a:hover {
-            color: var(--ink);
+            color: whitesmoke;
         }
 
         .nav-btn {
@@ -448,14 +448,40 @@
     </footer>
 
     <script>
+        function assetUrl(v) {
+            if (!v) return '';
+            if (v.startsWith('http://') || v.startsWith('https://')) return v;
+            return v.startsWith('/') ? v : '/' + v;
+        }
+
+        function escHtml(s) {
+            if (!s) return '';
+            return String(s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
+            const loading = document.getElementById('loading');
             try {
                 const r = await fetch('/api/showcase');
                 const json = await r.json();
-                if (json.status && json.data) render(json.data);
-                else document.getElementById('loading').textContent = 'Không tải được danh sách sách.';
+
+                if (!r.ok) {
+                    loading.textContent = json.message || 'Không tải được danh sách sách.';
+                    return;
+                }
+
+                // API trả về mảng sách trực tiếp (id đã mã hóa base64)
+                if (Array.isArray(json)) {
+                    render(json);
+                } else {
+                    loading.textContent = 'Không tải được danh sách sách.';
+                }
             } catch (e) {
-                document.getElementById('loading').textContent = 'Lỗi kết nối.';
+                loading.textContent = 'Lỗi kết nối.';
             }
         });
 
@@ -463,19 +489,21 @@
             document.getElementById('loading').style.display = 'none';
             const grid = document.getElementById('book-grid');
             grid.style.display = 'grid';
-            if (!books.length) { grid.innerHTML = '<p class="loading-msg" style="grid-column:1/-1">Chưa có sách nào.</p>'; return; }
+            if (!books.length) {
+                grid.innerHTML = '<p class="loading-msg" style="grid-column:1/-1">Chưa có sách nào.</p>';
+                return;
+            }
 
             books.forEach(b => {
-                let cover = '';
-                if (b.coverImageUrl) cover = b.coverImageUrl.startsWith('http') ? b.coverImageUrl : '/' + b.coverImageUrl;
-
+                const cover = assetUrl(b.coverImageUrl);
+                const bookId = encodeURIComponent(b.id);
                 const a = document.createElement('a');
                 a.className = 'book-card';
-                a.href = '/book-detail?id=' + b.id;
+                a.href = '/book-detail?id=' + bookId;
                 a.innerHTML = cover
-                    ? `<img src="${cover}" alt="${b.title}" class="book-thumb" loading="lazy" onerror="this.style.background='var(--warm)';this.removeAttribute('src')">`
+                    ? `<img src="${escHtml(cover)}" alt="${escHtml(b.title)}" class="book-thumb" loading="lazy" onerror="this.style.background='var(--warm)';this.removeAttribute('src')">`
                     : `<div class="book-thumb" style="display:flex;align-items:center;justify-content:center;color:var(--ink-muted);font-size:0.85rem;">Chưa có ảnh</div>`;
-                a.innerHTML += `<div class="book-name">${b.title}</div><div class="book-writer">${b.author || ''}</div>`;
+                a.innerHTML += `<div class="book-name">${escHtml(b.title)}</div><div class="book-writer">${escHtml(b.author || '')}</div>`;
                 grid.appendChild(a);
             });
         }

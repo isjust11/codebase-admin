@@ -6,13 +6,16 @@ import { Repository } from 'typeorm';
 import { Book } from '../entities/book.entity';
 import * as path from 'path';
 import * as fs from 'fs';
+import { BaseController } from './base/base.controller';
 
 @Controller()
-export class HomeController {
+export class HomeController extends BaseController{
   constructor(
     @InjectRepository(Book)
     private readonly bookRepository: Repository<Book>,
-  ) { }
+  ) { 
+    super();
+  }
 
   @Public()
   @Get()
@@ -52,9 +55,9 @@ export class HomeController {
         .take(12)
         .getMany();
 
-      return res.json({ status: true, data: books });
+      return this.success(res, books);
     } catch (error) {
-      return res.status(500).json({ status: false, message: 'Lỗi tải danh sách sách.' });
+      return this.error(res, error);
     }
   }
 
@@ -66,9 +69,9 @@ export class HomeController {
   @Get('api/book/:id')
   async getBookDetail(@Param('id') id: string, @Res() res: Response) {
     try {
-      const bookId = parseInt(id, 10);
+      const bookId = this.decode(id);
       if (isNaN(bookId)) {
-        return res.status(400).json({ status: false, message: 'ID không hợp lệ.' });
+        return this.error(res, { status: 400, message: 'ID không hợp lệ.' });
       }
 
       const book = await this.bookRepository.findOne({
@@ -77,12 +80,12 @@ export class HomeController {
       });
 
       if (!book) {
-        return res.status(404).json({ status: false, message: 'Không tìm thấy sách.' });
+        return this.error(res, { status: 404, message: 'Không tìm thấy sách.' });
       }
 
-      return res.json({ status: true, data: book });
+      return this.success(res, book);
     } catch (error) {
-      return res.status(500).json({ status: false, message: 'Lỗi tải thông tin sách.' });
+      return this.error(res, error);
     }
   }
 }

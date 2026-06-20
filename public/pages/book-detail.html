@@ -7,8 +7,8 @@
     <title>Readbox</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/epub.js/0.3.93/epub.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
     <style>
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -194,18 +194,38 @@
         let bookTitle = '';
         let rendition = null;
 
+        function assetUrl(v) {
+            if (!v) return '';
+            if (v.startsWith('http://') || v.startsWith('https://')) return v;
+            return v.startsWith('/') ? v : '/' + v;
+        }
+
+        function escHtml(s) {
+            if (!s) return '';
+            return String(s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
             const id = new URLSearchParams(location.search).get('id');
             if (!id) return showMsg('Không tìm thấy sách.');
 
             try {
-                const res = await fetch('/api/book/' + id);
+                const res = await fetch('/api/book/' + encodeURIComponent(id));
                 const json = await res.json();
-                if (json.status && json.data) {
-                    const book = json.data;
-                    bookTitle = book.title;
-                    document.title = book.title + ' — Readbox';
-                    renderDetail(book);
+
+                if (!res.ok) {
+                    return showMsg(json.message || 'Sách không tồn tại hoặc chưa được công khai.');
+                }
+
+                // API trả về object sách trực tiếp (id, categoryId, files[].id đã mã hóa)
+                if (json && json.title) {
+                    bookTitle = json.title;
+                    document.title = json.title + ' — Readbox';
+                    renderDetail(json);
                 } else {
                     showMsg('Sách không tồn tại hoặc chưa được công khai.');
                 }
@@ -214,14 +234,10 @@
             }
         });
 
-        function url(v) {
-            if (!v) return '';
-            return v.startsWith('http') ? v : '/' + v;
-        }
-
         function renderDetail(book) {
-            const cover = book.coverImageUrl ? url(book.coverImageUrl) : '';
+            const cover = assetUrl(book.coverImageUrl);
             const files = book.files || [];
+            const categoryName = book.category && book.category.name ? book.category.name : '';
 
             let btns = '';
             if (!files.length) {
@@ -229,21 +245,26 @@
             } else {
                 files.forEach(f => {
                     const ext = (f.format || '').toUpperCase();
-                    btns += `<button class="btn-read" onclick="openReader('${url(f.fileUrl)}','${ext}')">Đọc ${ext}</button>`;
+                    const fileUrl = assetUrl(f.fileUrl);
+                    btns += `<button class="btn-read" type="button" data-url="${escHtml(fileUrl)}" data-type="${escHtml(ext)}" onclick="openReaderFromBtn(this)">Đọc ${escHtml(ext)}</button>`;
                 });
             }
+
+            const desc = book.description
+                ? escHtml(book.description).replace(/\n/g, '<br>')
+                : 'Chưa có mô tả.';
 
             document.getElementById('content').innerHTML = `
                 <div class="detail-layout">
                     <div class="cover-col">
                         ${cover
-                            ? `<img src="${cover}" alt="${book.title}" class="cover-img" onerror="this.style.background='var(--warm)';this.alt=''">`
+                            ? `<img src="${escHtml(cover)}" alt="${escHtml(book.title)}" class="cover-img" onerror="this.style.background='var(--warm)';this.alt=''">`
                             : `<div class="cover-img" style="width:200px;aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;color:var(--ink-muted);font-size:0.85rem;">Chưa có ảnh bìa</div>`}
                     </div>
                     <div class="info-col">
-                        <h1 class="detail-title">${book.title}</h1>
-                        <div class="detail-author">${book.author || 'Chưa rõ tác giả'}</div>
-                        <div class="detail-desc">${book.description ? book.description.replace(/\n/g, '<br>') : 'Chưa có mô tả.'}</div>
+                        <h1 class="detail-title">${escHtml(book.title)}</h1>
+                        <div class="detail-author">${escHtml(book.author || 'Chưa rõ tác giả')}${categoryName ? ' · ' + escHtml(categoryName) : ''}</div>
+                        <div class="detail-desc">${desc}</div>
                         <div class="read-actions">${btns}</div>
                     </div>
                 </div>
@@ -256,7 +277,42 @@
         }
 
         function showMsg(t) {
-            document.getElementById('content').innerHTML = '<div class="loading-msg">' + t + '</div>';
+            document.getElementById('content').innerHTML = '<div class="loading-msg">' + escHtml(t) + '</div>';
+        }
+
+        function openReaderFromBtn(btn) {
+            openReader(btn.dataset.url, btn.dataset.type);
+        }
+
+        async function openEpubFromUrl(fileUrl, area) {
+            const ePubFn = window.ePub;
+            if (typeof ePubFn !== 'function') {
+                area.innerHTML = '<div class="loading-msg">Không tải được thư viện đọc EPUB. Vui lòng thử lại hoặc dùng ứng dụng Readbox.</div>';
+                return;
+            }
+
+            area.innerHTML = '<div class="loading-msg">Đang tải EPUB...</div>';
+
+            try {
+                // URL proxy Drive (/google-drive/download/:id) không có đuôi .epub —
+                // epub.js nếu truyền URL trực tiếp sẽ request META-INF/container.xml như path HTTP.
+                const res = await fetch(fileUrl, { credentials: 'same-origin' });
+                if (!res.ok) {
+                    throw new Error('HTTP ' + res.status);
+                }
+
+                const buffer = await res.arrayBuffer();
+                if (!buffer || buffer.byteLength === 0) {
+                    throw new Error('File EPUB rỗng');
+                }
+
+                area.innerHTML = '<div id="epub-viewer"></div><div class="page-nav"><button type="button" onclick="rendition.prev()">&lsaquo;</button><button type="button" onclick="rendition.next()">&rsaquo;</button></div>';
+                const book = ePubFn(buffer);
+                rendition = book.renderTo('epub-viewer', { width: '100%', height: '100%', spread: 'none' });
+                await rendition.display();
+            } catch (err) {
+                area.innerHTML = '<div class="loading-msg">Không mở được EPUB. ' + escHtml(err.message || String(err)) + '</div>';
+            }
         }
 
         function openReader(fileUrl, type) {
@@ -268,15 +324,15 @@
             overlay.style.display = 'flex';
             document.body.style.overflow = 'hidden';
 
-            if (type === 'EPUB' || fileUrl.toLowerCase().endsWith('.epub')) {
-                area.innerHTML = '<div id="epub-viewer"></div><div class="page-nav"><button onclick="rendition.prev()">&lsaquo;</button><button onclick="rendition.next()">&rsaquo;</button></div>';
-                const book = ePub(fileUrl);
-                rendition = book.renderTo('epub-viewer', { width: '100%', height: '100%', spread: 'none' });
-                rendition.display();
-            } else if (type === 'PDF' || fileUrl.toLowerCase().endsWith('.pdf')) {
-                area.innerHTML = '<iframe src="' + fileUrl + '#toolbar=0" class="pdf-frame"></iframe>';
+            const normalizedType = (type || '').toUpperCase();
+            const lowerUrl = (fileUrl || '').toLowerCase();
+
+            if (normalizedType === 'EPUB' || lowerUrl.endsWith('.epub')) {
+                openEpubFromUrl(fileUrl, area);
+            } else if (normalizedType === 'PDF' || lowerUrl.endsWith('.pdf')) {
+                area.innerHTML = '<iframe src="' + escHtml(fileUrl) + '#toolbar=0" class="pdf-frame"></iframe>';
             } else {
-                area.innerHTML = '<div class="loading-msg">Định dạng ' + type + ' không hỗ trợ đọc trên web. Vui lòng dùng ứng dụng Readbox.</div>';
+                area.innerHTML = '<div class="loading-msg">Định dạng ' + escHtml(normalizedType || type) + ' không hỗ trợ đọc trên web. Vui lòng dùng ứng dụng Readbox.</div>';
             }
         }
 

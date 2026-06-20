@@ -1,9 +1,10 @@
 import { Controller, Get, Param, Req, Res } from '@nestjs/common';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { join } from 'path';
 import * as fs from 'fs';
 import { Public } from 'src/guards/jwt-auth.guard';
 import { BaseController } from '../base/base.controller';
+import { Base64EncryptionUtil } from 'src/utils/base64Encryption.util';
 
 @Controller()
 @Public()
@@ -36,15 +37,39 @@ export class DeepLinkController extends BaseController {
     res.send(content);
   }
 
+  /** Desktop browser → web book detail; mobile → deep link / store fallback. */
+  private isDesktopUserAgent(userAgent?: string): boolean {
+    if (!userAgent) return true;
+    return !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(
+      userAgent,
+    );
+  }
+
+  /** `/book/NjU3` (base64) hoặc `/book/657` → id số cho trang web. */
+  private resolveNumericBookId(id: string): string {
+    if (/^\d+$/.test(id)) return id;
+    const numeric = Base64EncryptionUtil.decrypt(id);
+    return numeric > 0 ? String(numeric) : id;
+  }
+
   /**
    * Book share redirect page
    * https://readbox.pro.vn/book/:id
    *
-   * - Nếu app đã cài: Universal Link / App Link mở thẳng app
-   * - Nếu chưa cài: trang HTML redirect về store
+   * - Desktop: redirect sang /book-detail?id={id}
+   * - Mobile + app đã cài: Universal Link / App Link mở thẳng app
+   * - Mobile + chưa cài: trang HTML redirect về store
    */
   @Get('book/:id')
   async bookDeepLink(@Param('id') id: string, @Res() res: Response, @Req() req: Request) {
+    const numericBookId = this.resolveNumericBookId(id);
+    const userAgent = req.headers['user-agent'];
+
+    if (this.isDesktopUserAgent(userAgent)) {
+      const webBase = process.env.WEB_URL || 'https://readbox.pro.vn';
+      return res.redirect(302, `${webBase}/book-detail?id=${numericBookId}`);
+    }
+
     const language = req.headers['custom-language']?.includes('vi-VN') ? 'vi' : 'en';
     const appSchemeUrl = `readbox://book/${id}`;
     const iosStoreUrl = 'https://apps.apple.com/vn/app/readbox/id6761289734'; // TODO: thay App Store ID thật
@@ -160,6 +185,11 @@ export class DeepLinkController extends BaseController {
   </div>
 
   <script>
+    const isDesktop = !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(navigator.userAgent);
+    if (isDesktop) {
+      window.location.replace('/book-detail?id=${numericBookId}');
+    }
+
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
     const isAndroid = /Android/i.test(navigator.userAgent);
     const appUrl = '${appSchemeUrl}';
