@@ -68,8 +68,8 @@ export class BookService {
         // if (user.countryCode) {
         //   query.andWhere('(book.countryCode IS NULL OR book.countryCode = :countryCode)', { countryCode: user.countryCode });
         // }
-        const language = user.region ? user.region.split('-')[0].toLowerCase() : 'en';
-        query.andWhere('(book.language IS NULL OR book.language = :defaultLanguage OR book.language = :language)', { language: language, defaultLanguage: 'en' });
+        // const language = user.region ? user.region.split('-')[0].toLowerCase() : 'en';
+        // query.andWhere('(book.language IS NULL OR book.language = :defaultLanguage OR book.language = :language)', { language: language, defaultLanguage: 'en' });
       }
     }
     // Filter by statusCode (admin filtering by moderation status)
