@@ -29,7 +29,7 @@ App / FE  --HTTP-->  NestJS OcrModule  --publish ocr.jobs-->  RabbitMQ  --consum
 
 > Lưu ý: env dùng tên `RABBITMQ_URL`, `OCR_JOBS_QUEUE`, `OCR_RESULTS_QUEUE`, `OCR_PREFETCH` (xem `.env.example`). Connect chịu lỗi: retry nền, không sập app khi RabbitMQ chưa sẵn sàng.
 
-- [ ] Thêm RabbitMQ vào `docker-compose` dev (image `rabbitmq:3-management`, port 5672 + UI 15672). *(còn lại)*
+- [x] Thêm RabbitMQ vào `docker-compose` dev (image `rabbitmq:3.13-management`, port 5672 + UI 15672).
 - [x] Thêm env: `RABBITMQ_URL`, `OCR_JOBS_QUEUE=ocr.jobs`, `OCR_RESULTS_QUEUE=ocr.results`, `OCR_PREFETCH`.
 - [x] Cài `amqplib` + `@types/amqplib`.
 - [x] Tạo `src/queues/ocr-queue.interface.ts` (abstraction `publishJob`, `consumeResults`, `isReady` + message types).
@@ -52,7 +52,7 @@ App / FE  --HTTP-->  NestJS OcrModule  --publish ocr.jobs-->  RabbitMQ  --consum
 - [x] `src/controllers/ocr/ocr.controller.ts` — `@Controller('ocr')`, `JwtAuthGuard` + `PermissionGuard`:
   - `POST /ocr/jobs` (`FileInterceptor('file')`, ≤100MB, mimetype pdf/ảnh).
   - `POST /ocr/jobs/:id/requeue`, `GET /ocr/jobs`, `GET /ocr/jobs/:id`, `GET /ocr/jobs/:id/result?page=`, `GET /ocr/jobs/:id/assets?page=&type=`.
-  - `POST /ocr/jobs/:id/export` — *(phase 6, chưa làm)*.
+  - `POST /ocr/jobs/:id/export` — ✅ (Phase 6): `{ format: 'txt' | 'pdf' }`.
 - [x] DTO `CreateOcrJobDto { lang?, mode?, extractImages?, pages? }`.
 - [ ] Seed permission `ocr` (action CREATE/READ) — *(admin/super-admin đã bypass; seed cho role khác nếu cần)*.
 - [x] Add `OcrModule` vào `imports` của `app.module.ts`.
@@ -68,9 +68,9 @@ App / FE  --HTTP-->  NestJS OcrModule  --publish ocr.jobs-->  RabbitMQ  --consum
 - [x] Idempotent: upsert theo `UNIQUE(jobId,pageNumber)` + xóa-ghi-lại asset của trang trước khi insert.
 - **DoD:** Worker publish kết quả → DB cập nhật → FE/App nhận event realtime.
 
-## Phase 5 — Worker Python PaddleOCR (`codebase-ocr`) (P2)
+## Phase 5 — Worker Python PaddleOCR (`codebase-ocr`) (P2) — ✅ ĐÃ TRIỂN KHAI
 
-> Repo/service mới, Docker riêng. Consumer của `ocr.jobs`, publisher của `ocr.results`.
+> Repo/service mới tại `../codebase-ocr`, Docker riêng. Consumer của `ocr.jobs`, publisher của `ocr.results`. Đã khai báo service trong `docker-compose.yml` (`codebase-ocr`, healthcheck, scale-able).
 
 ```
 codebase-ocr/
@@ -87,13 +87,13 @@ codebase-ocr/
 └── README.md
 ```
 
-- [ ] Khởi tạo `PaddleOCR(use_angle_cls=True, lang=...)` **1 lần** lúc start + warm-up bằng ảnh giả.
-- [ ] Consume `ocr.jobs` với `prefetch_count` thấp; ack sau khi xong.
-- [ ] Tải file S3 → render từng trang (DPI cấu hình, mặc định 200–300) → OCR → chuẩn hoá `{page,width,height,lines:[{text,confidence,bbox}]}`.
-- [ ] Phát `ocr.results` theo tiến độ (`processing` mỗi N trang) và `done` khi hoàn tất.
-- [ ] Lỗi → retry N lần → đẩy `ocr.dlx` + publish `status=failed`.
-- [ ] `GET /health` (readiness model).
-- [ ] Dockerfile + healthcheck; có thể scale nhiều replica.
+- [x] Khởi tạo `PaddleOCR(use_angle_cls=True, lang=...)` **1 lần** lúc start + warm-up bằng ảnh giả (`app/ocr_engine.py`).
+- [x] Consume `ocr.jobs` với `prefetch_count` thấp; ack sau khi xong (`app/worker.py`).
+- [x] Tải file S3 → render từng trang (DPI cấu hình, mặc định 240) → OCR → chuẩn hoá `{page,width,height,lines:[{text,confidence,bbox}]}` (`app/processor.py`, `app/pdf_renderer.py`).
+- [x] Phát `ocr.results` theo tiến độ (`processing` mỗi N trang) và `done` khi hoàn tất.
+- [x] Lỗi → retry N lần → đẩy `ocr.dlx` + publish `status=failed`.
+- [x] `GET /health` (readiness model) — `app/health.py`.
+- [x] Dockerfile + healthcheck; có thể scale nhiều replica (`--scale codebase-ocr=N`).
 - **DoD:** Đưa 1 job PDF scan vi/en vào queue → worker OCR ra text + bbox đúng, publish kết quả.
 
 ## Phase 5b — Tách ảnh / figure / table trong trang PDF (P5)
@@ -114,25 +114,36 @@ codebase-ocr/
    - Vùng `figure` → crop từ ảnh trang (OpenCV/PIL) → ảnh tách (`source = layout`).
    - Vùng `table` → có thể lấy `res.html` (cấu trúc bảng) + ảnh crop.
 
-**Các bước:**
-- [ ] `image_extractor.extract(page, page_image)` trả `[{type, bbox, image_bytes, table_html?, source}]`.
-- [ ] Khử trùng/khử chồng lấn giữa ảnh embedded và figure layout (IoU bbox) để tránh tách 2 lần cùng 1 hình.
-- [ ] Bỏ qua ảnh quá nhỏ (icon, đường kẻ) theo ngưỡng diện tích cấu hình.
-- [ ] Upload mỗi ảnh tách lên S3 → nhận `imageUrl/imageKey`.
-- [ ] Đưa vào result message: `pages[].images[]` và `pages[].tables[]`.
-- [ ] Worker cấu hình `extract_images`, ngưỡng kích thước, có bật table hay không.
+**Các bước:** — ✅ ĐÃ TRIỂN KHAI (`app/image_extractor.py`)
+- [x] `image_extractor.extract(page, doc, mode)` trả `(images, tables)` dạng `OcrAssetMessage`.
+- [x] Khử trùng/khử chồng lấn giữa ảnh embedded và figure layout (IoU bbox, ngưỡng `OCR_DEDUP_IOU`).
+- [x] Bỏ qua ảnh quá nhỏ (icon, đường kẻ) theo ngưỡng diện tích `OCR_MIN_ASSET_AREA_RATIO`.
+- [x] Upload mỗi ảnh tách lên S3 → nhận `imageUrl/imageKey` (`app/s3_client.py`).
+- [x] Đưa vào result message: `pages[].images[]` và `pages[].tables[]`.
+- [x] Worker cấu hình `extract_images`, ngưỡng kích thước, bật/tắt table (`OCR_ENABLE_TABLE`).
 - **DoD:** Trang có hình (cả digital lẫn scan) → tách đúng ảnh + bbox, ảnh nằm trên S3, metadata trả về trong kết quả.
 
 > Lưu ý hiệu năng: PP-Structure nặng hơn OCR thuần. Nên (a) chỉ bật khi `extractImages=true`, (b) ưu tiên `get_images()` cho PDF digital (nhẹ), (c) chỉ chạy layout khi trang là scan hoặc khi cần bắt figure.
 
-## Phase 6 — Export & Hardening (P6)
+## Phase 6 — Export & Hardening (P6) — ✅ ĐÃ TRIỂN KHAI
 
-- [ ] Export `.txt` (ghép text các trang) và **searchable PDF** (ảnh gốc + lớp text ẩn — sinh ở worker bằng PyMuPDF/reportlab).
-- [ ] Retry/back-off, dead-letter xử lý, alert khi job kẹt.
-- [ ] Rate limit `POST /ocr/jobs` theo user; giới hạn dung lượng/độ dài.
-- [ ] Logging chi tiết (jobId xuyên suốt), metrics (số job, thời gian/trang).
-- [ ] (Tùy chọn) Bull Board/RabbitMQ UI để giám sát.
+- [x] Export `.txt` (ghép text các trang, đồng bộ ở backend) và **searchable PDF**
+  (ảnh gốc + lớp text ẩn, dựng ở worker bằng PyMuPDF — `app/pdf_export.py`, bất đồng bộ
+  qua queue `ocr.export`/`ocr.export.results`). API: `POST /ocr/jobs/:id/export { format }`.
+  Cột mới `ocr_job.txt_url`, `pdf_url`, `export_status`, `export_error`.
+- [x] Retry/back-off (worker retry `OCR_MAX_RETRIES`), dead-letter (`ocr.dlx`),
+  alert job kẹt — cron `OcrMaintenanceService` (`EVERY_5_MINUTES`, env `OCR_STUCK_*`).
+- [x] Rate limit `POST /ocr/jobs` theo user — `OcrRateLimitGuard` (env `OCR_RATE_LIMIT_*`);
+  giới hạn dung lượng 100MB + mimetype đã có ở controller.
+- [x] Logging chi tiết theo jobId xuyên suốt backend + worker. *(metrics nâng cao:
+  để mở rộng sau)*.
+- [x] Giám sát qua RabbitMQ Management UI (`:15672`). *(Bull Board không áp dụng vì
+  dùng RabbitMQ thay Bull)*.
 - **DoD:** Chịu tải nhiều job song song, job lỗi không kẹt hệ thống, có file export.
+
+### Hàng đợi export
+- `ocr.export` (backend → worker): `{ jobId, format:'pdf', fileUrl, fileKey?, lang, pages:[{page, lines:[{text,bbox}]}] }`.
+- `ocr.export.results` (worker → backend): `{ jobId, format:'pdf', status:'done'|'failed', url?, key?, error? }`.
 
 ---
 
@@ -145,7 +156,7 @@ codebase-ocr/
 | GET | `/ocr/jobs/:id` | — | `OcrJob` (kèm tiến độ) |
 | GET | `/ocr/jobs/:id/result` | `page?` | `{ page, width, height, lines:[{text,confidence,bbox}], images:[{type,bbox,imageUrl}], tables?:[{bbox,html,imageUrl}] }` |
 | GET | `/ocr/jobs/:id/assets` | `page?,type?` | `{ items:[{pageNumber,type,bbox,imageUrl}] }` |
-| POST | `/ocr/jobs/:id/export` | `{ format: 'txt'\|'pdf' }` | `{ url }` |
+| POST | `/ocr/jobs/:id/export` | `{ format: 'txt'\|'pdf' }` | txt: `{ format:'txt', url }` · pdf: `{ format:'pdf', status:'processing' }` (URL cập nhật sau qua `GET /ocr/jobs/:id` → `pdfUrl` hoặc WS) |
 | WS | `ocr.job.updated` | — | `{ jobId, status, processedPages, totalPages }` |
 
 ## Checklist hạ tầng / env
@@ -153,4 +164,4 @@ codebase-ocr/
 - [ ] `OCR_RMQ_URL`, `OCR_RMQ_JOBS_QUEUE`, `OCR_RMQ_RESULTS_QUEUE`, `OCR_RMQ_DLX`
 - [ ] `OCR_DEFAULT_LANG=auto`, `OCR_RENDER_DPI=240`
 - [ ] Worker: `S3_*` (tái dùng), `OCR_PREFETCH`, `OCR_USE_GPU`
-- [ ] docker-compose: rabbitmq + codebase-ocr (scale-able)
+- [x] docker-compose: rabbitmq + codebase-ocr (scale-able)

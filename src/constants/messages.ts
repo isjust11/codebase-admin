@@ -155,6 +155,10 @@ const messages = {
       requeued: 'Đã đẩy lại job OCR vào hàng đợi',
       success: 'Thành công',
       unsupportedFormat: (mime: string) => `Định dạng "${mime}" không được hỗ trợ`,
+      exportNoResult: 'Job chưa có kết quả OCR để export',
+      exportInvalidFormat: 'Định dạng export không hợp lệ (chỉ hỗ trợ txt hoặc pdf)',
+      exportPageLabel: 'Trang',
+      rateLimited: 'Bạn tạo job OCR quá nhanh. Vui lòng thử lại sau giây lát.',
     },
 
     // ─── Role ────────────────────────────────────────────────────────────────
@@ -316,6 +320,10 @@ const messages = {
       requeued: 'OCR job has been re-queued',
       success: 'Success',
       unsupportedFormat: (mime: string) => `Format "${mime}" is not supported`,
+      exportNoResult: 'This job has no OCR result to export',
+      exportInvalidFormat: 'Invalid export format (only txt or pdf supported)',
+      exportPageLabel: 'Page',
+      rateLimited: 'You are creating OCR jobs too fast. Please try again shortly.',
     },
 
     // ─── Role ────────────────────────────────────────────────────────────────

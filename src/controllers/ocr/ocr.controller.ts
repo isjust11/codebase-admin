@@ -18,8 +18,10 @@ import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { PermissionGuard } from '../../guards/permission.guard';
 import { RequirePermission } from '../../decorators/require-permissions.decorator';
 import { BaseController } from '../base/base.controller';
-import { OcrService } from '../../services/ocr.service';
+import { OcrService } from '../../services/ocr/ocr.service';
 import { CreateOcrJobDto } from '../../dtos/ocr/create-ocr-job.dto';
+import { ExportOcrJobDto } from '../../dtos/ocr/export-ocr-job.dto';
+import { OcrRateLimitGuard } from '../../guards/ocr-rate-limit.guard';
 import { Locale } from '../../decorators/locale.decorator';
 import {
   getMessages,
@@ -56,6 +58,7 @@ export class OcrController extends BaseController {
    */
   @Post('jobs')
   @RequirePermission('CREATE', 'ocr')
+  @UseGuards(OcrRateLimitGuard)
   @UseInterceptors(
     FileInterceptor('file', {
       limits: { fileSize: 100 * 1024 * 1024 }, // 100MB
@@ -229,6 +232,34 @@ export class OcrController extends BaseController {
         this.decode(id) as number,
         page ? Number(page) : undefined,
         type,
+        locale,
+      );
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  /**
+   * Export kết quả OCR.
+   * POST /ocr/jobs/:id/export  body: { format: 'txt' | 'pdf' }
+   * - txt: trả URL ngay.
+   * - pdf: trả { format:'pdf', status:'processing' }, theo dõi qua WS/`GET /ocr/jobs/:id`.
+   */
+  @Post('jobs/:id/export')
+  @RequirePermission('CREATE', 'ocr')
+  async export(
+    @Param('id') id: string,
+    @Body() dto: ExportOcrJobDto,
+    @Locale() locale: SupportedLocale,
+    @Request() req,
+    @Res() res: Response,
+  ) {
+    try {
+      const data = await this.ocrService.exportJob(
+        req.user.id,
+        this.decode(id) as number,
+        dto.format,
         locale,
       );
       return this.success(res, data);

@@ -7,6 +7,8 @@ import {
 import { ConfigService } from '@nestjs/config';
 import * as amqp from 'amqplib';
 import {
+  OcrExportMessage,
+  OcrExportResultMessage,
   OcrJobMessage,
   OcrQueue,
   OcrResultMessage,
@@ -36,11 +38,18 @@ export class RabbitmqOcrQueue
   private readonly url: string;
   private readonly jobsQueue: string;
   private readonly resultsQueue: string;
+  private readonly exportQueue: string;
+  private readonly exportResultsQueue: string;
   private readonly prefetch: number;
 
   /** Lưu handler để reapply mỗi khi kết nối lại. */
   private resultHandler:
     | ((message: OcrResultMessage) => Promise<void>)
+    | null = null;
+
+  /** Handler kết quả export, cũng reapply khi reconnect. */
+  private exportHandler:
+    | ((message: OcrExportResultMessage) => Promise<void>)
     | null = null;
 
   constructor(private readonly configService: ConfigService) {
@@ -51,6 +60,11 @@ export class RabbitmqOcrQueue
       this.configService.get<string>('OCR_JOBS_QUEUE') || 'ocr.jobs';
     this.resultsQueue =
       this.configService.get<string>('OCR_RESULTS_QUEUE') || 'ocr.results';
+    this.exportQueue =
+      this.configService.get<string>('OCR_EXPORT_QUEUE') || 'ocr.export';
+    this.exportResultsQueue =
+      this.configService.get<string>('OCR_EXPORT_RESULTS_QUEUE') ||
+      'ocr.export.results';
     this.prefetch = parseInt(
       this.configService.get<string>('OCR_PREFETCH') || '4',
       10,
@@ -104,6 +118,31 @@ export class RabbitmqOcrQueue
     }
   }
 
+  async publishExport(message: OcrExportMessage): Promise<void> {
+    if (!this.channel) {
+      throw new Error(
+        'OCR queue chưa sẵn sàng (RabbitMQ chưa kết nối). Vui lòng thử lại sau.',
+      );
+    }
+    const payload = Buffer.from(JSON.stringify(message));
+    this.channel.sendToQueue(this.exportQueue, payload, {
+      persistent: true,
+      contentType: 'application/json',
+    });
+    this.logger.debug(
+      `Đã publish OCR export #${message.jobId} (${message.format}) vào ${this.exportQueue}`,
+    );
+  }
+
+  async consumeExportResults(
+    handler: (message: OcrExportResultMessage) => Promise<void>,
+  ): Promise<void> {
+    this.exportHandler = handler;
+    if (this.channel) {
+      await this.applyExportConsumer();
+    }
+  }
+
   private async connectWithRetry(): Promise<void> {
     if (this.connecting || this.closedByApp) {
       return;
@@ -132,12 +171,17 @@ export class RabbitmqOcrQueue
       // Khai báo hàng đợi (idempotent). Dùng dead-letter để giữ message lỗi.
       await this.channel.assertQueue(this.jobsQueue, { durable: true });
       await this.channel.assertQueue(this.resultsQueue, { durable: true });
+      await this.channel.assertQueue(this.exportQueue, { durable: true });
+      await this.channel.assertQueue(this.exportResultsQueue, { durable: true });
 
       this.logger.log('RabbitMQ đã sẵn sàng cho OCR queue.');
 
       // Reapply consumer kết quả sau khi (re)connect.
       if (this.resultHandler) {
         await this.applyResultConsumer();
+      }
+      if (this.exportHandler) {
+        await this.applyExportConsumer();
       }
     } catch (error) {
       this.logger.warn(
@@ -179,6 +223,35 @@ export class RabbitmqOcrQueue
       { noAck: false },
     );
     this.logger.log(`Đang consume kết quả OCR từ ${this.resultsQueue}`);
+  }
+
+  private async applyExportConsumer(): Promise<void> {
+    if (!this.channel || !this.exportHandler) {
+      return;
+    }
+    const handler = this.exportHandler;
+    await this.channel.consume(
+      this.exportResultsQueue,
+      async (msg: amqp.ConsumeMessage | null) => {
+        if (!msg) {
+          return;
+        }
+        try {
+          const parsed = JSON.parse(
+            msg.content.toString(),
+          ) as OcrExportResultMessage;
+          await handler(parsed);
+          this.channel?.ack(msg);
+        } catch (error) {
+          this.logger.error(
+            `Xử lý OCR export result lỗi: ${(error as Error).message}`,
+          );
+          this.channel?.nack(msg, false, false);
+        }
+      },
+      { noAck: false },
+    );
+    this.logger.log(`Đang consume kết quả export từ ${this.exportResultsQueue}`);
   }
 
   private maskUrl(url: string): string {

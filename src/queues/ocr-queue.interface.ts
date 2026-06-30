@@ -76,6 +76,43 @@ export interface OcrResultMessage {
   error?: string;
 }
 
+/** Một dòng (text + bbox) gửi cho worker để dựng lớp text ẩn trong searchable PDF. */
+export interface OcrExportLineInput {
+  text: string;
+  bbox: OcrBBox;
+}
+
+/** Dữ liệu một trang phục vụ export. */
+export interface OcrExportPageInput {
+  page: number;
+  lines: OcrExportLineInput[];
+}
+
+/**
+ * Message yêu cầu worker tạo file export (hiện tại: searchable PDF). Backend gửi
+ * kèm file gốc + text/bbox từng trang để worker dựng lớp text ẩn lên ảnh trang.
+ */
+export interface OcrExportMessage {
+  jobId: number;
+  format: 'pdf';
+  fileUrl: string;
+  fileKey?: string;
+  lang: string;
+  pages: OcrExportPageInput[];
+}
+
+/** Kết quả export worker trả về. */
+export interface OcrExportResultMessage {
+  jobId: number;
+  format: 'pdf';
+  status: 'done' | 'failed';
+  /** URL public của file export đã upload. */
+  url?: string;
+  /** Key S3 của file export. */
+  key?: string;
+  error?: string;
+}
+
 /**
  * Abstraction của hàng đợi OCR. OcrService chỉ phụ thuộc vào interface này.
  */
@@ -88,6 +125,14 @@ export interface OcrQueue {
    * (re)apply handler mỗi khi kết nối lại để không mất message khi reconnect.
    */
   consumeResults(handler: (message: OcrResultMessage) => Promise<void>): Promise<void>;
+
+  /** Đẩy một yêu cầu export vào hàng đợi `ocr.export`. */
+  publishExport(message: OcrExportMessage): Promise<void>;
+
+  /** Đăng ký handler xử lý kết quả export từ `ocr.export.results`. */
+  consumeExportResults(
+    handler: (message: OcrExportResultMessage) => Promise<void>,
+  ): Promise<void>;
 
   /** Cho biết hàng đợi đã sẵn sàng publish hay chưa (để controller báo lỗi sớm). */
   isReady(): boolean;

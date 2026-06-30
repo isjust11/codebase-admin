@@ -100,7 +100,7 @@ import { OcrAsset } from './entities/ocr-asset.entity';
         OcrAsset,
       ],
       // Tránh xung đột khi đã dùng migrationsRun.
-      synchronize: false,
+      synchronize: true,
       migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
       migrationsRun: true,
       // Cấu hình để hỗ trợ MySQL 8.0+ với caching_sha2_password

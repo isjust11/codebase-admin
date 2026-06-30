@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { OCR_QUEUE, OcrQueue } from '../queues/ocr-queue.interface';
+import { OCR_QUEUE, OcrQueue } from '../../queues/ocr-queue.interface';
 import { OcrService } from './ocr.service';
 
 /**
@@ -19,6 +19,9 @@ export class OcrResultConsumer implements OnModuleInit {
     await this.queue.consumeResults(async (message) => {
       await this.ocrService.handleResult(message);
     });
-    this.logger.log('Đã đăng ký consumer kết quả OCR.');
+    await this.queue.consumeExportResults(async (message) => {
+      await this.ocrService.handleExportResult(message);
+    });
+    this.logger.log('Đã đăng ký consumer kết quả OCR + export.');
   }
 }

@@ -68,6 +68,21 @@ export class OcrJob {
   @Column({ type: 'text', nullable: true })
   error: string | null;
 
+  /** URL file .txt đã export (ghép text các trang). */
+  @Column({ name: 'txt_url', type: 'text', nullable: true })
+  txtUrl: string | null;
+
+  /** URL searchable PDF đã export (ảnh gốc + lớp text ẩn). */
+  @Column({ name: 'pdf_url', type: 'text', nullable: true })
+  pdfUrl: string | null;
+
+  /** Trạng thái export PDF: processing | done | failed. */
+  @Column({ name: 'export_status', type: 'varchar', length: 16, nullable: true })
+  exportStatus: string | null;
+
+  @Column({ name: 'export_error', type: 'text', nullable: true })
+  exportError: string | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

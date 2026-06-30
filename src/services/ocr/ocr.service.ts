@@ -7,19 +7,20 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { OcrJob, OcrJobStatus } from '../entities/ocr-job.entity';
-import { OcrResult } from '../entities/ocr-result.entity';
-import { OcrAsset } from '../entities/ocr-asset.entity';
-import { MediaService } from './media.service';
+import { OcrJob, OcrJobStatus } from '../../entities/ocr-job.entity';
+import { OcrResult } from '../../entities/ocr-result.entity';
+import { OcrAsset } from '../../entities/ocr-asset.entity';
+import { MediaService } from '../media.service';
 import {
   OCR_QUEUE,
   OcrAssetMessage,
+  OcrExportResultMessage,
   OcrQueue,
   OcrResultMessage,
   OcrResultPage,
-} from '../queues/ocr-queue.interface';
-import { OcrGateway } from '../gateways/ocr.gateway';
-import { getMessages, SupportedLocale } from '../constants/messages';
+} from '../../queues/ocr-queue.interface';
+import { OcrGateway } from '../../gateways/ocr.gateway';
+import { getMessages, SupportedLocale } from '../../constants/messages';
 
 export interface CreateOcrJobInput {
   lang?: string;
@@ -246,6 +247,102 @@ export class OcrService {
       processedPages: job.processedPages,
       totalPages: job.totalPages,
       error: job.error,
+    });
+  }
+
+  /**
+   * Export kết quả OCR.
+   * - 'txt': ghép text các trang, upload S3, trả URL ngay (đồng bộ).
+   * - 'pdf': gửi yêu cầu sang worker dựng searchable PDF (bất đồng bộ),
+   *   trả về trạng thái 'processing'; kết quả cập nhật qua handleExportResult.
+   */
+  async exportJob(
+    userId: number,
+    jobId: number,
+    format: 'txt' | 'pdf',
+    locale: SupportedLocale = 'vi',
+  ): Promise<{ format: string; url?: string; status?: string }> {
+    const job = await this.getJob(userId, jobId, locale);
+    const messages = getMessages(locale).ocr;
+
+    const results = await this.resultRepo.find({
+      where: { jobId },
+      order: { pageNumber: 'ASC' },
+    });
+    if (!results.length) {
+      throw new BadRequestException(messages.exportNoResult);
+    }
+
+    if (format === 'txt') {
+      const text = results
+        .map(
+          (r) =>
+            `--- ${messages.exportPageLabel} ${r.pageNumber} ---\n${r.text ?? ''}`,
+        )
+        .join('\n\n');
+      const media = await this.mediaService.uploadFromBuffer(
+        Buffer.from(text, 'utf-8'),
+        `ocr-${jobId}.txt`,
+        'text/plain; charset=utf-8',
+        'ocr/export',
+        userId,
+      );
+      job.txtUrl = media.url;
+      await this.jobRepo.save(job);
+      return { format: 'txt', url: media.url };
+    }
+
+    // format === 'pdf' → async qua worker.
+    const pages = results.map((r) => ({
+      page: r.pageNumber,
+      lines: (r.blocks ?? []).map((line) => ({
+        text: line.text,
+        bbox: line.bbox,
+      })),
+    }));
+
+    job.exportStatus = 'processing';
+    job.exportError = null;
+    await this.jobRepo.save(job);
+
+    await this.queue.publishExport({
+      jobId: job.id,
+      format: 'pdf',
+      fileUrl: job.fileUrl,
+      fileKey: job.fileKey ?? undefined,
+      lang: job.lang,
+      pages,
+    });
+
+    return { format: 'pdf', status: 'processing' };
+  }
+
+  /** Xử lý kết quả export từ worker (cập nhật pdfUrl / lỗi + bắn realtime). */
+  async handleExportResult(message: OcrExportResultMessage): Promise<void> {
+    const job = await this.jobRepo.findOne({ where: { id: message.jobId } });
+    if (!job) {
+      this.logger.warn(
+        `Nhận export result cho job #${message.jobId} không tồn tại.`,
+      );
+      return;
+    }
+
+    if (message.status === 'done') {
+      job.pdfUrl = message.url ?? null;
+      job.exportStatus = 'done';
+      job.exportError = null;
+    } else {
+      job.exportStatus = 'failed';
+      job.exportError = message.error ?? 'Export thất bại.';
+    }
+    await this.jobRepo.save(job);
+
+    this.gateway.emitJobUpdate({
+      jobId: job.id,
+      status: job.status,
+      processedPages: job.processedPages,
+      totalPages: job.totalPages,
+      error: job.exportError,
     });
   }
 

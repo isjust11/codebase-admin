@@ -6,8 +6,9 @@ import { OcrJob } from '../entities/ocr-job.entity';
 import { OcrResult } from '../entities/ocr-result.entity';
 import { OcrAsset } from '../entities/ocr-asset.entity';
 import { OcrController } from '../controllers/ocr/ocr.controller';
-import { OcrService } from '../services/ocr.service';
-import { OcrResultConsumer } from '../services/ocr-result.consumer';
+import { OcrService } from '../services/ocr/ocr.service';
+import { OcrResultConsumer } from '../services/ocr/ocr-result.consumer';
+import { OcrMaintenanceService } from '../services/ocr/ocr-maintenance.service';
 import { OcrGateway } from '../gateways/ocr.gateway';
 import { RabbitmqOcrQueue } from '../queues/rabbitmq-ocr.queue';
 import { OCR_QUEUE } from '../queues/ocr-queue.interface';
@@ -23,6 +24,7 @@ import { OCR_QUEUE } from '../queues/ocr-queue.interface';
     OcrService,
     OcrGateway,
     OcrResultConsumer,
+    OcrMaintenanceService,
     { provide: OCR_QUEUE, useClass: RabbitmqOcrQueue },
   ],
   exports: [OcrService],
