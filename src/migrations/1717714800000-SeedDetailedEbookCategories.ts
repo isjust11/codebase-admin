@@ -4,6 +4,52 @@ import { CategoryCodeEnum } from 'src/enums/category-code.enum';
 
 export class SeedDetailedEbookCategories1717714800000 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
+        const categoryColumns = await queryRunner.query(`SHOW COLUMNS FROM category`);
+        const existingColumns = new Set(
+            categoryColumns.map((column: { Field?: string }) => column?.Field).filter(Boolean)
+        );
+        const hasColumn = (columnName: string): boolean => existingColumns.has(columnName);
+
+        const buildUpsertPayload = (category: {
+            name: string;
+            nameEN: string;
+            description: string;
+            descriptionEN: string;
+            icon: string;
+            iconType: string;
+            color: string;
+            sortOrder: number;
+        }) => {
+            const assignments: string[] = [];
+            const insertColumns: string[] = [];
+            const values: Array<string | number | null> = [];
+
+            const appendColumn = (columnName: string, value: string | number | null) => {
+                if (!hasColumn(columnName)) {
+                    return;
+                }
+                assignments.push(`${columnName} = ?`);
+                insertColumns.push(columnName);
+                values.push(value);
+            };
+
+            appendColumn('name', category.name);
+            appendColumn('nameEN', category.nameEN);
+            appendColumn('description', category.description);
+            appendColumn('descriptionEN', category.descriptionEN);
+            appendColumn('icon', category.icon);
+            appendColumn('iconType', category.iconType);
+            appendColumn('color', category.color);
+            appendColumn('sortOrder', category.sortOrder);
+            appendColumn('categoryTypeId', null);
+
+            return {
+                assignments,
+                insertColumns,
+                values,
+            };
+        };
+
         // Lấy category type ID cho BOOK_CATEGORY
         const bookCategoryTypeResult = await queryRunner.query(
             `SELECT id FROM category_type WHERE code = ?`,
@@ -390,17 +436,19 @@ export class SeedDetailedEbookCategories1717714800000 implements MigrationInterf
             );
 
             if (existing && existing.length > 0) {
+                const payload = buildUpsertPayload(parent);
                 await queryRunner.query(
                     `UPDATE category 
-                     SET name = ?, nameEN = ?, description = ?, descriptionEN = ?, icon = ?, iconType = ?, color = ?, sortOrder = ?, categoryTypeId = ?
+                     SET ${payload.assignments.join(', ')}
                      WHERE code = ?`,
-                    [parent.name, parent.nameEN, parent.description, parent.descriptionEN, parent.icon, parent.iconType, parent.color, parent.sortOrder, categoryTypeId, parent.code]
+                    [...payload.values.map(value => value === null ? categoryTypeId : value), parent.code]
                 );
             } else {
+                const payload = buildUpsertPayload(parent);
                 await queryRunner.query(
-                    `INSERT INTO category (name, nameEN, description, descriptionEN, icon, iconType, color, sortOrder, categoryTypeId, code, isActive, allowEdit, isDefault)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, true, true, false)`,
-                    [parent.name, parent.nameEN, parent.description, parent.descriptionEN, parent.icon, parent.iconType, parent.color, parent.sortOrder, categoryTypeId, parent.code]
+                    `INSERT INTO category (${payload.insertColumns.join(', ')}, code, isActive, allowEdit, isDefault)
+                     VALUES (${payload.insertColumns.map(() => '?').join(', ')}, ?, true, true, false)`,
+                    [...payload.values.map(value => value === null ? categoryTypeId : value), parent.code]
                 );
             }
         }
@@ -427,17 +475,33 @@ export class SeedDetailedEbookCategories1717714800000 implements MigrationInterf
             );
 
             if (existing && existing.length > 0) {
+                const payload = buildUpsertPayload(child);
+                const updateAssignments = hasColumn('parentId')
+                    ? `${payload.assignments.join(', ')}, parentId = ?`
+                    : payload.assignments.join(', ');
+                const updateValues = payload.values.map(value => value === null ? categoryTypeId : value);
+                if (hasColumn('parentId')) {
+                    updateValues.push(parentId);
+                }
                 await queryRunner.query(
                     `UPDATE category 
-                     SET name = ?, nameEN = ?, description = ?, descriptionEN = ?, icon = ?, iconType = ?, color = ?, sortOrder = ?, categoryTypeId = ?, parentId = ?
+                     SET ${updateAssignments}
                      WHERE code = ?`,
-                    [child.name, child.nameEN, child.description, child.descriptionEN, child.icon, child.iconType, child.color, child.sortOrder, categoryTypeId, parentId, child.code]
+                    [...updateValues, child.code]
                 );
             } else {
+                const payload = buildUpsertPayload(child);
+                const insertColumns = hasColumn('parentId')
+                    ? [...payload.insertColumns, 'parentId']
+                    : payload.insertColumns;
+                const insertValues = payload.values.map(value => value === null ? categoryTypeId : value);
+                if (hasColumn('parentId')) {
+                    insertValues.push(parentId);
+                }
                 await queryRunner.query(
-                    `INSERT INTO category (name, nameEN, description, descriptionEN, icon, iconType, color, sortOrder, categoryTypeId, parentId, code, isActive, allowEdit, isDefault)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, true, true, false)`,
-                    [child.name, child.nameEN, child.description, child.descriptionEN, child.icon, child.iconType, child.color, child.sortOrder, categoryTypeId, parentId, child.code]
+                    `INSERT INTO category (${insertColumns.join(', ')}, code, isActive, allowEdit, isDefault)
+                     VALUES (${insertColumns.map(() => '?').join(', ')}, ?, true, true, false)`,
+                    [...insertValues, child.code]
                 );
             }
         }

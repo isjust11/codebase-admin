@@ -49,6 +49,10 @@ import { GoogleDriveModule } from './modules/google-drive.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { FacebookModule } from './modules/facebook.module';
 import { HomeController } from './controllers/home.controller';
+import { OcrModule } from './modules/ocr.module';
+import { OcrJob } from './entities/ocr-job.entity';
+import { OcrResult } from './entities/ocr-result.entity';
+import { OcrAsset } from './entities/ocr-asset.entity';
 
 @Module({
   imports: [
@@ -91,8 +95,12 @@ import { HomeController } from './controllers/home.controller';
         UserInteraction,
         SubscriptionPlan,
         UserSubscription,
+        OcrJob,
+        OcrResult,
+        OcrAsset,
       ],
-      synchronize: true, // Chỉ bật khi development
+      // Tránh xung đột khi đã dùng migrationsRun.
+      synchronize: false,
       migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
       migrationsRun: true,
       // Cấu hình để hỗ trợ MySQL 8.0+ với caching_sha2_password
@@ -131,6 +139,7 @@ import { HomeController } from './controllers/home.controller';
     GeminiModule,
     GoogleDriveModule,
     FacebookModule,
+    OcrModule,
     TypeOrmModule.forFeature([Book]),
   ],
   controllers: [FcmController, DeepLinkController, HomeController],

@@ -147,6 +147,16 @@ const messages = {
       uploadRequired: 'Vui lòng upload file Word',
     },
 
+    // ─── OCR ─────────────────────────────────────────────────────────────────
+    ocr: {
+      fileRequired: 'Thiếu file để OCR',
+      jobNotFound: 'Không tìm thấy job OCR',
+      created: 'Đã tạo job OCR',
+      requeued: 'Đã đẩy lại job OCR vào hàng đợi',
+      success: 'Thành công',
+      unsupportedFormat: (mime: string) => `Định dạng "${mime}" không được hỗ trợ`,
+    },
+
     // ─── Role ────────────────────────────────────────────────────────────────
     role: {
       notFound: 'Vai trò không tồn tại',
@@ -296,6 +306,16 @@ const messages = {
       libreOfficeRequired: 'Converting .doc files requires LibreOffice. Please install LibreOffice (https://www.libreoffice.org) or send a .docx file instead of .doc.',
       error: 'Error converting file',
       uploadRequired: 'Please upload a Word file',
+    },
+
+    // ─── OCR ─────────────────────────────────────────────────────────────────
+    ocr: {
+      fileRequired: 'OCR file is required',
+      jobNotFound: 'OCR job not found',
+      created: 'OCR job created',
+      requeued: 'OCR job has been re-queued',
+      success: 'Success',
+      unsupportedFormat: (mime: string) => `Format "${mime}" is not supported`,
     },
 
     // ─── Role ────────────────────────────────────────────────────────────────
