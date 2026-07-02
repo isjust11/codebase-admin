@@ -59,6 +59,34 @@ export interface OcrResultPage {
   lines: OcrLine[];
   images?: OcrAssetMessage[];
   tables?: OcrAssetMessage[];
+  /**
+   * Ảnh raster đầy đủ của trang, đúng pixel space (width x height ở trên)
+   * mà worker đã dùng để tính bbox. Client hiển thị ảnh này thay vì tự
+   * render lại PDF để tránh lệch bbox do khác engine render.
+   */
+  pageImageUrl?: string;
+  pageImageKey?: string;
+}
+
+/** Response API `GET /ocr/jobs/:id/result` — gộp text blocks + assets theo trang. */
+export interface OcrPageResultDto {
+  id: number;
+  jobId: number;
+  pageNumber: number;
+  /** Alias `pageNumber` cho client (Flutter). */
+  page: number;
+  width: number;
+  height: number;
+  text: string | null;
+  blocks: OcrLine[] | null;
+  /** Alias `blocks` cho client. */
+  lines: OcrLine[] | null;
+  images: OcrAssetMessage[];
+  tables: OcrAssetMessage[];
+  /** Ảnh raster đầy đủ của trang (đúng pixel space đã dùng để OCR/tính bbox). */
+  pageImageUrl: string | null;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 /**

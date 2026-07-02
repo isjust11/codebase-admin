@@ -36,9 +36,20 @@ export class OcrResult {
   @Column({ type: 'longtext', nullable: true })
   text: string | null;
 
-  /** Danh sách dòng kèm bbox + confidence (JSON). */
+  /** Danh sách dòng text kèm bbox + confidence (JSON). Ảnh/figure/table + bbox nằm ở bảng `ocr_asset`. */
   @Column({ type: 'json', nullable: true })
   blocks: OcrLine[] | null;
+
+  /**
+   * Ảnh raster đầy đủ của trang (đúng pixel space đã dùng để OCR/tính bbox).
+   * Client hiển thị ảnh này thay vì tự render lại PDF để bbox luôn khớp
+   * chính xác 1:1, tránh lệch do khác engine render (PyMuPDF vs pdfium).
+   */
+  @Column({ name: 'page_image_url', type: 'text', nullable: true })
+  pageImageUrl: string | null;
+
+  @Column({ name: 'page_image_key', type: 'varchar', length: 512, nullable: true })
+  pageImageKey: string | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

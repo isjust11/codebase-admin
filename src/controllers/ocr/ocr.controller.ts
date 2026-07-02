@@ -187,7 +187,7 @@ export class OcrController extends BaseController {
   }
 
   /**
-   * Kết quả OCR (text + bbox) theo trang.
+   * Kết quả OCR theo trang: text blocks + ảnh/figure/table kèm bbox.
    * GET /ocr/jobs/:id/result?page=
    */
   @Get('jobs/:id/result')

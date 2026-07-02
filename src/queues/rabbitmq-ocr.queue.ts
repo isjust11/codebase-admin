@@ -52,6 +52,16 @@ export class RabbitmqOcrQueue
     | ((message: OcrExportResultMessage) => Promise<void>)
     | null = null;
 
+  /**
+   * Chuỗi promise tuần tự hoá việc xử lý message kết quả. amqplib gọi callback
+   * consume KHÔNG đợi handler async xong (prefetch > 1 → nhiều message chạy
+   * song song). Nếu message 'processing' (kèm trang, xử lý chậm) và 'done'
+   * (xử lý nhanh) của cùng job chạy đồng thời, handler 'processing' có thể
+   * lưu DB SAU và ghi đè status='done' → job kẹt 'processing' vĩnh viễn.
+   */
+  private resultChain: Promise<void> = Promise.resolve();
+  private exportChain: Promise<void> = Promise.resolve();
+
   constructor(private readonly configService: ConfigService) {
     this.url =
       this.configService.get<string>('RABBITMQ_URL') ||
@@ -202,23 +212,27 @@ export class RabbitmqOcrQueue
     const handler = this.resultHandler;
     await this.channel.consume(
       this.resultsQueue,
-      async (msg: amqp.ConsumeMessage | null) => {
+      (msg: amqp.ConsumeMessage | null) => {
         if (!msg) {
           return;
         }
-        try {
-          const parsed = JSON.parse(
-            msg.content.toString(),
-          ) as OcrResultMessage;
-          await handler(parsed);
-          this.channel?.ack(msg);
-        } catch (error) {
-          this.logger.error(
-            `Xử lý OCR result lỗi: ${(error as Error).message}`,
-          );
-          // requeue = false → tránh loop vô hạn với message hỏng.
-          this.channel?.nack(msg, false, false);
-        }
+        // Tuần tự hoá: message sau chỉ được xử lý khi message trước xong,
+        // giữ đúng thứ tự publish của worker (processing → done).
+        this.resultChain = this.resultChain.then(async () => {
+          try {
+            const parsed = JSON.parse(
+              msg.content.toString(),
+            ) as OcrResultMessage;
+            await handler(parsed);
+            this.channel?.ack(msg);
+          } catch (error) {
+            this.logger.error(
+              `Xử lý OCR result lỗi: ${(error as Error).message}`,
+            );
+            // requeue = false → tránh loop vô hạn với message hỏng.
+            this.channel?.nack(msg, false, false);
+          }
+        });
       },
       { noAck: false },
     );
@@ -232,22 +246,24 @@ export class RabbitmqOcrQueue
     const handler = this.exportHandler;
     await this.channel.consume(
       this.exportResultsQueue,
-      async (msg: amqp.ConsumeMessage | null) => {
+      (msg: amqp.ConsumeMessage | null) => {
         if (!msg) {
           return;
         }
-        try {
-          const parsed = JSON.parse(
-            msg.content.toString(),
-          ) as OcrExportResultMessage;
-          await handler(parsed);
-          this.channel?.ack(msg);
-        } catch (error) {
-          this.logger.error(
-            `Xử lý OCR export result lỗi: ${(error as Error).message}`,
-          );
-          this.channel?.nack(msg, false, false);
-        }
+        this.exportChain = this.exportChain.then(async () => {
+          try {
+            const parsed = JSON.parse(
+              msg.content.toString(),
+            ) as OcrExportResultMessage;
+            await handler(parsed);
+            this.channel?.ack(msg);
+          } catch (error) {
+            this.logger.error(
+              `Xử lý OCR export result lỗi: ${(error as Error).message}`,
+            );
+            this.channel?.nack(msg, false, false);
+          }
+        });
       },
       { noAck: false },
     );

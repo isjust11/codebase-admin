@@ -15,6 +15,7 @@ import {
   OCR_QUEUE,
   OcrAssetMessage,
   OcrExportResultMessage,
+  OcrPageResultDto,
   OcrQueue,
   OcrResultMessage,
   OcrResultPage,
@@ -161,22 +162,35 @@ export class OcrService {
     return job;
   }
 
-  /** Lấy kết quả OCR theo trang (hoặc 1 trang nếu truyền page). */
+  /** Lấy kết quả OCR theo trang (text blocks + ảnh/bảng kèm bbox). */
   async getResult(
     userId: number,
     jobId: number,
     page?: number,
     locale: SupportedLocale = 'vi',
-  ): Promise<OcrResult[]> {
+  ): Promise<OcrPageResultDto[]> {
     await this.getJob(userId, jobId, locale); // đảm bảo quyền sở hữu
     const where: Record<string, unknown> = { jobId };
     if (page) {
       where.pageNumber = page;
     }
-    return this.resultRepo.find({
-      where,
-      order: { pageNumber: 'ASC' },
-    });
+    const [results, assets] = await Promise.all([
+      this.resultRepo.find({
+        where,
+        order: { pageNumber: 'ASC' },
+      }),
+      this.assetRepo.find({
+        where: page ? { jobId, pageNumber: page } : { jobId },
+        order: { pageNumber: 'ASC', id: 'ASC' },
+      }),
+    ]);
+
+    return results.map((result) =>
+      this.toPageResultDto(
+        result,
+        assets.filter((asset) => asset.pageNumber === result.pageNumber),
+      ),
+    );
   }
 
   async getAssets(
@@ -235,7 +249,12 @@ export class OcrService {
       if (job.totalPages) {
         job.processedPages = job.totalPages;
       }
-    } else {
+    } else if (
+      job.status !== OcrJobStatus.DONE &&
+      job.status !== OcrJobStatus.FAILED
+    ) {
+      // Không hạ cấp job đã kết thúc về 'processing' — message tiến độ có thể
+      // đến trễ / bị redeliver sau message 'done'.
       job.status = OcrJobStatus.PROCESSING;
     }
 
@@ -363,6 +382,8 @@ export class OcrService {
     result.height = pageResult.height ?? 0;
     result.text = text;
     result.blocks = lines;
+    result.pageImageUrl = pageResult.pageImageUrl ?? null;
+    result.pageImageKey = pageResult.pageImageKey ?? null;
     await this.resultRepo.save(result);
 
     const assets: OcrAssetMessage[] = [
@@ -386,5 +407,45 @@ export class OcrService {
       );
       await this.assetRepo.save(entities);
     }
+  }
+
+  private toPageResultDto(
+    result: OcrResult,
+    pageAssets: OcrAsset[],
+  ): OcrPageResultDto {
+    const images = pageAssets
+      .filter((asset) => asset.type === 'image' || asset.type === 'figure')
+      .map((asset) => this.assetToMessage(asset));
+    const tables = pageAssets
+      .filter((asset) => asset.type === 'table')
+      .map((asset) => this.assetToMessage(asset));
+
+    return {
+      id: result.id,
+      jobId: result.jobId,
+      pageNumber: result.pageNumber,
+      page: result.pageNumber,
+      width: result.width,
+      height: result.height,
+      text: result.text,
+      blocks: result.blocks,
+      lines: result.blocks,
+      images,
+      tables,
+      pageImageUrl: result.pageImageUrl,
+      createdAt: result.createdAt,
+      updatedAt: result.updatedAt,
+    };
+  }
+
+  private assetToMessage(asset: OcrAsset): OcrAssetMessage {
+    return {
+      type: asset.type as OcrAssetMessage['type'],
+      bbox: asset.bbox ?? [],
+      imageUrl: asset.imageUrl ?? undefined,
+      imageKey: asset.imageKey ?? undefined,
+      tableHtml: asset.tableHtml ?? undefined,
+      source: asset.source ?? undefined,
+    };
   }
 }
