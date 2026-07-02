@@ -57,8 +57,8 @@ export class OcrController extends BaseController {
    * POST /ocr/jobs  (multipart/form-data: file + lang/mode/extractImages/pages)
    */
   @Post('jobs')
-  @RequirePermission('CREATE', 'ocr')
-  @UseGuards(OcrRateLimitGuard)
+  // @RequirePermission('CREATE', 'ocr')
+  // @UseGuards(OcrRateLimitGuard)
   @UseInterceptors(
     FileInterceptor('file', {
       limits: { fileSize: 100 * 1024 * 1024 }, // 100MB
@@ -107,7 +107,7 @@ export class OcrController extends BaseController {
    * POST /ocr/jobs/:id/requeue
    */
   @Post('jobs/:id/requeue')
-  @RequirePermission('CREATE', 'ocr')
+  // @RequirePermission('CREATE', 'ocr')
   async requeue(
     @Param('id') id: string,
     @Locale() locale: SupportedLocale,
@@ -131,7 +131,7 @@ export class OcrController extends BaseController {
    * GET /ocr/jobs?page=&size=&status=
    */
   @Get('jobs')
-  @RequirePermission('READ', 'ocr')
+  // @RequirePermission('READ', 'ocr')
   async list(
     @Query('page') page: string,
     @Query('size') size: string,
@@ -167,7 +167,7 @@ export class OcrController extends BaseController {
    * GET /ocr/jobs/:id
    */
   @Get('jobs/:id')
-  @RequirePermission('READ', 'ocr')
+  // @RequirePermission('READ', 'ocr')
   async detail(
     @Param('id') id: string,
     @Locale() locale: SupportedLocale,
@@ -191,7 +191,7 @@ export class OcrController extends BaseController {
    * GET /ocr/jobs/:id/result?page=
    */
   @Get('jobs/:id/result')
-  @RequirePermission('READ', 'ocr')
+  // @RequirePermission('READ', 'ocr')
   async result(
     @Param('id') id: string,
     @Query('page') page: string,
@@ -217,7 +217,7 @@ export class OcrController extends BaseController {
    * GET /ocr/jobs/:id/assets?page=&type=
    */
   @Get('jobs/:id/assets')
-  @RequirePermission('READ', 'ocr')
+  // @RequirePermission('READ', 'ocr')
   async assets(
     @Param('id') id: string,
     @Query('page') page: string,
@@ -247,7 +247,7 @@ export class OcrController extends BaseController {
    * - pdf: trả { format:'pdf', status:'processing' }, theo dõi qua WS/`GET /ocr/jobs/:id`.
    */
   @Post('jobs/:id/export')
-  @RequirePermission('CREATE', 'ocr')
+  // @RequirePermission('CREATE', 'ocr')
   async export(
     @Param('id') id: string,
     @Body() dto: ExportOcrJobDto,
