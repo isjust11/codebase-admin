@@ -16,12 +16,12 @@
 services:
   rabbitmq:
     image: rabbitmq:3.13-management
-    container_name: readbox-rabbitmq
-    hostname: readbox-rabbitmq
+    container_name: smartreader-rabbitmq
+    hostname: smartreader-rabbitmq
     restart: unless-stopped
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-readbox}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:-readbox123}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-smartreader}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:-123456}
     ports:
       - "5672:5672"   # AMQP cho backend + worker
       - "15672:15672" # Management UI
@@ -40,14 +40,14 @@ services:
   # ──────────────────────────────────────────────────────────────────────────
   codebase-ocr:
     build: ../codebase-ocr
-    image: readbox-ocr-worker
+    image: smartreader-ocr-worker
     restart: unless-stopped
     depends_on:
       rabbitmq:
         condition: service_healthy
     environment:
       # Trong mạng compose, host của broker là tên service "rabbitmq"
-      RABBITMQ_URL: amqp://${RABBITMQ_DEFAULT_USER:-readbox}:${RABBITMQ_DEFAULT_PASS:-readbox123}@rabbitmq:5672
+      RABBITMQ_URL: amqp://${RABBITMQ_DEFAULT_USER:-smartreader}:${RABBITMQ_DEFAULT_PASS:-123456}@rabbitmq:5672
       OCR_JOBS_QUEUE: ${OCR_JOBS_QUEUE:-ocr.jobs}
       OCR_RESULTS_QUEUE: ${OCR_RESULTS_QUEUE:-ocr.results}
       OCR_PREFETCH: ${OCR_PREFETCH:-2}
@@ -70,4 +70,4 @@ services:
 
 volumes:
   rabbitmq_data:
-    name: readbox_rabbitmq_data
+    name: smartreader_rabbitmq_data
