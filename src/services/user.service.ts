@@ -148,6 +148,8 @@ export class UserService {
         code: SubscriptionPlanEnum.FREE,
         name: 'Free',
         description: 'Free subscription plan',
+        nameEn: 'Free',
+        descriptionEn: 'Free subscription plan',
         storageLimitBytes: '1073741824',
         ttsLimitPerPeriod: 100000,
         convertLimitPerPeriod: 10,
