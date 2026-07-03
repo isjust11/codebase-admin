@@ -13,6 +13,28 @@ export const OCR_QUEUE = 'OCR_QUEUE';
 /** Một bbox là danh sách các điểm [x, y] (PaddleOCR trả polygon 4 điểm). */
 export type OcrBBox = number[][];
 
+/** Preset style tài liệu để biên tập/áp dụng hàng loạt trên client. */
+export type OcrTextPreset = 'body' | 'h1' | 'h2' | 'h3' | 'caption';
+
+/** Style text ở mức dòng hoặc run (không phụ thuộc OCR engine gốc). */
+export interface OcrTextStyle {
+  fontFamily?: string;
+  fontSize?: number;
+  colorHex?: string;
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  align?: 'left' | 'center' | 'right' | 'justify';
+  lineHeight?: number;
+  preset?: OcrTextPreset;
+}
+
+/** Một đoạn text có style riêng (rich-text). */
+export interface OcrTextRun {
+  text: string;
+  style?: OcrTextStyle;
+}
+
 /** Message gửi cho worker để bắt đầu xử lý một job. */
 export interface OcrJobMessage {
   jobId: number;
@@ -35,6 +57,10 @@ export interface OcrLine {
   text: string;
   confidence: number;
   bbox: OcrBBox;
+  /** Style tổng thể cho cả dòng (áp preset/header/body...). */
+  style?: OcrTextStyle;
+  /** Rich text theo từng đoạn trong dòng. */
+  runs?: OcrTextRun[];
 }
 
 /** Ảnh/figure/table được tách ra từ một trang. */

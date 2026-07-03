@@ -193,6 +193,28 @@ export class OcrService {
     );
   }
 
+  /**
+   * Lưu dữ liệu đã chỉnh sửa từ OCR editor.
+   * - Upsert từng trang vào `ocr_result` (text/blocks/size/pageImage).
+   * - Ghi đè assets theo trang để phản ánh chính xác thao tác xóa/sửa/thêm.
+   */
+  async saveEditedResult(
+    userId: number,
+    jobId: number,
+    pages: OcrResultPage[],
+    locale: SupportedLocale = 'vi',
+  ): Promise<{ savedPages: number }> {
+    if (!Array.isArray(pages) || pages.length === 0) {
+      throw new BadRequestException('Dữ liệu trang chỉnh sửa không hợp lệ.');
+    }
+    await this.getJob(userId, jobId, locale);
+
+    for (const page of pages) {
+      await this.upsertResultPage(jobId, page);
+    }
+    return { savedPages: pages.length };
+  }
+
   async getAssets(
     userId: number,
     jobId: number,
@@ -369,7 +391,13 @@ export class OcrService {
     jobId: number,
     pageResult: OcrResultPage,
   ): Promise<void> {
-    const lines = pageResult.lines ?? [];
+    const lines = (pageResult.lines ?? []).map((line) => ({
+      text: line.text ?? '',
+      confidence: line.confidence ?? 0,
+      bbox: line.bbox ?? [],
+      style: (line as any).style ?? undefined,
+      runs: (line as any).runs ?? undefined,
+    }));
     const text = lines.map((line) => line.text).join('\n');
 
     let result = await this.resultRepo.findOne({

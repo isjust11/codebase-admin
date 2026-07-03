@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Get,
+  Put,
   Param,
   Query,
   Body,
@@ -21,6 +22,7 @@ import { BaseController } from '../base/base.controller';
 import { OcrService } from '../../services/ocr/ocr.service';
 import { CreateOcrJobDto } from '../../dtos/ocr/create-ocr-job.dto';
 import { ExportOcrJobDto } from '../../dtos/ocr/export-ocr-job.dto';
+import { SaveOcrResultDto } from '../../dtos/ocr/save-ocr-result.dto';
 import { OcrRateLimitGuard } from '../../guards/ocr-rate-limit.guard';
 import { Locale } from '../../decorators/locale.decorator';
 import {
@@ -204,6 +206,31 @@ export class OcrController extends BaseController {
         req.user.id,
         this.decode(id) as number,
         page ? Number(page) : undefined,
+        locale,
+      );
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  /**
+   * Lưu kết quả OCR đã biên tập (text/style/bbox/assets) từ editor client.
+   * PUT /ocr/jobs/:id/result
+   */
+  @Put('jobs/:id/result')
+  async saveResult(
+    @Param('id') id: string,
+    @Body() dto: SaveOcrResultDto,
+    @Locale() locale: SupportedLocale,
+    @Request() req,
+    @Res() res: Response,
+  ) {
+    try {
+      const data = await this.ocrService.saveEditedResult(
+        req.user.id,
+        this.decode(id) as number,
+        dto.pages ?? [],
         locale,
       );
       return this.success(res, data);
