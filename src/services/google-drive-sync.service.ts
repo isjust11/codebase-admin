@@ -148,7 +148,7 @@ export class GoogleDriveSyncService implements OnModuleInit {
   // Public API
   // ------------------------------------------------------------------
 
-  @Cron(CronExpression.EVERY_2_HOURS)
+  // @Cron(CronExpression.EVERY_2_HOURS)
   async scheduledSync() {
     const enabled = this.configService.get<string>('GOOGLE_DRIVE_SYNC_ENABLED');
     if (enabled !== 'true') return;
