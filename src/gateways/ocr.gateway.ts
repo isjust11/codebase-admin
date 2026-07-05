@@ -22,6 +22,10 @@ export interface OcrJobUpdatePayload {
   processedPages?: number;
   totalPages?: number | null;
   error?: string | null;
+  /** Trạng thái export PDF: processing | done | failed */
+  exportStatus?: string | null;
+  pdfUrl?: string | null;
+  exportError?: string | null;
 }
 
 /**

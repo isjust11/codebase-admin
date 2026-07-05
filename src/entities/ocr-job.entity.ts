@@ -37,6 +37,9 @@ export class OcrJob {
   @Column({ name: 'original_name', type: 'varchar', length: 512, nullable: true })
   originalName: string | null;
 
+  @Column({ name: 'description', type: 'text', nullable: true })
+  description: string | null;
+
   @Column({ name: 'mime_type', type: 'varchar', length: 128, nullable: true })
   mimeType: string | null;
 

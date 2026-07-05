@@ -136,22 +136,37 @@ export interface OcrExportLineInput {
   bbox: OcrBBox;
 }
 
+/** Ảnh/figure đã tách — chèn vào PDF text-only (không dùng ảnh trang gốc). */
+export interface OcrExportAssetInput {
+  type: 'image' | 'figure' | 'table';
+  bbox: OcrBBox;
+  imageUrl?: string;
+  imageKey?: string;
+}
+
 /** Dữ liệu một trang phục vụ export. */
 export interface OcrExportPageInput {
   page: number;
+  width: number;
+  height: number;
   lines: OcrExportLineInput[];
+  assets?: OcrExportAssetInput[];
 }
 
 /**
- * Message yêu cầu worker tạo file export (hiện tại: searchable PDF). Backend gửi
- * kèm file gốc + text/bbox từng trang để worker dựng lớp text ẩn lên ảnh trang.
+ * Message yêu cầu worker tạo file export (PDF).
+ * Mặc định `includeSourceImage: false` → chỉ text + figure đã tách trên nền trắng.
+ * Bật `includeSourceImage: true` → searchable PDF (ảnh gốc + lớp text ẩn).
  */
 export interface OcrExportMessage {
   jobId: number;
   format: 'pdf';
-  fileUrl: string;
+  /** Chỉ cần khi includeSourceImage = true. */
+  fileUrl?: string;
   fileKey?: string;
   lang: string;
+  /** false (mặc định): PDF sạch — text đã chỉnh + ảnh tách, không ảnh scan gốc. */
+  includeSourceImage?: boolean;
   pages: OcrExportPageInput[];
 }
 

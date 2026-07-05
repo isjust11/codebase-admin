@@ -14,6 +14,7 @@ import { MediaService } from '../media.service';
 import {
   OCR_QUEUE,
   OcrAssetMessage,
+  OcrBBox,
   OcrExportResultMessage,
   OcrPageResultDto,
   OcrQueue,
@@ -22,6 +23,7 @@ import {
 } from '../../queues/ocr-queue.interface';
 import { OcrGateway } from '../../gateways/ocr.gateway';
 import { getMessages, SupportedLocale } from '../../constants/messages';
+import { UpdateOcrJobDto } from 'src/dtos/ocr/update-ocr-job.dto';
 
 export interface CreateOcrJobInput {
   lang?: string;
@@ -333,13 +335,29 @@ export class OcrService {
       return { format: 'txt', url: media.url };
     }
 
-    // format === 'pdf' → async qua worker.
+    // format === 'pdf' → async qua worker (text-only: không chèn ảnh scan gốc).
+    const assets = await this.assetRepo.find({
+      where: { jobId },
+      order: { pageNumber: 'ASC', id: 'ASC' },
+    });
+
     const pages = results.map((r) => ({
       page: r.pageNumber,
+      width: r.width,
+      height: r.height,
       lines: (r.blocks ?? []).map((line) => ({
         text: line.text,
         bbox: line.bbox,
       })),
+      assets: assets
+        .filter((a) => a.pageNumber === r.pageNumber)
+        .filter((a) => a.imageUrl && this._isExportableAsset(a, r.width, r.height))
+        .map((a) => ({
+          type: a.type as 'image' | 'figure' | 'table',
+          bbox: a.bbox ?? [],
+          imageUrl: a.imageUrl ?? undefined,
+          imageKey: a.imageKey ?? undefined,
+        })),
     }));
 
     job.exportStatus = 'processing';
@@ -349,9 +367,8 @@ export class OcrService {
     await this.queue.publishExport({
       jobId: job.id,
       format: 'pdf',
-      fileUrl: job.fileUrl,
-      fileKey: job.fileKey ?? undefined,
       lang: job.lang,
+      includeSourceImage: false,
       pages,
     });
 
@@ -383,8 +400,23 @@ export class OcrService {
       status: job.status,
       processedPages: job.processedPages,
       totalPages: job.totalPages,
-      error: job.exportError,
+      error: job.error,
+      exportStatus: job.exportStatus,
+      pdfUrl: job.pdfUrl,
+      exportError: job.exportError,
     });
+  }
+
+  async deleteJob(userId: number, jobId: number, locale: SupportedLocale = 'vi'): Promise<void> {
+    const job = await this.getJob(userId, jobId, locale);
+    await this.jobRepo.delete(jobId);
+  }
+
+  async updateJob(userId: number, jobId: number, dto: UpdateOcrJobDto, locale: SupportedLocale = 'vi'): Promise<void> {
+    const job = await this.getJob(userId, jobId, locale);
+    job.originalName = dto.name ?? job.originalName;
+    job.description = dto.description ?? job.description;
+    await this.jobRepo.save(job);
   }
 
   private async upsertResultPage(
@@ -475,5 +507,22 @@ export class OcrService {
       tableHtml: asset.tableHtml ?? undefined,
       source: asset.source ?? undefined,
     };
+  }
+
+  /** Bỏ figure full-page (ảnh scan gốc) — chỉ giữ ảnh nhỏ đã tách. */
+  private _isExportableAsset(
+    asset: OcrAsset,
+    pageWidth: number,
+    pageHeight: number,
+  ): boolean {
+    if (!asset.bbox?.length || pageWidth <= 0 || pageHeight <= 0) {
+      return true;
+    }
+    const xs = asset.bbox.map((p) => p[0]);
+    const ys = asset.bbox.map((p) => p[1]);
+    const w = Math.max(...xs) - Math.min(...xs);
+    const h = Math.max(...ys) - Math.min(...ys);
+    const ratio = (w * h) / (pageWidth * pageHeight);
+    return ratio < 0.85;
   }
 }

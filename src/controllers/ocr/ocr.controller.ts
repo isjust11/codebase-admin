@@ -12,6 +12,7 @@ import {
   Request,
   Res,
   BadRequestException,
+  Delete,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
@@ -29,6 +30,7 @@ import {
   getMessages,
   SupportedLocale,
 } from '../../constants/messages';
+import { UpdateOcrJobDto } from 'src/dtos/ocr/update-ocr-job.dto';
 
 /** Định dạng file đầu vào cho OCR. */
 const ALLOWED_OCR_MIME = [
@@ -290,6 +292,42 @@ export class OcrController extends BaseController {
         locale,
       );
       return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  /**
+   * Xóa job.
+   * DELETE /ocr/jobs/:id
+   */
+  @Delete('jobs/:id')
+  async deleteJob(
+    @Param('id') id: string,
+    @Locale() locale: SupportedLocale,
+    @Request() req,
+    @Res() res: Response,
+  ) {
+    try {
+      await this.ocrService.deleteJob(req.user.id, this.decode(id) as number);
+      return this.success(res, null);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  //** update job include name file and description */
+  @Put('jobs/:id')
+  async updateJob(
+    @Param('id') id: string,
+    @Body() dto: UpdateOcrJobDto,
+    @Locale() locale: SupportedLocale,
+    @Request() req,
+    @Res() res: Response,
+  ) {
+    try {
+      await this.ocrService.updateJob(req.user.id, this.decode(id) as number, dto, locale);
+      return this.success(res, null);
     } catch (error) {
       return this.error(res, error);
     }
