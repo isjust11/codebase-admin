@@ -12,6 +12,7 @@ export enum NotificationType {
   PAYMENT = 'PAYMENT',
   CONTINUE_READING = 'CONTINUE_READING',
   HOT_BOOKS = 'HOT_BOOKS',
+  CHAT = 'CHAT',
 }
 
 export enum NotificationPriority {

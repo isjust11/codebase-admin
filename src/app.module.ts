@@ -53,6 +53,11 @@ import { OcrModule } from './modules/ocr.module';
 import { OcrJob } from './entities/ocr-job.entity';
 import { OcrResult } from './entities/ocr-result.entity';
 import { OcrAsset } from './entities/ocr-asset.entity';
+import { ChatModule } from './modules/chat.module';
+import { ChatConversation } from './entities/chat-conversation.entity';
+import { ChatConversationMember } from './entities/chat-conversation-member.entity';
+import { ChatMessage } from './entities/chat-message.entity';
+import { ChatMessageReceipt } from './entities/chat-message-receipt.entity';
 
 @Module({
   imports: [
@@ -98,6 +103,10 @@ import { OcrAsset } from './entities/ocr-asset.entity';
         OcrJob,
         OcrResult,
         OcrAsset,
+        ChatConversation,
+        ChatConversationMember,
+        ChatMessage,
+        ChatMessageReceipt,
       ],
       // Tránh xung đột khi đã dùng migrationsRun.
       synchronize: true,
@@ -140,6 +149,7 @@ import { OcrAsset } from './entities/ocr-asset.entity';
     GoogleDriveModule,
     FacebookModule,
     OcrModule,
+    ChatModule,
     TypeOrmModule.forFeature([Book]),
   ],
   controllers: [FcmController, DeepLinkController, HomeController],

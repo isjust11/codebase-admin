@@ -3,10 +3,10 @@ import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import * as dotenv from 'dotenv';
-import { IoAdapter } from '@nestjs/platform-socket.io';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as compression from 'compression';
+import { ChatRedisIoAdapter } from './gateways/chat-redis-io.adapter';
 //config env
 dotenv.config();
 
@@ -36,7 +36,15 @@ async function bootstrap() {
       ? allowedOrigins
       : (process.env.NODE_ENV === 'production' ? false : '*'),
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Accept-Language', 'x-region', 'x-country-code'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'Accept',
+      'Accept-Language',
+      'x-region',
+      'x-country-code',
+      'x-app-id',
+    ],
     credentials: true,
     exposedHeaders: ['Authorization'],
   };
@@ -70,7 +78,9 @@ async function bootstrap() {
     SwaggerModule.setup('swagger-ui', app, document);
   }
 
-  app.useWebSocketAdapter(new IoAdapter(app));
+  const redisIoAdapter = new ChatRedisIoAdapter(app);
+  await redisIoAdapter.connectToRedis();
+  app.useWebSocketAdapter(redisIoAdapter);
 
   await app.listen(process.env.PORT ?? 4200, '0.0.0.0');
   console.log(`Application is running on: ${await app.getUrl()}`);

@@ -68,6 +68,24 @@ services:
       retries: 5
       start_period: 120s
 
+  # Redis — Socket.IO adapter + chat presence/unread cache
+  redis:
+    image: redis:7-alpine
+    container_name: codebase-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
 volumes:
   rabbitmq_data:
     name: smartreader_rabbitmq_data
+  redis_data:
+    name: codebase_redis_data
