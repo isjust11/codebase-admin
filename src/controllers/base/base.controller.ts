@@ -57,12 +57,13 @@ export abstract class BaseController {
 
   protected decode(id: string) {
     try {
-      const isNumber = !isNaN(Number(id));
-      if (isNumber) {
-        return Number(id);
-      }else { 
-        return Base64EncryptionUtil.decrypt(id);
+      const numericValue = Number(id);
+      if (Number.isFinite(numericValue)) {
+        return numericValue;
       }
+
+      const decryptedValue = Base64EncryptionUtil.decrypt(id);
+      return Number.isFinite(decryptedValue) ? decryptedValue : 0;
     } catch (error) {
       return 0;
     }

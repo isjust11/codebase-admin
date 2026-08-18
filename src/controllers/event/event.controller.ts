@@ -44,6 +44,7 @@ export class EventController extends BaseController {
   @Post()
   async create(@Body() dto: EventDto, @Request() req, @Res() res: Response) {
     try {
+      dto.templateId = this.decode(dto.templateId);
       return this.success(res, await this.eventService.create(req.user.id, dto));
     } catch (error) {
       return this.error(res, error);
