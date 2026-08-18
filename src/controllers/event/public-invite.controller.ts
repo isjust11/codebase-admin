@@ -2,7 +2,9 @@ import { Controller, Get, Post, Body, Param, UseGuards, Res } from '@nestjs/comm
 import { GuestService } from '../../services/guest.service';
 import { EventService } from '../../services/event.service';
 import { TemplateRenderService } from '../../services/template-render.service';
+import { WishService } from '../../services/wish.service';
 import { RsvpDto } from '../../dtos/guest.dto';
+import { CreateWishDto } from '../../dtos/wish.dto';
 import { BaseController } from '../base/base.controller';
 import { JwtAuthGuard, Public } from '../../guards/jwt-auth.guard';
 import { PermissionGuard } from '../../guards/permission.guard';
@@ -17,6 +19,7 @@ export class PublicInviteController extends BaseController {
     private readonly guestService: GuestService,
     private readonly eventService: EventService,
     private readonly templateRenderService: TemplateRenderService,
+    private readonly wishService: WishService,
   ) {
     super();
   }
@@ -55,6 +58,31 @@ export class PublicInviteController extends BaseController {
           plusOnes: guest.plusOnes,
         },
       });
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Public()
+  @Get(':token/wishes')
+  async listWishes(@Param('token') token: string, @Locale() locale: SupportedLocale, @Res() res: Response) {
+    try {
+      return this.success(res, await this.wishService.listApprovedByToken(token, locale));
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Public()
+  @Post(':token/wishes')
+  async createWish(
+    @Param('token') token: string,
+    @Body() dto: CreateWishDto,
+    @Locale() locale: SupportedLocale,
+    @Res() res: Response,
+  ) {
+    try {
+      return this.success(res, await this.wishService.createByToken(token, dto, locale));
     } catch (error) {
       return this.error(res, error);
     }

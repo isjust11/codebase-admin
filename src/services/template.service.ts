@@ -7,10 +7,13 @@ import { TemplateDto } from '../dtos/template.dto';
 import { PaginatedResponse, PaginationParams } from '../dtos/filter.dto';
 import { getMessages, SupportedLocale } from '../constants/messages';
 import { TemplateRenderService } from './template-render.service';
+import { TemplateSectionCompilerService } from './template-section-compiler.service';
 import { TemplateType } from '../enums/template-type.enum';
 import { TemplateStatus } from '../enums/template-status.enum';
+import { TemplateEditorMode } from '../enums/template-editor-mode.enum';
 import { RoleService } from './role.service';
 import { RoleEnum } from '../enums/role.enum';
+import { SECTION_CATALOG } from '../constants/wedding-layout';
 
 type Actor = { id: number; roles?: any[]; isAdmin?: boolean };
 
@@ -20,6 +23,7 @@ export class TemplateService {
     @InjectRepository(Template)
     private readonly templateRepository: Repository<Template>,
     private readonly templateRenderService: TemplateRenderService,
+    private readonly templateSectionCompilerService: TemplateSectionCompilerService,
     private readonly roleService: RoleService,
   ) {}
 
@@ -111,13 +115,16 @@ export class TemplateService {
       type: dto.type || TemplateType.EVENT,
       thumbnailUrl: dto.thumbnailUrl,
       description: dto.description,
-      htmlContent: dto.htmlContent,
+      htmlContent: dto.htmlContent || '<div class="el-invite-root"></div>',
       cssContent: dto.cssContent,
       variablesSchema: dto.variablesSchema || [],
+      layoutJson: dto.layoutJson,
+      editorMode: dto.editorMode || TemplateEditorMode.CODE,
       categoryId: dto.categoryId ? Number(dto.categoryId) : undefined,
       isPremium: dto.isPremium ?? false,
       createdById: dto.createdBy ? Number(dto.createdBy) : Number(actor.id),
     });
+    this.applyVisualCompile(entity, dto);
     this.applyStatus(entity, published ? TemplateStatus.PUBLISHED : TemplateStatus.DRAFT);
     return this.templateRepository.save(entity);
   }
@@ -139,6 +146,9 @@ export class TemplateService {
     if (dto.htmlContent !== undefined) template.htmlContent = dto.htmlContent;
     if (dto.cssContent !== undefined) template.cssContent = dto.cssContent;
     if (dto.variablesSchema !== undefined) template.variablesSchema = dto.variablesSchema;
+    if (dto.layoutJson !== undefined) template.layoutJson = dto.layoutJson;
+    if (dto.editorMode !== undefined) template.editorMode = dto.editorMode;
+    this.applyVisualCompile(template, dto);
     if (dto.categoryId !== undefined) template.categoryId = dto.categoryId ? Number(dto.categoryId) : undefined;
     if (dto.isPremium !== undefined) template.isPremium = dto.isPremium;
     if (moderate && dto.isPublished !== undefined) {
@@ -199,6 +209,31 @@ export class TemplateService {
     return { deleted: true };
   }
 
+  async previewDraft(dto: Partial<TemplateDto> & { sampleData?: Record<string, any> }) {
+    let htmlContent = dto.htmlContent || '';
+    let cssContent = dto.cssContent || '';
+    let schema = dto.variablesSchema || [];
+    if (dto.editorMode === TemplateEditorMode.VISUAL || dto.layoutJson) {
+      const compiled = this.templateSectionCompilerService.compile(dto.layoutJson as any);
+      htmlContent = compiled.html;
+      cssContent = compiled.css;
+      schema = compiled.variablesSchema;
+    }
+    const fake = { name: dto.name || 'EventLab', variablesSchema: schema } as Partial<Template>;
+    const html = this.templateRenderService.mergeHtml(htmlContent, cssContent, {
+      sample: this.buildSampleData(fake, dto.sampleData || {}),
+      invitationUrl: 'https://eventlab.app/e/preview',
+    });
+    return { html, compiled: { htmlContent, cssContent, variablesSchema: schema } };
+  }
+
+  catalogMeta() {
+    return {
+      sections: SECTION_CATALOG,
+      starters: this.templateSectionCompilerService.starters(),
+    };
+  }
+
   async preview(id: number, sampleData: Record<string, any> = {}, locale: SupportedLocale = 'vi') {
     const template = await this.findOne(id, locale);
     if (!template.htmlContent) {
@@ -245,6 +280,23 @@ export class TemplateService {
       eventTitle: template.name,
       eventDate: '2026-12-12',
       venue: 'Trung tâm hội nghị EventLab',
+      familiesTitle: 'Hai bên gia đình',
+      brideFather: 'Nguyễn Văn B',
+      brideMother: 'Trần Thị C',
+      groomFather: 'Lê Văn D',
+      groomMother: 'Phạm Thị E',
+      ceremonyTime: '09:00',
+      ceremonyVenue: 'Nhà văn hoá phường',
+      receptionTime: '18:00',
+      receptionVenue: 'Trung tâm hội nghị EventLab',
+      mapQuery: 'Ho Chi Minh City',
+      coupleMessage: 'Cảm ơn vì đã đến chia vui cùng chúng mình.',
+      dressCode: 'Formal / Pastel',
+      galleryImages: [],
+      storyItems: [
+        { year: '2019', title: 'Gặp nhau', text: 'Một buổi cà phê tình cờ.' },
+        { year: '2023', title: 'Cầu hôn', text: 'Lời hứa cho cả đời.' },
+      ],
     };
     for (const variable of template.variablesSchema || []) {
       const key = variable?.key;
@@ -254,6 +306,22 @@ export class TemplateService {
       }
     }
     return { ...sample, ...extra };
+  }
+
+  private applyVisualCompile(template: Template, dto: Partial<TemplateDto>) {
+    const visual = dto.editorMode === TemplateEditorMode.VISUAL || (!!dto.layoutJson && dto.editorMode !== TemplateEditorMode.CODE);
+    if (!visual) {
+      if (dto.editorMode) template.editorMode = dto.editorMode;
+      return;
+    }
+    const compiled = this.templateSectionCompilerService.compile(dto.layoutJson || (template.layoutJson as any));
+    template.editorMode = TemplateEditorMode.VISUAL;
+    template.layoutJson = compiled.layoutJson;
+    template.htmlContent = compiled.html;
+    template.cssContent = compiled.css;
+    if (!dto.variablesSchema) {
+      template.variablesSchema = compiled.variablesSchema;
+    }
   }
 
   private applyStatus(template: Template, status: TemplateStatus) {

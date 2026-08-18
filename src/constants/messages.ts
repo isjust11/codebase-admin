@@ -165,6 +165,8 @@ const messages = {
       inviteNotFound: 'Thiệp không tồn tại hoặc đã hết hạn',
       forbidden: 'Bạn không có quyền thao tác trên sự kiện này',
       importEmpty: 'Danh sách nhập trống',
+      wishEmpty: 'Lời chúc không được để trống',
+      wishNotFound: 'Lời chúc không tồn tại',
     },
 
     // ─── Payment ─────────────────────────────────────────────────────────────
@@ -331,6 +333,8 @@ const messages = {
       inviteNotFound: 'Invitation not found or expired',
       forbidden: 'You do not have access to this event',
       importEmpty: 'Import list is empty',
+      wishEmpty: 'Wish message is required',
+      wishNotFound: 'Wish not found',
     },
 
     // ─── Payment ─────────────────────────────────────────────────────────────

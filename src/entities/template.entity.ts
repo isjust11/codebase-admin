@@ -4,6 +4,7 @@ import { User } from './user.entity';
 import { Category } from './category.entity';
 import { TemplateType } from '../enums/template-type.enum';
 import { TemplateStatus } from '../enums/template-status.enum';
+import { TemplateEditorMode } from '../enums/template-editor-mode.enum';
 
 @Entity('templates')
 export class Template {
@@ -33,6 +34,12 @@ export class Template {
 
   @Column({ type: 'json', nullable: true })
   variablesSchema?: Record<string, any>[];
+
+  @Column({ type: 'json', nullable: true })
+  layoutJson?: Record<string, any>;
+
+  @Column({ type: 'varchar', length: 16, default: TemplateEditorMode.CODE })
+  editorMode?: TemplateEditorMode | string;
 
   @Column({ nullable: true })
   categoryId?: number;

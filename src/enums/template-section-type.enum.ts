@@ -1,0 +1,17 @@
+export enum TemplateSectionType {
+  COVER = 'cover',
+  INVITE_HERO = 'inviteHero',
+  COUNTDOWN = 'countdown',
+  COUPLE = 'couple',
+  FAMILIES = 'families',
+  LOVE_STORY = 'loveStory',
+  GALLERY = 'gallery',
+  EVENT_INFO = 'eventInfo',
+  MAP = 'map',
+  DRESS_CODE = 'dressCode',
+  WISHES = 'wishes',
+  GUESTBOOK = 'guestbook',
+  RSVP = 'rsvp',
+  FOOTER = 'footer',
+  AUDIO = 'audio',
+}

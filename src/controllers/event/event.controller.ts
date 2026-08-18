@@ -18,6 +18,7 @@ import { memoryStorage } from 'multer';
 import { EventService } from '../../services/event.service';
 import { GuestService } from '../../services/guest.service';
 import { InvitationRenderService } from '../../services/invitation-render.service';
+import { WishService } from '../../services/wish.service';
 import { EventDto, EventDataDto, AssignTemplateDto } from '../../dtos/event.dto';
 import { GuestDto, ImportGuestsDto } from '../../dtos/guest.dto';
 import { PaginationParams } from '../../dtos/filter.dto';
@@ -28,6 +29,7 @@ import { Response } from 'express';
 import { Locale } from '../../decorators/locale.decorator';
 import { SupportedLocale } from '../../constants/messages';
 import { GuestSource } from '../../enums/guest-source.enum';
+import { WishStatus } from '../../enums/wish-status.enum';
 import { parseGuestImportFile } from '../../utils/guest-import.util';
 
 @Controller('events')
@@ -37,6 +39,7 @@ export class EventController extends BaseController {
     private readonly eventService: EventService,
     private readonly guestService: GuestService,
     private readonly invitationRenderService: InvitationRenderService,
+    private readonly wishService: WishService,
   ) {
     super();
   }
@@ -212,6 +215,71 @@ export class EventController extends BaseController {
         res,
         await this.invitationRenderService.renderGuestImage(this.decode(id), this.decode(guestId), req.user.id, locale),
       );
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Get(':id/wishes')
+  async listWishes(
+    @Param('id') id: string,
+    @Request() req,
+    @Locale() locale: SupportedLocale,
+    @Res() res: Response,
+  ) {
+    try {
+      return this.success(res, await this.wishService.listForHost(this.decode(id), req.user.id, locale));
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Post(':id/wishes/:wishId/approve')
+  async approveWish(
+    @Param('id') id: string,
+    @Param('wishId') wishId: string,
+    @Request() req,
+    @Locale() locale: SupportedLocale,
+    @Res() res: Response,
+  ) {
+    try {
+      return this.success(
+        res,
+        await this.wishService.moderate(this.decode(id), this.decode(wishId), req.user.id, WishStatus.APPROVED, locale),
+      );
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Post(':id/wishes/:wishId/reject')
+  async rejectWish(
+    @Param('id') id: string,
+    @Param('wishId') wishId: string,
+    @Request() req,
+    @Locale() locale: SupportedLocale,
+    @Res() res: Response,
+  ) {
+    try {
+      return this.success(
+        res,
+        await this.wishService.moderate(this.decode(id), this.decode(wishId), req.user.id, WishStatus.REJECTED, locale),
+      );
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Delete(':id/wishes/:wishId')
+  async deleteWish(
+    @Param('id') id: string,
+    @Param('wishId') wishId: string,
+    @Request() req,
+    @Locale() locale: SupportedLocale,
+    @Res() res: Response,
+  ) {
+    try {
+      return this.success(res, await this.wishService.remove(this.decode(id), this.decode(wishId), req.user.id, locale));
     } catch (error) {
       return this.error(res, error);
     }

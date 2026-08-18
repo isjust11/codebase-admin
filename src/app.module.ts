@@ -46,6 +46,7 @@ import { Template } from './entities/template.entity';
 import { Event } from './entities/event.entity';
 import { Guest } from './entities/guest.entity';
 import { Contact } from './entities/contact.entity';
+import { Wish } from './entities/wish.entity';
 import { TemplateModule } from './modules/template.module';
 import { EventModule } from './modules/event.module';
 import { ContactModule } from './modules/contact.module';
@@ -91,6 +92,7 @@ import { ContactModule } from './modules/contact.module';
         Event,
         Guest,
         Contact,
+        Wish,
       ],
       // synchronize: auto-update schema from entities (dev only).
       // migrationsRun: runs migrations on startup — InitialSchema runs before SeedsCommonData.

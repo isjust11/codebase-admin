@@ -1,5 +1,6 @@
-import { IsString, IsOptional, IsBoolean, IsArray, IsEnum, IsObject } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsArray, IsEnum, IsObject, ValidateIf } from 'class-validator';
 import { TemplateType } from '../enums/template-type.enum';
+import { TemplateEditorMode } from '../enums/template-editor-mode.enum';
 
 export class TemplateVariableDto {
   @IsString()
@@ -48,8 +49,9 @@ export class TemplateDto {
   @IsString()
   description?: string;
 
+  @ValidateIf((dto) => dto.editorMode !== TemplateEditorMode.VISUAL && !dto.layoutJson)
   @IsString()
-  htmlContent: string;
+  htmlContent?: string;
 
   @IsOptional()
   @IsString()
@@ -72,12 +74,40 @@ export class TemplateDto {
 
   @IsOptional()
   createdBy?: any;
+
+  @IsOptional()
+  @IsObject()
+  layoutJson?: Record<string, any>;
+
+  @IsOptional()
+  @IsString()
+  editorMode?: string;
+
+  @IsOptional()
+  @IsObject()
+  theme?: Record<string, any>;
 }
 
 export class TemplatePreviewDto {
   @IsOptional()
   @IsObject()
   sampleData?: Record<string, any>;
+
+  @IsOptional()
+  @IsString()
+  htmlContent?: string;
+
+  @IsOptional()
+  @IsString()
+  cssContent?: string;
+
+  @IsOptional()
+  @IsObject()
+  layoutJson?: Record<string, any>;
+
+  @IsOptional()
+  @IsString()
+  editorMode?: string;
 }
 
 export class TemplateRejectDto {

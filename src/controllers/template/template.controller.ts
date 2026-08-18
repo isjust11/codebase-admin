@@ -65,6 +65,27 @@ export class TemplateController extends BaseController {
     }
   }
 
+  @Get('starters')
+  @RequirePermission('READ', 'template')
+  async starters(@Res() res: Response) {
+    try {
+      return this.success(res, this.templateService.catalogMeta());
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Post('preview-draft')
+  @RequirePermission('READ', 'template')
+  async previewDraft(@Body() dto: TemplatePreviewDto, @Res() res: Response) {
+    try {
+      const data = await this.templateService.previewDraft(dto);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
   @Post()
   @RequirePermission('CREATE', 'template')
   async create(@Body() dto: TemplateDto, @Request() req, @Res() res: Response) {

@@ -70,7 +70,8 @@ export class InvitationRenderService {
         const page = await browser.newPage();
         await page.setViewport({ width: 1080, height: 1920, deviceScaleFactor: 2 });
         await page.setContent(html, { waitUntil: 'networkidle0', timeout: 30000 });
-        const element = (await page.$('.card')) || (await page.$('body'));
+        const element =
+          (await page.$('.el-cover')) || (await page.$('.el-invite-root')) || (await page.$('.card')) || (await page.$('body'));
         const buffer = await element.screenshot({ type: 'png' });
         return Buffer.from(buffer);
       } finally {
