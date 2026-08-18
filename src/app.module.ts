@@ -49,6 +49,13 @@ import { GoogleDriveModule } from './modules/google-drive.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { FacebookModule } from './modules/facebook.module';
 import { HomeController } from './controllers/home.controller';
+import { Template } from './entities/template.entity';
+import { Event } from './entities/event.entity';
+import { Guest } from './entities/guest.entity';
+import { Contact } from './entities/contact.entity';
+import { TemplateModule } from './modules/template.module';
+import { EventModule } from './modules/event.module';
+import { ContactModule } from './modules/contact.module';
 
 @Module({
   imports: [
@@ -91,6 +98,10 @@ import { HomeController } from './controllers/home.controller';
         UserInteraction,
         SubscriptionPlan,
         UserSubscription,
+        Template,
+        Event,
+        Guest,
+        Contact,
       ],
       synchronize: true, // Chỉ bật khi development
       migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
@@ -131,6 +142,9 @@ import { HomeController } from './controllers/home.controller';
     GeminiModule,
     GoogleDriveModule,
     FacebookModule,
+    TemplateModule,
+    EventModule,
+    ContactModule,
     TypeOrmModule.forFeature([Book]),
   ],
   controllers: [FcmController, DeepLinkController, HomeController],

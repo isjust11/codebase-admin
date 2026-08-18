@@ -61,8 +61,8 @@ async function bootstrap() {
   // Swagger - chỉ bật khi development (tránh lộ API trên production)
   if (process.env.NODE_ENV !== 'production') {
     const config = new DocumentBuilder()
-      .setTitle('Codebase Admin API')
-      .setDescription('Codebase Admin API Documentation')
+      .setTitle('EventLab API')
+      .setDescription('EventLab Admin API Documentation')
       .setVersion('1.0')
       .addBearerAuth()
       .build();

@@ -152,6 +152,21 @@ const messages = {
       notFound: 'Vai trò không tồn tại',
     },
 
+    // ─── EventLab ────────────────────────────────────────────────────────────
+    eventlab: {
+      templateNotFound: 'Template không tồn tại',
+      templateEmpty: 'Template chưa có nội dung HTML',
+      templateForbidden: 'Bạn không có quyền thao tác trên mẫu này',
+      templateNotEditable: 'Mẫu đã xuất bản không thể sửa. Hãy gỡ xuất bản hoặc tạo bản mới.',
+      templateInvalidStatus: 'Trạng thái mẫu không hợp lệ cho thao tác này',
+      eventNotFound: 'Sự kiện không tồn tại',
+      guestNotFound: 'Khách mời không tồn tại',
+      contactNotFound: 'Liên hệ không tồn tại',
+      inviteNotFound: 'Thiệp không tồn tại hoặc đã hết hạn',
+      forbidden: 'Bạn không có quyền thao tác trên sự kiện này',
+      importEmpty: 'Danh sách nhập trống',
+    },
+
     // ─── Payment ─────────────────────────────────────────────────────────────
     payment: {
       notFound: 'Thanh toán không tồn tại',
@@ -301,6 +316,21 @@ const messages = {
     // ─── Role ────────────────────────────────────────────────────────────────
     role: {
       notFound: 'Role not found',
+    },
+
+    // ─── EventLab ────────────────────────────────────────────────────────────
+    eventlab: {
+      templateNotFound: 'Template not found',
+      templateEmpty: 'Template HTML content is empty',
+      templateForbidden: 'You do not have access to this template',
+      templateNotEditable: 'Published templates cannot be edited. Unpublish or create a new copy.',
+      templateInvalidStatus: 'Template status is invalid for this action',
+      eventNotFound: 'Event not found',
+      guestNotFound: 'Guest not found',
+      contactNotFound: 'Contact not found',
+      inviteNotFound: 'Invitation not found or expired',
+      forbidden: 'You do not have access to this event',
+      importEmpty: 'Import list is empty',
     },
 
     // ─── Payment ─────────────────────────────────────────────────────────────

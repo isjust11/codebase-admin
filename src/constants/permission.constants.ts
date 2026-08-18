@@ -11,6 +11,10 @@ export const RESOURCES = {
   CATEGORY_TYPE: 'CATEGORY_TYPE',
   STATIC_PAGE: 'STATIC_PAGE',
   EBOOK: 'EBOOK',
+  TEMPLATE: 'TEMPLATE',
+  EVENT: 'EVENT',
+  GUEST: 'GUEST',
+  CONTACT: 'CONTACT',
 } as const;
 
 // Định nghĩa các Action chuẩn
@@ -130,6 +134,49 @@ export const PERMISSION_TEMPLATES = {
       { action: ACTIONS.UPDATE, name: 'Cập nhật trang tĩnh', code: 'STATIC_PAGE_UPDATE' },
       { action: ACTIONS.DELETE, name: 'Xóa trang tĩnh', code: 'STATIC_PAGE_DELETE' },
       { action: ACTIONS.PUBLISH, name: 'Xuất bản trang tĩnh', code: 'STATIC_PAGE_PUBLISH' },
+    ]
+  },
+  [RESOURCES.TEMPLATE]: {
+    name: 'Quản lý template EventLab',
+    permissions: [
+      { action: ACTIONS.READ, name: 'Xem template', code: 'TEMPLATE_READ' },
+      { action: ACTIONS.CREATE, name: 'Tạo template', code: 'TEMPLATE_CREATE' },
+      { action: ACTIONS.UPDATE, name: 'Cập nhật template', code: 'TEMPLATE_UPDATE' },
+      { action: ACTIONS.DELETE, name: 'Xóa template', code: 'TEMPLATE_DELETE' },
+      { action: ACTIONS.PUBLISH, name: 'Xuất bản template', code: 'TEMPLATE_PUBLISH' },
+      { action: ACTIONS.APPROVE, name: 'Duyệt template', code: 'TEMPLATE_APPROVE' },
+      { action: ACTIONS.REJECT, name: 'Từ chối template', code: 'TEMPLATE_REJECT' },
+    ]
+  },
+  [RESOURCES.EVENT]: {
+    name: 'Quản lý sự kiện EventLab',
+    permissions: [
+      { action: ACTIONS.READ, name: 'Xem sự kiện', code: 'EVENT_READ' },
+      { action: ACTIONS.CREATE, name: 'Tạo sự kiện', code: 'EVENT_CREATE' },
+      { action: ACTIONS.UPDATE, name: 'Cập nhật sự kiện', code: 'EVENT_UPDATE' },
+      { action: ACTIONS.DELETE, name: 'Xóa sự kiện', code: 'EVENT_DELETE' },
+      { action: ACTIONS.PUBLISH, name: 'Xuất bản sự kiện', code: 'EVENT_PUBLISH' },
+    ]
+  },
+  [RESOURCES.GUEST]: {
+    name: 'Quản lý khách mời EventLab',
+    permissions: [
+      { action: ACTIONS.READ, name: 'Xem khách mời', code: 'GUEST_READ' },
+      { action: ACTIONS.CREATE, name: 'Thêm khách mời', code: 'GUEST_CREATE' },
+      { action: ACTIONS.UPDATE, name: 'Cập nhật khách mời', code: 'GUEST_UPDATE' },
+      { action: ACTIONS.DELETE, name: 'Xóa khách mời', code: 'GUEST_DELETE' },
+      { action: ACTIONS.IMPORT, name: 'Nhập khách mời', code: 'GUEST_IMPORT' },
+      { action: ACTIONS.EXPORT, name: 'Xuất khách mời', code: 'GUEST_EXPORT' },
+    ]
+  },
+  [RESOURCES.CONTACT]: {
+    name: 'Quản lý danh bạ EventLab',
+    permissions: [
+      { action: ACTIONS.READ, name: 'Xem danh bạ', code: 'CONTACT_READ' },
+      { action: ACTIONS.CREATE, name: 'Thêm liên hệ', code: 'CONTACT_CREATE' },
+      { action: ACTIONS.UPDATE, name: 'Cập nhật liên hệ', code: 'CONTACT_UPDATE' },
+      { action: ACTIONS.DELETE, name: 'Xóa liên hệ', code: 'CONTACT_DELETE' },
+      { action: ACTIONS.IMPORT, name: 'Nhập danh bạ', code: 'CONTACT_IMPORT' },
     ]
   },
   [RESOURCES.EBOOK]: {
