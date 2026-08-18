@@ -1,8 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { User } from './user.entity';
 import { Transform } from 'class-transformer';
-import { Book } from './book.entity';
-import { InteractionType } from 'src/enums/interaction-type.enum';
+import { InteractionType } from '../enums/interaction-type.enum';
 
 @Entity()
 @Index(['userId', 'targetType', 'targetId', 'interactionType'], { unique: false })
@@ -24,15 +23,9 @@ export class UserInteraction {
   @Column()
   targetType: string;
 
-  @Column({ nullable: true })
-  bookId?: number;
 
   @Column({ type: 'enum', enum: InteractionType, default: InteractionType.VIEW })
   interactionType: InteractionType;
-
-  @ManyToOne(() => Book, book => book.id, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'bookId' })
-  book: Book;
 
   // Additional data for specific interaction types
   @Column({ type: 'text', nullable: true })

@@ -265,7 +265,7 @@ export class AuthService {
       await this.validateSubscription(user);
 
       return this.generateToken(user);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in mobileSocialLogin:', {
         message: error?.message,
         status: error?.response?.status || error?.status,

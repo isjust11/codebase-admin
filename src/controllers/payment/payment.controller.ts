@@ -115,8 +115,8 @@ export class PaymentController extends BaseController {
             orderCode: payment.id, // PayOS requires orderCode as number
             amount: payment.amount,
             description: `${payment.plan?.name} `,
-            returnUrl: `readbox://payment/result?status=success&transactionId=${payment.transactionId}`,
-            cancelUrl: `readbox://payment/result?status=cancelled&transactionId=${payment.transactionId}`,
+            returnUrl: `eventlab://payment/result?status=success&transactionId=${payment.transactionId}`,
+            cancelUrl: `eventlab://payment/result?status=cancelled&transactionId=${payment.transactionId}`,
           });
           break;
         default:
@@ -161,7 +161,7 @@ export class PaymentController extends BaseController {
    * VNPay Return URL – xử lý trên SERVER (không phải mobile).
    * Luồng: User thanh toán xong trên VNPay → VNPay redirect trình duyệt/WebView
    * đến URL này (GET /payment/vnpay/callback?vnp_xxx=...) → request tới server →
-   * handler chạy trên server, verify, rồi response 302 redirect về readbox://payment/result.
+   * handler chạy trên server, verify, rồi response 302 redirect về eventlab://payment/result.
    *
    * Bảo mật: Public (không JWT) là bắt buộc vì redirect không gửi được token.
    * Mọi request đều được verify chữ ký HMAC (vnp_SecureHash) với VNPAY_HASH_SECRET
@@ -177,7 +177,7 @@ export class PaymentController extends BaseController {
       if (!verifyResult.isValid) {
         // Redirect về app với error
         return res.redirect(
-          `readbox://payment/result?status=error&message=${encodeURIComponent(verifyResult.message || 'Invalid signature')}`,
+          `eventlab://payment/result?status=error&message=${encodeURIComponent(verifyResult.message || 'Invalid signature')}`,
         );
       }
 
@@ -186,18 +186,18 @@ export class PaymentController extends BaseController {
       if (isSuccess) {
         // Redirect về app với success
         return res.redirect(
-          `readbox://payment/result?status=success&transactionId=${orderId}`,
+          `eventlab://payment/result?status=success&transactionId=${orderId}`,
         );
       } else {
         // Redirect về app với failed
         const errorMsg = this.vnpayService.getErrorMessage(responseCode);
         return res.redirect(
-          `readbox://payment/result?status=failed&transactionId=${orderId}&message=${encodeURIComponent(errorMsg)}`,
+          `eventlab://payment/result?status=failed&transactionId=${orderId}&message=${encodeURIComponent(errorMsg)}`,
         );
       }
-    } catch (error) {
+    } catch (error: any) {
       return res.redirect(
-        `readbox://payment/result?status=error&message=${encodeURIComponent(error.message)}`,
+        `eventlab://payment/result?status=error&message=${encodeURIComponent(error.message)}`,
       );
     }
   }
@@ -214,7 +214,7 @@ export class PaymentController extends BaseController {
 
       if (!isValid) {
         return res.redirect(
-          `readbox://payment/result?status=error&message=${encodeURIComponent(
+          `eventlab://payment/result?status=error&message=${encodeURIComponent(
             'Invalid MoMo signature',
           )}`,
         );
@@ -225,18 +225,18 @@ export class PaymentController extends BaseController {
 
       if (isSuccess) {
         return res.redirect(
-          `readbox://payment/result?status=success&transactionId=${orderId}`,
+          `eventlab://payment/result?status=success&transactionId=${orderId}`,
         );
       }
 
       return res.redirect(
-        `readbox://payment/result?status=failed&transactionId=${orderId}&message=${encodeURIComponent(
+        `eventlab://payment/result?status=failed&transactionId=${orderId}&message=${encodeURIComponent(
           message || 'Payment failed',
         )}`,
       );
-    } catch (error) {
+    } catch (error: any) {
       return res.redirect(
-        `readbox://payment/result?status=error&message=${encodeURIComponent(
+        `eventlab://payment/result?status=error&message=${encodeURIComponent(
           error.message,
         )}`,
       );

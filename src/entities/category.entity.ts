@@ -1,7 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 import { CategoryType } from './category-type.entity';
 import { Feature } from './feature.entity';
-import { Book } from './book.entity';
 
 @Entity()
 export class Category {
@@ -77,9 +76,6 @@ export class Category {
 
   @OneToMany(() => Feature, features => features.featureType)
   feature: Feature[];
-
-  @OneToMany(() => Book, book => book.category)
-  books: Book[];
 
   @Column({
     default: 0

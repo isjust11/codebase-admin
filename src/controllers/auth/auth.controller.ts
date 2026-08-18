@@ -9,6 +9,7 @@ import { BaseController } from '../base/base.controller';
 import { UpdateProfileDto } from '../../dtos/update-profile-dto';
 import { Locale } from '../../decorators/locale.decorator';
 import { SupportedLocale } from '../../constants/messages';
+import axios from 'axios';
 
 @Controller('auth')
 export class AuthController extends BaseController {
@@ -168,15 +169,18 @@ export class AuthController extends BaseController {
     try {
       const result = await this.authService.refreshAccessToken(refreshToken, locale);
       return this.success(res, result);
-    } catch (error) {
-      const _error = error.response;
-      return this.error(res, {
-        status: _error.status,
-        message: _error.message,
-        code: _error.code,
-        statusCode: _error.statusCode,
-        data: _error.data,
-      });
+    } catch (error: any) {
+      if (axios.isAxiosError(error)) {
+        return this.error(res, {
+          status: error.response?.status,
+          message: error.response?.data?.message,
+          code: error.response?.data?.code,
+          statusCode: error.response?.data?.statusCode,
+          data: error.response?.data?.data,
+        });
+      } else {
+        return this.error(res, error);
+      }
     }
   }
 
@@ -228,7 +232,7 @@ export class AuthController extends BaseController {
     try {
       const result = await this.authService.validateToken(token, locale);
       return this.success(res, result);
-    } catch (error) {
+    } catch (error: any) {
       const _error = error.response;
       return this.error(res, {
         status: _error.status,

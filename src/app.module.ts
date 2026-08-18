@@ -33,11 +33,6 @@ import { ConfigModule } from '@nestjs/config';
 import { FcmController } from './controllers/fcm/fcm.controller';
 import { DeepLinkController } from './controllers/deep-link/deep-link.controller';
 import { TopicSubscription } from './entities/topic-subscription.entity';
-import { Book } from './entities/book.entity';
-import { BookFile } from './entities/book-file.entity';
-import { SyncState } from './entities/sync-state.entity';
-import { SyncLog } from './entities/sync-log.entity';
-import { EbookModule } from './modules/ebook.module';
 import { UserInteraction } from './entities/user-interaction.entity';
 import { ConverterModule } from './modules/converter.module';
 import { SubscriptionModule } from './modules/subscription.module';
@@ -45,9 +40,7 @@ import { PaymentModule } from './modules/payment.module';
 import { SubscriptionPlan } from './entities/subscription-plan.entity';
 import { UserSubscription } from './entities/user-subscription.entity';
 import { GeminiModule } from './modules/gemini.module';
-import { GoogleDriveModule } from './modules/google-drive.module';
 import { ScheduleModule } from '@nestjs/schedule';
-import { FacebookModule } from './modules/facebook.module';
 import { HomeController } from './controllers/home.controller';
 import { Template } from './entities/template.entity';
 import { Event } from './entities/event.entity';
@@ -91,10 +84,6 @@ import { ContactModule } from './modules/contact.module';
         Page,
         Feedback,
         TopicSubscription,
-        Book,
-        BookFile,
-        SyncState,
-        SyncLog,
         UserInteraction,
         SubscriptionPlan,
         UserSubscription,
@@ -103,9 +92,12 @@ import { ContactModule } from './modules/contact.module';
         Guest,
         Contact,
       ],
-      synchronize: true, // Chỉ bật khi development
+      // synchronize: auto-update schema from entities (dev only).
+      // migrationsRun: runs migrations on startup — InitialSchema runs before SeedsCommonData.
+      // Do not enable both on a fresh DB: migrations run BEFORE synchronize, so seeds would fail.
+      synchronize: process.env.TYPEORM_SYNCHRONIZE === 'true',
       migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
-      migrationsRun: true,
+      migrationsRun: process.env.TYPEORM_MIGRATIONS_RUN !== 'false',
       // Cấu hình để hỗ trợ MySQL 8.0+ với caching_sha2_password
       extra: {
         charset: 'utf8mb4',
@@ -135,17 +127,13 @@ import { ContactModule } from './modules/contact.module';
     UserInteractionModule,
     PageModule,
     FeedbackModule,
-    EbookModule,
     ConverterModule,
     SubscriptionModule,
     PaymentModule,
     GeminiModule,
-    GoogleDriveModule,
-    FacebookModule,
     TemplateModule,
     EventModule,
     ContactModule,
-    TypeOrmModule.forFeature([Book]),
   ],
   controllers: [FcmController, DeepLinkController, HomeController],
 })

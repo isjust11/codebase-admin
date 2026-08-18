@@ -120,7 +120,7 @@ export class MediaController extends BaseController {
     try {
       await this.mediaService.deleteFile(filename, req.user.id);
       return { success: true };
-    } catch (error) {
+    } catch (error: any) {
       return { success: false, message: error.message };
     }
   }
@@ -132,7 +132,7 @@ export class MediaController extends BaseController {
     try {
       filenames.forEach(filename => this.mediaService.deleteFile(filename, req.user.id));
       return { success: true };
-    } catch (error) {
+    } catch (error: any) {
       return { success: false, message: error.message };
     }
 

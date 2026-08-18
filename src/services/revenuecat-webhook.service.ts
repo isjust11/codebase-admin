@@ -134,7 +134,7 @@ export class RevenueCatWebhookService {
           break;
       }
       return subscriptionActive;
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Error processing RevenueCat webhook: ${error.message}`, error.stack);
       throw error;
     }
@@ -268,7 +268,7 @@ export class RevenueCatWebhookService {
       });
 
       return await this.paymentRepository.save(payment);
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Failed to save RevenueCat Payment: ${error.message}`);
     }
   }

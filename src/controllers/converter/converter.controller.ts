@@ -88,7 +88,7 @@ export class ConverterController {
       res.setHeader('Content-Length', pdfBuffer.length);
 
       return res.send(Buffer.from(pdfBuffer));
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in convertWordToPdf:', error);
       
       // Xử lý lỗi và trả về response
@@ -166,7 +166,7 @@ export class ConverterController {
       res.setHeader('Content-Length', pdfBuffer.length);
 
       return res.send(pdfBuffer);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in convertWordToPdfPublic:', error);
       
       const statusCode = error.status || 500;

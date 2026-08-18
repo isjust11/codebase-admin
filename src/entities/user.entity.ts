@@ -2,7 +2,6 @@ import { Entity, Column, PrimaryGeneratedColumn, BeforeInsert, ManyToMany, JoinT
 import * as bcrypt from 'bcrypt';
 import { Role } from './role.entity';
 import { Exclude } from 'class-transformer';
-import { Book } from './book.entity';
 import { UserSubscription } from './user-subscription.entity';
 
 @Entity()
@@ -124,9 +123,6 @@ export class User {
 
   // @Column({ type: 'json', nullable: true })
   permissions: string[];
-
-  @OneToMany(() => Book, book => book.createBy)
-  books: Book[];
 
   @OneToMany(() => UserSubscription, (sub) => sub.user)
   subscriptions: UserSubscription[];

@@ -9,25 +9,6 @@ import { InteractionType } from '../enums/interaction-type.enum';
 import { InteractionTarget } from '../enums/interaction-target.enum';
 import { Article } from '../entities/article.entity';
 import { Category } from '../entities/category.entity';
-import { Book } from 'src/entities/book.entity';
-import { User } from 'src/entities/user.entity';
-import { FcmService } from './fcm.service';
-import { FcmTokenService } from './fcm-token.service';
-import { NotificationService } from './notification.service';
-import { NotificationType } from 'src/enums/notification.enum';
-import { InteractionTemplate } from 'src/templates/notification/interaction-template';
-
-/** Các interaction sẽ gửi thông báo tới người đăng ebook */
-const NOTIFY_OWNER_TYPES: InteractionType[] = [
-  InteractionType.LIKE,
-  InteractionType.BOOKMARK,
-  InteractionType.FAVORITE,
-  InteractionType.SHARE,
-  InteractionType.DOWNLOAD,
-  InteractionType.RATING,
-  InteractionType.FOLLOW,
-  InteractionType.REPORT_BROKEN_LINK
-];
 
 @Injectable()
 export class UserInteractionService {
@@ -43,13 +24,6 @@ export class UserInteractionService {
     @InjectRepository(Category)
     private categoryRepository: Repository<Category>,
     private dataSource: DataSource,
-    @InjectRepository(Book)
-    private bookRepository: Repository<Book>,
-    @InjectRepository(User)
-    private userRepository: Repository<User>,
-    private fcmService: FcmService,
-    private fcmTokenService: FcmTokenService,
-    private notificationService: NotificationService,
   ) { }
 
   async createInteraction(userId: number, createDto: CreateUserInteractionDto, locale: SupportedLocale = 'vi'): Promise<UserInteraction> {
@@ -140,9 +114,6 @@ export class UserInteractionService {
         existingInteraction.comment = createDto.comment;
         existingInteraction.updatedAt = new Date();
         await this.userInteractionRepository.save(existingInteraction);
-        if (createDto.comment) {
-          this.sendInteractionNotification(userId, createDto, false).catch(() => { });
-        }
       } else {
         existingInteraction.updatedAt = new Date();
         existingInteraction.status = existingInteraction.status === 1 ? 0 : 1;
@@ -176,13 +147,9 @@ export class UserInteractionService {
       status: 1,
     });
 
-    this.setTargetForeignKeys(interaction, createDto.targetType, createDto.targetId);
-
     const savedInteraction = await this.userInteractionRepository.save(interaction);
 
     await this.updateInteractionStats(createDto.targetType, createDto.targetId, createDto.interactionType, 1);
-
-    this.sendInteractionNotification(userId, createDto, true).catch(() => { });
 
     return savedInteraction;
   }
@@ -199,7 +166,6 @@ export class UserInteractionService {
     const limit = query.limit || 10;
     const skip = (page - 1) * limit;
     queryBuilder
-      .leftJoinAndSelect('interaction.book', 'book')
       .leftJoinAndSelect('interaction.user', 'user');
     const [interactions, total] = await queryBuilder.skip(skip)
       .take(limit).orderBy('interaction.updatedAt', 'DESC').getManyAndCount();
@@ -318,9 +284,6 @@ export class UserInteractionService {
       .skip(skip)
       .take(limit)
       .orderBy('interaction.updatedAt', 'DESC')
-      .leftJoinAndSelect('interaction.book', 'book')
-      .leftJoinAndSelect('book.files', 'files')
-      .leftJoinAndSelect('book.category', 'category')
       .getManyAndCount();
 
     return {
@@ -398,27 +361,12 @@ export class UserInteractionService {
       case InteractionTarget.ARTICLE:
         exists = await this.articleRepository.findOne({ where: { id: targetId } }) !== null;
         break;
-      case InteractionTarget.BOOK:
-        exists = await this.bookRepository.findOne({ where: { id: targetId } }) !== null;
-        break;
       default:
-        throw new Error(`Unsupported target type: ${targetType}`);
+        return;
     }
 
     if (!exists) {
       throw new NotFoundException(getMessages(locale).userInteraction.notFound);
-    }
-  }
-
-  private setTargetForeignKeys(
-    interaction: UserInteraction,
-    targetType: InteractionTarget,
-    targetId: number,
-  ): void {
-    switch (targetType) {
-      case InteractionTarget.BOOK:
-        interaction.bookId = targetId;
-        break;
     }
   }
 
@@ -507,124 +455,5 @@ export class UserInteractionService {
       .getRawOne();
     const averageRating = averageRatingResult ? parseFloat(averageRatingResult.avg) : 0;
     return { totalRating, averageRating };
-  }
-
-  /**
-   * Gửi thông báo tới người đăng ebook khi có interaction mới.
-   * Với RATING có comment → thêm thông báo tới những người đã bình luận trước đó.
-   */
-  async sendInteractionNotification(
-    actorUserId: number,
-    dto: CreateUserInteractionDto,
-    isNewInteraction: boolean,
-  ): Promise<void> {
-    try {
-      if (dto.targetType !== InteractionTarget.BOOK) return;
-      if (!NOTIFY_OWNER_TYPES.includes(dto.interactionType)) return;
-
-      const book = await this.bookRepository.findOne({
-        where: { id: dto.targetId },
-        relations: ['createBy'],
-      });
-      if (!book) return;
-
-      const actor = await this.userRepository.findOne({ where: { id: actorUserId } });
-      const actorName = actor?.fullName || actor?.username || 'Người dùng';
-
-      const ownerUserId = book.createById;
-
-      if (ownerUserId && ownerUserId !== actorUserId) {
-        const notification = InteractionTemplate.forBookOwner(
-          dto.interactionType,
-          actorName,
-          book.title,
-          book.id,
-          { rating: dto.rating, comment: dto.comment },
-        );
-
-        if (notification) {
-          const ownerToken = await this.fcmTokenService.findByUserId(ownerUserId);
-          if (ownerToken) {
-            await this.fcmService.sendToToken(ownerToken.token, {
-              title: notification.title,
-              body: notification.body,
-              type: NotificationType.INTERACTION,
-              data: notification.data,
-            });
-          }
-
-          await this.notificationService.newNotification(
-            NotificationType.INTERACTION,
-            notification.data,
-            notification.title,
-            notification.body,
-            ownerUserId,
-          );
-        }
-      }
-
-      if (dto.interactionType === InteractionType.RATING && dto.comment) {
-        await this.notifyOtherReviewers(actorUserId, book, actorName, dto.comment);
-      }
-    } catch (err) {
-      this.logger.warn(`[sendInteractionNotification] Failed: ${err?.message}`);
-    }
-  }
-
-  /**
-   * Gửi thông báo tới những người đã bình luận/đánh giá trước đó khi có bình luận mới.
-   */
-  private async notifyOtherReviewers(
-    actorUserId: number,
-    book: Book,
-    actorName: string,
-    comment: string,
-  ): Promise<void> {
-    const otherReviewers = await this.userInteractionRepository
-      .createQueryBuilder('i')
-      .select('DISTINCT i.userId', 'userId')
-      .where('i.targetId = :targetId', { targetId: book.id })
-      .andWhere('i.targetType = :targetType', { targetType: InteractionTarget.BOOK })
-      .andWhere('i.interactionType = :interactionType', { interactionType: InteractionType.RATING })
-      .andWhere('i.userId != :actorId', { actorId: actorUserId })
-      .andWhere('i.comment IS NOT NULL')
-      .getRawMany();
-
-    if (otherReviewers.length === 0) return;
-
-    const notification = InteractionTemplate.newCommentForOtherReviewers(
-      actorName,
-      book.title,
-      book.id,
-      comment,
-    );
-
-    const reviewerIds: number[] = otherReviewers
-      .map((r) => Number(r.userId))
-      .filter((id) => id !== book.createById);
-
-    for (const reviewerId of reviewerIds) {
-      try {
-        const token = await this.fcmTokenService.findByUserId(reviewerId);
-        if (token) {
-          await this.fcmService.sendToToken(token.token, {
-            title: notification.title,
-            body: notification.body,
-            type: NotificationType.INTERACTION,
-            data: notification.data,
-          });
-        }
-
-        await this.notificationService.newNotification(
-          NotificationType.INTERACTION,
-          notification.data,
-          notification.title,
-          notification.body,
-          reviewerId,
-        );
-      } catch (err) {
-        this.logger.warn(`[notifyOtherReviewers] userId=${reviewerId} failed: ${err?.message}`);
-      }
-    }
   }
 }

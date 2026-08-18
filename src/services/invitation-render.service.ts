@@ -76,7 +76,7 @@ export class InvitationRenderService {
       } finally {
         await browser.close();
       }
-    } catch (error) {
+    } catch (error: any) {
       this.logger.warn(`Puppeteer screenshot failed, falling back to PDF raster: ${error?.message}`);
       return this.pdfFallback(html);
     }

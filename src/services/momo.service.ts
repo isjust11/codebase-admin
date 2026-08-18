@@ -67,8 +67,8 @@ export class MomoService {
 
     const payload = {
       partnerCode: this.config.partnerCode,
-      partnerName: 'Readbox',
-      storeId: 'ReadboxStore',
+      partnerName: 'EventLab',
+      storeId: 'EventLabStore',
       requestId,
       amount: params.amount,
       orderId: params.orderId,

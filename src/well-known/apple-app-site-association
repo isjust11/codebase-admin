@@ -3,10 +3,10 @@
     "apps": [],
     "details": [
       {
-        "appID": "W76M42BX6R.com.hungvv.readbox",
+        "appID": "TEAMID.com.eventlab.app",
         "paths": [
-          "/book/*",
-          "/share/book/*"
+          "/e/*",
+          "/public/e/*"
         ]
       }
     ]

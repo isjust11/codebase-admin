@@ -7,8 +7,6 @@ import { InteractionStats } from '../entities/interaction-stats.entity';
 import { Article } from '../entities/article.entity';
 import { Category } from '../entities/category.entity';
 import { AuthModule } from './auth.module';
-import { Book } from 'src/entities/book.entity';
-import { User } from 'src/entities/user.entity';
 import { NotificationModule } from './notification.module';
 
 @Module({
@@ -20,8 +18,6 @@ import { NotificationModule } from './notification.module';
       InteractionStats,
       Article,
       Category,
-      Book,
-      User,
     ]),
   ],
   controllers: [UserInteractionController],

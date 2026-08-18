@@ -8,6 +8,10 @@ import { SubscriptionPlanEnum } from 'src/enums/subscription-plan.enum';
 
 export class SeedsCommonData1710669600002 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
+        const existingRoles = await queryRunner.query(`SELECT COUNT(*) AS c FROM role`);
+        const hasRoles = Number(existingRoles[0]?.c) > 0;
+
+        if (!hasRoles) {
         // Insert roles
         await queryRunner.query(`
             INSERT INTO role ( name, code, description, isActive) VALUES
@@ -216,19 +220,12 @@ export class SeedsCommonData1710669600002 implements MigrationInterface {
             ('Quản lý bài viết', 'ARTICLE_DELETE', 'Xóa bài viết', true, 'DELETE', '${RESOURCES.ARTICLE}'),
             ('Quản lý bài viết', 'ARTICLE_PUBLISH', 'Xuất bản bài viết', true, 'PUBLISH', '${RESOURCES.ARTICLE}'),
             ('Quản lý bài viết', 'ARTICLE_IMPORT', 'Nhập bài viết', true, 'IMPORT', '${RESOURCES.ARTICLE}'),
-            ('Quản lý bài viết', 'ARTICLE_EXPORT', 'Xuất bài viết', true, 'EXPORT', '${RESOURCES.ARTICLE}'),
-            ('Quản lý ebook', 'EBOOK_READ', 'Xem danh sách ebook', true, 'READ', '${RESOURCES.EBOOK}'),
-            ('Quản lý ebook', 'EBOOK_CREATE', 'Tạo ebook mới', true, 'CREATE', '${RESOURCES.EBOOK}'),
-            ('Quản lý ebook', 'EBOOK_UPDATE', 'Cập nhật thông tin ebook', true, 'UPDATE', '${RESOURCES.EBOOK}'),
-            ('Quản lý ebook', 'EBOOK_DELETE', 'Xóa ebook', true, 'DELETE', '${RESOURCES.EBOOK}'),
-            ('Quản lý ebook', 'EBOOK_IMPORT', 'Nhập ebook', true, 'IMPORT', '${RESOURCES.EBOOK}'),
-            ('Quản lý ebook', 'EBOOK_EXPORT', 'Xuất ebook', true, 'EXPORT', '${RESOURCES.EBOOK}')
+            ('Quản lý bài viết', 'ARTICLE_EXPORT', 'Xuất bài viết', true, 'EXPORT', '${RESOURCES.ARTICLE}')
         `);
         // select permission by resource
         const permissionResult = await queryRunner.query(`
             SELECT id, resource FROM permission WHERE resource = '${RESOURCES.USER}' || resource = '${RESOURCES.ROLE}' || resource = '${RESOURCES.PERMISSION}' 
             || resource = '${RESOURCES.FEATURE}' || resource = '${RESOURCES.CATEGORY}' || resource = '${RESOURCES.CATEGORY_TYPE}' || resource = '${RESOURCES.ARTICLE}'
-            || resource = '${RESOURCES.EBOOK}'
         `);
 
         // insert role permission
@@ -238,13 +235,19 @@ export class SeedsCommonData1710669600002 implements MigrationInterface {
                 ('${superAdminRoleId}', '${permission.id}')
             `);
         }
+        }
+
+        const existingPlans = await queryRunner.query(`SELECT COUNT(*) AS c FROM subscription_plans`);
+        if (Number(existingPlans[0]?.c) > 0) {
+            return;
+        }
 
         // insert subscription plan
         await queryRunner.query(`
-            INSERT INTO subscription_plans (name, code, description, isActive, createdAt, updatedAt) VALUES
-            ('Free', '${SubscriptionPlanEnum.FREE}', 'Free plan', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-            ('Readbox Pro Year', '${SubscriptionPlanEnum.PRO_YEAR}', 'Readbox Pro Year plan', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-            ('Readbox Pro Monthly', '${SubscriptionPlanEnum.PRO_MONTHLY}', 'Readbox Pro Monthly plan', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            INSERT INTO subscription_plans (name, nameEn, code, description, descriptionEn, isActive, createdAt, updatedAt) VALUES
+            ('Free', 'Free', '${SubscriptionPlanEnum.FREE}', 'Gói miễn phí', 'Free plan', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+            ('EventLab Pro Year', 'EventLab Pro Year', '${SubscriptionPlanEnum.PRO_YEAR}', 'Gói Pro theo năm', 'EventLab Pro Year plan', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+            ('EventLab Pro Monthly', 'EventLab Pro Monthly', '${SubscriptionPlanEnum.PRO_MONTHLY}', 'Gói Pro theo tháng', 'EventLab Pro Monthly plan', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         `);
 
     }

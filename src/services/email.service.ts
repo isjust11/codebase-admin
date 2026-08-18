@@ -16,7 +16,7 @@ export class EmailService {
         pass: this.configService.get<string>('EMAIL_PASSWORD'),
       },
     });
-    this.appName = this.configService.get<string>('APP_NAME') || 'ReadBox Admin';
+    this.appName = this.configService.get<string>('APP_NAME') || 'EventLab Admin';
   }
 
   async sendVerificationEmail(email: string, token: string, fullName: string) {
@@ -30,7 +30,7 @@ export class EmailService {
     htmlContent = htmlContent
       .replace(/{{fullName}}/g, fullName)
       .replace(/{{verificationUrl}}/g, verificationUrl)
-      .replace(/{{appName}}/g, this.appName || 'ReadBox Admin');
+      .replace(/{{appName}}/g, this.appName || 'EventLab Admin');
 
     const mailOptions = {
       from: this.configService.get<string>('EMAIL_USER'),
@@ -57,7 +57,7 @@ export class EmailService {
       .replace(/{{fullName}}/g, fullName)
       .replace(/{{pin}}/g, pin)
       .replace(/{{expiresIn}}/g, expiresIn.toString())
-      .replace(/{{appName}}/g, this.appName || 'ReadBox Admin');
+      .replace(/{{appName}}/g, this.appName || 'EventLab Admin');
 
     const mailOptions = {
       from: this.configService.get<string>('EMAIL_USER'),
@@ -83,7 +83,7 @@ export class EmailService {
       .replace(/{{fullName}}/g, fullName)
       .replace(/{{pin}}/g, pin)
       .replace(/{{expiresIn}}/g, this.configService.get<string>('PIN_EXPIRES_IN') || '10')
-      .replace(/{{appName}}/g, this.appName || 'ReadBox Admin');
+      .replace(/{{appName}}/g, this.appName || 'EventLab Admin');
 
     const subject = 'Mã PIN xác thực tài khoản - ' + this.appName;
 

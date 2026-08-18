@@ -5,11 +5,7 @@ export class LookupRequestDto {
   @IsString()
   query: string;
 
-  @IsNotEmpty({ message: 'EbookId không được để trống' })
-  @IsString()
-  ebookId: string;
-
   @IsOptional()
   @IsString()
-  language?: string = 'vi'; // Mặc định trả lời tiếng Việt
+  language?: string = 'vi';
 }

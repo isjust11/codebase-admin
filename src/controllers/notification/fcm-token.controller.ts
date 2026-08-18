@@ -229,7 +229,7 @@ export class FcmTokenController extends BaseController {
             await this.service.subscribeTopic(topic, userId);
             await this.topicSubscriptionService.subscribe(userId, topic);
             return { topic, success: true };
-          } catch (error) {
+          } catch (error: any) {
             return { topic, success: false, error: error.message };
           }
         })

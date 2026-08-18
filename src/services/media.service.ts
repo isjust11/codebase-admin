@@ -49,7 +49,7 @@ export class MediaService {
     private mediaRepository: Repository<Media>,
     private readonly configService: ConfigService,
   ) {
-    this.bucketName = this.configService.get<string>('S3_BUCKET_NAME') || 'readbox-storage';
+    this.bucketName = this.configService.get<string>('S3_BUCKET_NAME') || 'eventlab-storage';
     this.endpoint = this.configService.get<string>('S3_ENDPOINT') || '';
     this.s3Client = new S3Client({
       region: this.configService.get<string>('S3_REGION') || 'us-east-1',
@@ -168,7 +168,7 @@ export class MediaService {
           Key: filePath,
         }));
       }
-    } catch (_error) {
+    } catch (_error: any) {
       throw new Error(`Failed to delete file: ${_error.message}`);
     }
   }
@@ -189,7 +189,7 @@ export class MediaService {
           },
         }));
       }
-    } catch (_error) {
+    } catch (_error: any) {
       throw new Error(`Failed to delete user data: ${_error.message}`);
     }
   }

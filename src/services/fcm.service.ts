@@ -51,7 +51,7 @@ export class FcmService {
       android: {
         priority: 'high' as const,
         notification: {
-          channelId: 'readbox_channel',
+          channelId: 'eventlab_channel',
           sound: 'default',
           priority: 'high' as const,
         },
@@ -93,7 +93,7 @@ export class FcmService {
       android: {
         priority: 'high' as const,
         notification: {
-          channelId: 'readbox_channel',
+          channelId: 'eventlab_channel',
           sound: 'default',
           priority: 'high' as const,
         },
@@ -123,7 +123,7 @@ export class FcmService {
       android: {
         priority: 'high' as const,
         notification: {
-          channelId: 'readbox_channel',
+          channelId: 'eventlab_channel',
           sound: 'default',
           priority: 'high' as const,
         },

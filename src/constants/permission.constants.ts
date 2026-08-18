@@ -10,7 +10,6 @@ export const RESOURCES = {
   NOTIFICATION: 'NOTIFICATION',
   CATEGORY_TYPE: 'CATEGORY_TYPE',
   STATIC_PAGE: 'STATIC_PAGE',
-  EBOOK: 'EBOOK',
   TEMPLATE: 'TEMPLATE',
   EVENT: 'EVENT',
   GUEST: 'GUEST',
@@ -177,17 +176,6 @@ export const PERMISSION_TEMPLATES = {
       { action: ACTIONS.UPDATE, name: 'Cập nhật liên hệ', code: 'CONTACT_UPDATE' },
       { action: ACTIONS.DELETE, name: 'Xóa liên hệ', code: 'CONTACT_DELETE' },
       { action: ACTIONS.IMPORT, name: 'Nhập danh bạ', code: 'CONTACT_IMPORT' },
-    ]
-  },
-  [RESOURCES.EBOOK]: {
-    name: 'Quản lý ebook',
-    permissions: [
-      { action: ACTIONS.READ, name: 'Xem ebook', code: 'EBOOK_READ' },
-      { action: ACTIONS.CREATE, name: 'Tạo ebook', code: 'EBOOK_CREATE' },
-      { action: ACTIONS.UPDATE, name: 'Cập nhật ebook', code: 'EBOOK_UPDATE' },
-      { action: ACTIONS.DELETE, name: 'Xóa ebook', code: 'EBOOK_DELETE' },
-      { action: ACTIONS.IMPORT, name: 'Nhập ebook', code: 'EBOOK_IMPORT' },
-      { action: ACTIONS.EXPORT, name: 'Xuất ebook', code: 'EBOOK_EXPORT' },
     ]
   },
 } as const;

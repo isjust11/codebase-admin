@@ -12,7 +12,6 @@ import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { PermissionGuard } from '../../guards/permission.guard';
 import { LookupRequestDto } from '../../dtos/gemini/lookup-request.dto';
 import { TranslateRequestDto } from '../../dtos/gemini/translate-request.dto';
-import { GenerateBookCoverRequestDto } from '../../dtos/gemini/generate-book-cover-request.dto';
 import { BaseController } from '../base/base.controller';
 
 @Controller('ai')
@@ -22,27 +21,21 @@ export class GeminiController extends BaseController {
     super();
   }
 
-  /**
-   * Tra cứu / giải thích từ hoặc khái niệm bằng AI
-   * POST /ai/lookup
-   */
   @Post('lookup')
   @HttpCode(HttpStatus.OK)
   async lookup(
     @Body() dto: LookupRequestDto,
     @Req() req: Request,
   ) {
-    // get language from header
-    const language = req.headers['x-custom-lang'] || 'vi';
+    const language = req.headers['x-custom-lang'] || dto.language || 'vi';
     try {
-      const bookId = this.decode(dto.ebookId);
-      const result = await this.geminiService.lookup(dto.query, bookId, language);
+      const result = await this.geminiService.lookup(dto.query, language);
       return {
         status: true,
         message: 'Tra cứu thành công',
         data: result,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in lookup:', error);
       return {
         status: false,
@@ -52,10 +45,6 @@ export class GeminiController extends BaseController {
     }
   }
 
-  /**
-   * Dịch thuật văn bản bằng AI
-   * POST /ai/translate
-   */
   @Post('translate')
   @HttpCode(HttpStatus.OK)
   async translate(@Body() dto: TranslateRequestDto) {
@@ -70,35 +59,11 @@ export class GeminiController extends BaseController {
         message: 'Dịch thuật thành công',
         data: result,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in translate:', error);
       return {
         status: false,
         message: error.message || 'Lỗi khi dịch thuật',
-        code: error.status || 500,
-      };
-    }
-  }
-
-  // generate book cover
-  @Post('generate-book-cover')
-  @HttpCode(HttpStatus.OK)
-  async generateBookCover(@Body() dto: GenerateBookCoverRequestDto) {
-    try {
-      const result = await this.geminiService.generateBookCover(
-        dto.title,
-        dto.author,
-      );
-      return {
-        status: true,
-        message: 'Tạo ảnh bìa sách thành công',
-        data: result,
-      };
-    } catch (error) {
-      console.error('Error in generateBookCover:', error);
-      return {
-        status: false,
-        message: error.message || 'Lỗi khi tạo ảnh bìa sách',
         code: error.status || 500,
       };
     }

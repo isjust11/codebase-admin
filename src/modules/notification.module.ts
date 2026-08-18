@@ -29,10 +29,8 @@ import { TopicSubscriptionService } from '../services/topic-subscription.service
 import { NotificationConfigController } from '../controllers/notification/notification-config.controller';
 import { FcmTokenController } from '../controllers/notification/fcm-token.controller';
 import { NotificationController } from '../controllers/notification/notification.controller';
-import { NotificationJobService } from '../services/notification-job.service';
 import { UserInteraction } from '../entities/user-interaction.entity';
 import { InteractionStats } from '../entities/interaction-stats.entity';
-import { Book } from '../entities/book.entity';
 import { User } from '../entities/user.entity';
 
 @Module({
@@ -46,7 +44,6 @@ import { User } from '../entities/user.entity';
       TopicSubscription,
       UserInteraction,
       InteractionStats,
-      Book,
       User,
     ])
   ],
@@ -71,13 +68,12 @@ import { User } from '../entities/user.entity';
     EventFilter,
     RoomFilter,
     MessageFilter,
-    NotificationJobService,
   ],
   controllers: [
     NotificationConfigController,
     FcmTokenController,
     NotificationController,
   ],
-  exports: [NotificationService, FcmService, FcmTokenService, TopicSubscriptionService, NotificationJobService],
+  exports: [NotificationService, FcmService, FcmTokenService, TopicSubscriptionService],
 })
 export class NotificationModule {} 

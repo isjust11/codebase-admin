@@ -3,7 +3,6 @@ import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { RequirePermission } from '../../decorators/require-permissions.decorator';
 import { BaseController } from '../base/base.controller';
 import { NotificationRecordService } from '../../services/notification-record.service';
-import { NotificationJobService } from '../../services/notification-job.service';
 import { PaginationParams } from 'src/dtos/filter.dto';
 import { Response } from 'express';
 import { NotificationStatus } from 'src/enums/notification.enum';
@@ -14,7 +13,6 @@ import { SupportedLocale } from 'src/constants/messages';
 export class NotificationController extends BaseController {
   constructor(
     private readonly service: NotificationRecordService,
-    private readonly jobService: NotificationJobService,
   ) {
     super();
   }
@@ -130,38 +128,6 @@ export class NotificationController extends BaseController {
     try {
       await this.service.remove(this.decode(id));
       return this.success(res, null);
-    } catch (error) {
-      return this.error(res, error);
-    }
-  }
-
-  // ─── Manual job triggers (for testing) ──────────────────────────────────────
-
-  /**
-   * Trigger job "Continue Reading" thủ công.
-   * POST /notifications/jobs/trigger/continue-reading
-   */
-  @Post('jobs/trigger/continue-reading')
-  @RequirePermission('CREATE', 'notification')
-  async triggerContinueReading(@Res() res: Response) {
-    try {
-      await this.jobService.sendContinueReadingNotifications();
-      return this.success(res, { message: 'Continue reading job triggered successfully' });
-    } catch (error) {
-      return this.error(res, error);
-    }
-  }
-
-  /**
-   * Trigger job "Hot Books" thủ công.
-   * POST /notifications/jobs/trigger/hot-books
-   */
-  @Post('jobs/trigger/hot-books')
-  @RequirePermission('CREATE', 'notification')
-  async triggerHotBooks(@Res() res: Response) {
-    try {
-      await this.jobService.sendHotBooksNotifications();
-      return this.success(res, { message: 'Hot books job triggered successfully' });
     } catch (error) {
       return this.error(res, error);
     }

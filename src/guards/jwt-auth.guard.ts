@@ -36,7 +36,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       const result = await super.canActivate(context) as boolean;
       this.logger.debug(`Authentication successful for user: ${request.user?.id}`);
       return result;
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Authentication failed: ${error.message}`);
       throw error;
     }
