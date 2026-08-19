@@ -219,9 +219,19 @@ export class TemplateService {
       cssContent = compiled.css;
       schema = compiled.variablesSchema;
     }
-    const fake = { name: dto.name || 'EventLab', variablesSchema: schema } as Partial<Template>;
+    const sample = this.buildSampleData(
+      { name: dto.name || 'EventLab', variablesSchema: schema },
+      dto.sampleData || {},
+    );
     const html = this.templateRenderService.mergeHtml(htmlContent, cssContent, {
-      sample: this.buildSampleData(fake, dto.sampleData || {}),
+      sample,
+      event: {
+        title: sample.eventTitle,
+        eventDate: sample.eventDate,
+        venue: sample.venue,
+        coverImageUrl: sample.coverImageUrl,
+        eventData: sample,
+      },
       invitationUrl: 'https://eventlab.app/e/preview',
     });
     return { html, compiled: { htmlContent, cssContent, variablesSchema: schema } };
@@ -272,7 +282,10 @@ export class TemplateService {
     };
   }
 
-  private buildSampleData(template: Template, extra: Record<string, any> = {}): Record<string, any> {
+  private buildSampleData(
+    template: Pick<Template, 'name'> & { variablesSchema?: Template['variablesSchema'] },
+    extra: Record<string, any> = {},
+  ): Record<string, any> {
     const sample: Record<string, any> = {
       guestName: 'Nguyễn Văn A',
       brideName: 'Lan',

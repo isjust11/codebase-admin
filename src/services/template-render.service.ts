@@ -31,24 +31,25 @@ export class TemplateRenderService {
     const guest = context.guest || {};
     const eventData = (event.eventData as Record<string, any>) || {};
     const extraData = (guest.extraData as Record<string, any>) || {};
+    const sample = context.sample || {};
     const year = new Date().getFullYear();
 
     return {
+      ...sample,
       ...eventData,
       ...extraData,
-      ...(context.sample || {}),
-      eventTitle: event.title,
-      eventDate: event.eventDate || eventData.eventDate,
-      venue: event.venue || eventData.venue,
-      coverImageUrl: event.coverImageUrl,
-      guestName: guest.name || extraData.guestName || 'Quý khách',
-      guestPhone: guest.phone,
-      guestEmail: guest.email,
-      tableNumber: extraData.tableNumber,
-      personalMessage: extraData.personalMessage,
-      invitationUrl: context.invitationUrl || '',
-      eventUrl: context.invitationUrl || '',
-      qrCodeUrl: context.qrCodeUrl || '',
+      eventTitle: event.title ?? eventData.eventTitle ?? sample.eventTitle,
+      eventDate: event.eventDate ?? eventData.eventDate ?? sample.eventDate,
+      venue: event.venue ?? eventData.venue ?? sample.venue,
+      coverImageUrl: event.coverImageUrl ?? eventData.coverImageUrl ?? sample.coverImageUrl,
+      guestName: guest.name ?? extraData.guestName ?? sample.guestName ?? 'Quý khách',
+      guestPhone: guest.phone ?? extraData.guestPhone ?? sample.guestPhone,
+      guestEmail: guest.email ?? extraData.guestEmail ?? sample.guestEmail,
+      tableNumber: extraData.tableNumber ?? sample.tableNumber,
+      personalMessage: extraData.personalMessage ?? sample.personalMessage,
+      invitationUrl: context.invitationUrl || sample.invitationUrl || '',
+      eventUrl: context.invitationUrl || sample.eventUrl || sample.invitationUrl || '',
+      qrCodeUrl: context.qrCodeUrl || sample.qrCodeUrl || '',
       currentYear: year,
     };
   }
