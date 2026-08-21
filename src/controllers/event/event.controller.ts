@@ -47,8 +47,22 @@ export class EventController extends BaseController {
   @Post()
   async create(@Body() dto: EventDto, @Request() req, @Res() res: Response) {
     try {
-      dto.templateId = this.decode(dto.templateId);
+      if (dto.templateId !== undefined && dto.templateId !== null && dto.templateId !== '') {
+        dto.templateId = this.decode(String(dto.templateId));
+      } else {
+        dto.templateId = undefined;
+      }
       return this.success(res, await this.eventService.create(req.user.id, dto));
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  /** Seed React templates (wedding-basic, wedding-invite2) + demo events. */
+  @Post('demo/seed-wedding')
+  async seedWeddingDemo(@Request() req, @Res() res: Response) {
+    try {
+      return this.success(res, await this.eventService.seedWeddingDemo(req.user.id));
     } catch (error) {
       return this.error(res, error);
     }

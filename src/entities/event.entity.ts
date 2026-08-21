@@ -25,6 +25,10 @@ export class Event {
   @JoinColumn({ name: 'templateId' })
   template?: Template;
 
+  /** Public invite slug for React host: GET /public/events/:slug */
+  @Column({ length: 255, unique: true, nullable: true })
+  slug?: string;
+
   @Column({ length: 255 })
   title: string;
 

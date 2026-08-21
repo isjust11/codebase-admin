@@ -10,6 +10,7 @@ import { InvitationRenderService } from '../services/invitation-render.service';
 import { WishService } from '../services/wish.service';
 import { EventController } from '../controllers/event/event.controller';
 import { PublicInviteController } from '../controllers/event/public-invite.controller';
+import { PublicEventsController } from '../controllers/event/public-events.controller';
 import { AuthModule } from './auth.module';
 import { TemplateModule } from './template.module';
 import { MediaModule } from './media.module';
@@ -22,7 +23,7 @@ import { MediaModule } from './media.module';
     TypeOrmModule.forFeature([Event, Guest, Template, Wish]),
   ],
   providers: [EventService, GuestService, InvitationRenderService, WishService],
-  controllers: [EventController, PublicInviteController],
+  controllers: [EventController, PublicInviteController, PublicEventsController],
   exports: [EventService, GuestService, WishService],
 })
 export class EventModule {}

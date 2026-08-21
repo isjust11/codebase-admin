@@ -10,6 +10,10 @@ export class EventDto {
   title: string;
 
   @IsOptional()
+  @IsString()
+  slug?: string;
+
+  @IsOptional()
   @IsEnum(TemplateType)
   type?: TemplateType;
 

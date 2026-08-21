@@ -10,20 +10,35 @@ export abstract class BaseController {
   // Hàm trả về response lỗi
   protected error(res: Response, error: any) {
     try {
+      if (error && typeof error.getStatus === 'function') {
+        const status = error.getStatus();
+        const responseBody = error.getResponse?.();
+        const message =
+          typeof responseBody === 'string'
+            ? responseBody
+            : responseBody?.message || error.message || 'Error';
+        return res.status(status).json({
+          status: false,
+          message,
+          code: status,
+          statusCode: status,
+          data: typeof responseBody === 'object' ? responseBody : undefined,
+        });
+      }
       const { status, message, data, code, statusCode } = error;
-      return res.status(status).json({
+      return res.status(status || 500).json({
         status,
         message,
         code,
         statusCode,
         data,
       });
-    } catch (error) {
+    } catch (err) {
       return res.status(500).json({
         status: false,
         message: 'Internal server error',
         code: 500,
-        data: error,
+        data: err,
       });
     }
   }
