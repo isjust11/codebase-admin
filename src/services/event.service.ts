@@ -154,7 +154,6 @@ export class EventService {
     const entity = this.eventRepository.create({
       userId,
       title: dto.title,
-      slug,
       type: dto.type || TemplateType.EVENT,
       templateId: this.parseOptionalTemplateId(dto.templateId),
       eventDate: dto.eventDate ? new Date(dto.eventDate) : undefined,
@@ -169,10 +168,6 @@ export class EventService {
   async update(id: number, userId: number, dto: Partial<EventDto>, locale: SupportedLocale = 'vi'): Promise<Event> {
     const event = await this.findOneForUser(id, userId, locale);
     if (dto.title !== undefined) event.title = dto.title;
-    if (dto.slug !== undefined) {
-      const next = await this.ensureUniqueSlug(this.slugify(dto.slug || event.title), event.id);
-      event.slug = next;
-    }
     if (dto.type !== undefined) event.type = dto.type;
     if (dto.eventDate !== undefined) event.eventDate = dto.eventDate ? new Date(dto.eventDate) : undefined;
     if (dto.venue !== undefined) event.venue = dto.venue;
@@ -275,173 +270,5 @@ export class EventService {
       counts.total += count;
     }
     return counts;
-  }
-
-  private async ensurePublishedReactTemplate(opts: {
-    slug: string;
-    name: string;
-    description: string;
-    htmlContent: string;
-    cssContent: string;
-    variablesSchema: Array<{ key: string; label: string; type: string; scope: string; required?: boolean }>;
-    createdById?: number;
-  }): Promise<Template> {
-    let template = await this.templateRepository.findOne({ where: { slug: opts.slug } });
-    if (template) {
-      if (!template.isPublished || template.status !== TemplateStatus.PUBLISHED) {
-        template.isPublished = true;
-        template.status = TemplateStatus.PUBLISHED;
-        template = await this.templateRepository.save(template);
-      }
-      return template;
-    }
-    template = this.templateRepository.create({
-      name: opts.name,
-      slug: opts.slug,
-      type: TemplateType.WEDDING,
-      description: opts.description,
-      htmlContent: opts.htmlContent,
-      cssContent: opts.cssContent,
-      variablesSchema: opts.variablesSchema,
-      editorMode: TemplateEditorMode.CODE,
-      status: TemplateStatus.PUBLISHED,
-      isPublished: true,
-      createdById: opts.createdById,
-    });
-    return this.templateRepository.save(template);
-  }
-
-  /** Ensure wedding-basic template exists (published). */
-  async ensureWeddingBasicTemplate(createdById?: number): Promise<Template> {
-    return this.ensurePublishedReactTemplate({
-      slug: WEDDING_BASIC_TEMPLATE_SLUG,
-      name: 'Wedding Basic (React)',
-      description:
-        'Package templates/wedding-basic. Public JSON slots via GET /public/events/:slug',
-      htmlContent: WEDDING_BASIC_HTML,
-      cssContent: WEDDING_BASIC_CSS,
-      variablesSchema: WEDDING_BASIC_VARIABLES_SCHEMA,
-      createdById,
-    });
-  }
-
-  async ensureWeddingInvite2Template(createdById?: number): Promise<Template> {
-    return this.ensurePublishedReactTemplate({
-      slug: WEDDING_INVITE2_TEMPLATE_SLUG,
-      name: 'Wedding Invite 2 (React)',
-      description:
-        'Package templates/wedding-invite2. Public JSON slots via GET /public/events/:slug',
-      htmlContent: WEDDING_INVITE2_HTML,
-      cssContent: WEDDING_INVITE2_CSS,
-      variablesSchema: WEDDING_INVITE2_VARIABLES_SCHEMA,
-      createdById,
-    });
-  }
-
-  private async upsertDemoEvents(
-    userId: number,
-    template: Template,
-    demos: Array<{
-      slug: string;
-      title: string;
-      eventDate: string;
-      venue: string;
-      eventData: Record<string, any>;
-    }>,
-  ): Promise<Event[]> {
-    const created: Event[] = [];
-    for (const demo of demos) {
-      let event = await this.eventRepository.findOne({
-        where: { slug: demo.slug },
-        relations: ['template'],
-      });
-      if (event && event.userId !== userId) {
-        throw new ConflictException(`Slug "${demo.slug}" already used by another user`);
-      }
-      if (!event) {
-        event = this.eventRepository.create({
-          userId,
-          slug: demo.slug,
-          title: demo.title,
-          type: TemplateType.WEDDING,
-          templateId: template.id,
-          eventDate: new Date(demo.eventDate),
-          venue: demo.venue,
-          eventData: demo.eventData,
-          status: EventStatus.PUBLISHED,
-        });
-      } else {
-        event.title = demo.title;
-        event.templateId = template.id;
-        event.type = TemplateType.WEDDING;
-        event.eventDate = new Date(demo.eventDate);
-        event.venue = demo.venue;
-        event.eventData = demo.eventData;
-        event.status = EventStatus.PUBLISHED;
-      }
-      created.push(await this.eventRepository.save(event));
-    }
-    return created;
-  }
-
-  /**
-   * Seed published React templates + demo events (idempotent per slug).
-   * wedding-basic → minh-anh-hoang-nam, aidana-dias
-   * wedding-invite2 → ngoc-anh-tuan
-   */
-  async seedWeddingDemo(userId: number) {
-    const weddingBasic = await this.ensureWeddingBasicTemplate(userId);
-    const weddingInvite2 = await this.ensureWeddingInvite2Template(userId);
-    const created = [
-      ...(await this.upsertDemoEvents(userId, weddingBasic, WEDDING_DEMO_EVENTS)),
-      ...(await this.upsertDemoEvents(userId, weddingInvite2, WEDDING_INVITE2_DEMO_EVENTS)),
-    ];
-    const summarize = (template: Template) => ({
-      id: template.id,
-      slug: template.slug,
-      name: template.name,
-    });
-    return {
-      template: summarize(weddingBasic),
-      templates: [summarize(weddingBasic), summarize(weddingInvite2)],
-      events: created.map((e) => ({
-        id: e.id,
-        slug: e.slug,
-        title: e.title,
-        status: e.status,
-        reactInviteUrl: this.reactInviteUrl(e.slug!),
-        publicApiUrl: `/public/events/${e.slug}`,
-      })),
-    };
-  }
-
-  async listPublicPublished(): Promise<Array<{ slug: string; templateId: string; title: string }>> {
-    const events = await this.eventRepository
-      .createQueryBuilder('event')
-      .leftJoinAndSelect('event.template', 'template')
-      .where('event.status = :status', { status: EventStatus.PUBLISHED })
-      .andWhere('event.slug IS NOT NULL')
-      .orderBy('event.id', 'DESC')
-      .getMany();
-    return events.map((e) => ({
-      slug: e.slug!,
-      templateId: e.template?.slug || WEDDING_BASIC_TEMPLATE_SLUG,
-      title: e.title,
-    }));
-  }
-
-  async findPublicBySlug(slug: string): Promise<EventInvitePayload> {
-    const event = await this.eventRepository.findOne({
-      where: { slug, status: EventStatus.PUBLISHED },
-      relations: ['template'],
-    });
-    if (!event) {
-      const available = await this.listPublicPublished();
-      throw new NotFoundException({
-        message: `Event "${slug}" not found`,
-        available: available.map((e) => e.slug),
-      });
-    }
-    return this.toInvitePayload(event);
   }
 }

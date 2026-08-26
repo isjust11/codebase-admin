@@ -26,15 +26,23 @@ async function bootstrap() {
   // Tạo danh sách origins: web client + mobile origins
   const allowedOrigins: string[] = [];
   if (clientUrl) {
-    allowedOrigins.push(clientUrl);
+    allowedOrigins.push(...clientUrl.split(',').map(url => url.trim()));
   }
   allowedOrigins.push(...mobileOrigins);
 
-  // Nếu không có origin nào được cấu hình, cho phép tất cả (chỉ dùng cho development)
   const corsOptions = {
-    origin: allowedOrigins.length > 0
-      ? allowedOrigins
-      : (process.env.NODE_ENV === 'production' ? false : '*'),
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+      if (!origin) return callback(null, true);
+      if (process.env.NODE_ENV !== 'production') {
+        if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+          return callback(null, true);
+        }
+      }
+      if (allowedOrigins.length === 0 || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+        return callback(null, true);
+      }
+      return callback(null, false);
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Accept-Language', 'x-region', 'x-country-code'],
     credentials: true,
