@@ -19,12 +19,14 @@ import { EventService } from '../../services/event.service';
 import { GuestService } from '../../services/guest.service';
 import { InvitationRenderService } from '../../services/invitation-render.service';
 import { WishService } from '../../services/wish.service';
-import { EventDto, EventDataDto, AssignTemplateDto } from '../../dtos/event.dto';
+import { EventDto, EventDataDto, AssignTemplateDto, UpdateCustomizationDto, UpsertEventMediaDto } from '../../dtos/event.dto';
 import { GuestDto, ImportGuestsDto } from '../../dtos/guest.dto';
 import { PaginationParams } from '../../dtos/filter.dto';
 import { BaseController } from '../base/base.controller';
 import { PermissionGuard } from '../../guards/permission.guard';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
+import { RequirePermission } from '../../decorators/require-permissions.decorator';
+import { ACTIONS, RESOURCES } from '../../constants/permission.constants';
 import { Response } from 'express';
 import { Locale } from '../../decorators/locale.decorator';
 import { SupportedLocale } from '../../constants/messages';
@@ -308,7 +310,34 @@ export class EventController extends BaseController {
     }
   }
 
+  @Get(':id/customization')
+  @RequirePermission(ACTIONS.READ, RESOURCES.EVENT)
+  async getCustomization(@Param('id') id: string, @Request() req, @Locale() locale: SupportedLocale, @Res() res: Response) {
+    try {
+      return this.success(res, await this.eventService.getCustomization(this.decode(id), req.user.id, locale, req.user));
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Put(':id/customization')
+  @RequirePermission(ACTIONS.UPDATE, RESOURCES.EVENT)
+  async updateCustomization(
+    @Param('id') id: string,
+    @Body() dto: UpdateCustomizationDto,
+    @Request() req,
+    @Locale() locale: SupportedLocale,
+    @Res() res: Response,
+  ) {
+    try {
+      return this.success(res, await this.eventService.updateCustomization(this.decode(id), req.user.id, dto, locale, req.user));
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
   @Put(':id/data')
+  @RequirePermission(ACTIONS.UPDATE, RESOURCES.EVENT)
   async updateData(
     @Param('id') id: string,
     @Body() dto: EventDataDto,
@@ -318,6 +347,58 @@ export class EventController extends BaseController {
   ) {
     try {
       return this.success(res, await this.eventService.updateData(this.decode(id), req.user.id, dto.eventData || {}, locale));
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Event Media Endpoints (Hybrid Storage)
+  // ---------------------------------------------------------------------------
+
+  @Get(':id/media')
+  @RequirePermission(ACTIONS.READ, RESOURCES.EVENT)
+  async getMedia(
+    @Param('id') id: string,
+    @Query('groupKey') groupKey: string,
+    @Request() req,
+    @Locale() locale: SupportedLocale,
+    @Res() res: Response,
+  ) {
+    try {
+      return this.success(res, await this.eventService.getMedia(this.decode(id), req.user.id, locale, groupKey));
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Put(':id/media')
+  @RequirePermission(ACTIONS.UPDATE, RESOURCES.EVENT)
+  async upsertMedia(
+    @Param('id') id: string,
+    @Body() dto: UpsertEventMediaDto,
+    @Request() req,
+    @Locale() locale: SupportedLocale,
+    @Res() res: Response,
+  ) {
+    try {
+      return this.success(res, await this.eventService.upsertMedia(this.decode(id), req.user.id, dto, locale, req.user));
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Delete(':id/media/:mediaId')
+  @RequirePermission(ACTIONS.UPDATE, RESOURCES.EVENT)
+  async deleteMediaItem(
+    @Param('id') id: string,
+    @Param('mediaId') mediaId: string,
+    @Request() req,
+    @Locale() locale: SupportedLocale,
+    @Res() res: Response,
+  ) {
+    try {
+      return this.success(res, await this.eventService.deleteMediaItem(this.decode(mediaId), this.decode(id), req.user.id, locale, req.user));
     } catch (error) {
       return this.error(res, error);
     }

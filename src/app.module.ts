@@ -44,6 +44,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { HomeController } from './controllers/home.controller';
 import { Template } from './entities/template.entity';
 import { Event } from './entities/event.entity';
+import { EventMedia } from './entities/event-media.entity';
 import { Guest } from './entities/guest.entity';
 import { Contact } from './entities/contact.entity';
 import { Wish } from './entities/wish.entity';
@@ -90,6 +91,7 @@ import { ContactModule } from './modules/contact.module';
         UserSubscription,
         Template,
         Event,
+        EventMedia,
         Guest,
         Contact,
         Wish,

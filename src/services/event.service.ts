@@ -10,7 +10,8 @@ import { Repository } from 'typeorm';
 import { Event } from '../entities/event.entity';
 import { Template } from '../entities/template.entity';
 import { Guest } from '../entities/guest.entity';
-import { EventDto } from '../dtos/event.dto';
+import { EventMedia, EventMediaType } from '../entities/event-media.entity';
+import { EventDto, UpdateCustomizationDto, UpsertEventMediaDto } from '../dtos/event.dto';
 import { PaginatedResponse, PaginationParams } from '../dtos/filter.dto';
 import { getMessages, SupportedLocale } from '../constants/messages';
 import { EventStatus } from '../enums/event-status.enum';
@@ -51,6 +52,8 @@ export class EventService {
     private readonly templateRepository: Repository<Template>,
     @InjectRepository(Guest)
     private readonly guestRepository: Repository<Guest>,
+    @InjectRepository(EventMedia)
+    private readonly eventMediaRepository: Repository<EventMedia>,
     private readonly templateRenderService: TemplateRenderService,
   ) {}
 
@@ -202,6 +205,248 @@ export class EventService {
     return this.eventRepository.save(event);
   }
 
+  async getCustomization(
+    id: number,
+    userId: number,
+    locale: SupportedLocale = 'vi',
+    currentUser?: any,
+  ) {
+    const event = await this.findOneForUser(id, userId, locale);
+    const template = event.templateId
+      ? await this.templateRepository.findOne({ where: { id: event.templateId } })
+      : null;
+
+    let variablesSchema = template?.variablesSchema || [];
+    if (!variablesSchema || variablesSchema.length === 0) {
+      const templateSlug = template?.slug || WEDDING_BASIC_TEMPLATE_SLUG;
+      if (templateSlug === WEDDING_INVITE2_TEMPLATE_SLUG) {
+        variablesSchema = WEDDING_INVITE2_VARIABLES_SCHEMA;
+      } else {
+        variablesSchema = WEDDING_BASIC_VARIABLES_SCHEMA;
+      }
+    }
+
+    const invitePayload = event.slug ? this.toInvitePayload({ ...event, template: template || undefined } as Event) : null;
+    const reactInviteUrl = event.slug ? this.reactInviteUrl(event.slug) : null;
+
+    // Check if user is restricted to VIEW_EDITOR role only
+    const userRoleCodes: string[] = Array.isArray(currentUser?.roles)
+      ? currentUser.roles.map((r: any) => typeof r === 'string' ? r : r.code || r.name)
+      : [];
+    const isViewEditorOnly =
+      userRoleCodes.includes('VIEW_EDITOR') &&
+      !userRoleCodes.includes('TEMPLATE_MODIFY_EDITOR') &&
+      !userRoleCodes.includes('ADMIN') &&
+      !userRoleCodes.includes('SUPPER_ADMIN');
+
+    const media = await this.getMedia(id, userId, locale);
+
+    return {
+      eventId: event.id,
+      title: event.title,
+      slug: event.slug,
+      venue: event.venue,
+      eventDate: event.eventDate,
+      templateId: event.templateId,
+      templateSlug: template?.slug || WEDDING_BASIC_TEMPLATE_SLUG,
+      templateName: template?.name || 'Wedding Template',
+      variablesSchema,
+      eventData: event.eventData || {},
+      media,
+      invitePayload,
+      reactInviteUrl,
+      readOnly: isViewEditorOnly,
+      userRoles: userRoleCodes,
+    };
+  }
+
+  async updateCustomization(
+    id: number,
+    userId: number,
+    dto: UpdateCustomizationDto,
+    locale: SupportedLocale = 'vi',
+    currentUser?: any,
+  ) {
+    // Verify user is not restricted by VIEW_EDITOR role
+    const userRoleCodes: string[] = Array.isArray(currentUser?.roles)
+      ? currentUser.roles.map((r: any) => typeof r === 'string' ? r : r.code || r.name)
+      : [];
+    if (
+      userRoleCodes.includes('VIEW_EDITOR') &&
+      !userRoleCodes.includes('TEMPLATE_MODIFY_EDITOR') &&
+      !userRoleCodes.includes('ADMIN') &&
+      !userRoleCodes.includes('SUPPER_ADMIN')
+    ) {
+      throw new ForbiddenException('User with VIEW_EDITOR role cannot modify invitation content');
+    }
+
+    const event = await this.findOneForUser(id, userId, locale);
+
+    if (dto.eventData) {
+      event.eventData = { ...(event.eventData || {}), ...dto.eventData };
+    }
+
+    if (dto.title !== undefined) {
+      event.title = dto.title;
+    } else if (event.eventData?.brideName && event.eventData?.groomName) {
+      event.title = `Lễ Thành Hôn · ${event.eventData.brideName} & ${event.eventData.groomName}`;
+    }
+
+    if (dto.venue !== undefined) {
+      event.venue = dto.venue;
+    } else if (event.eventData?.venue) {
+      event.venue = event.eventData.venue;
+    }
+
+    if (dto.eventDate !== undefined) {
+      event.eventDate = dto.eventDate ? new Date(dto.eventDate) : undefined;
+    } else if (event.eventData?.eventDate) {
+      event.eventDate = new Date(event.eventData.eventDate);
+    }
+
+    if (dto.slug !== undefined) {
+      const baseSlug = this.slugify(dto.slug);
+      event.slug = await this.ensureUniqueSlug(baseSlug, event.id);
+    } else if (!event.slug) {
+      event.slug = await this.ensureUniqueSlug(this.slugify(event.title), event.id);
+    }
+
+    const savedEvent = await this.eventRepository.save(event);
+    const template = savedEvent.templateId
+      ? await this.templateRepository.findOne({ where: { id: savedEvent.templateId } })
+      : null;
+
+    const invitePayload = savedEvent.slug
+      ? this.toInvitePayload({ ...savedEvent, template: template || undefined } as Event)
+      : null;
+
+    return {
+      event: savedEvent,
+      invitePayload,
+      reactInviteUrl: savedEvent.slug ? this.reactInviteUrl(savedEvent.slug) : null,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Event Media Methods (Hybrid Storage)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Returns all media items for an event, optionally filtered by groupKey.
+   * Groups are returned as a map: { album: [...], highlight_video: [...] }
+   */
+  async getMedia(
+    eventId: number,
+    userId: number,
+    locale: SupportedLocale = 'vi',
+    groupKey?: string,
+  ): Promise<Record<string, EventMedia[]>> {
+    await this.findOneForUser(eventId, userId, locale); // ownership check
+
+    const where: any = { eventId };
+    if (groupKey) where.groupKey = groupKey;
+
+    const items = await this.eventMediaRepository.find({
+      where,
+      order: { groupKey: 'ASC', sortOrder: 'ASC', id: 'ASC' },
+    });
+
+    // Group by groupKey
+    return items.reduce<Record<string, EventMedia[]>>((acc, item) => {
+      if (!acc[item.groupKey]) acc[item.groupKey] = [];
+      acc[item.groupKey].push(item);
+      return acc;
+    }, {});
+  }
+
+  /**
+   * Replaces all media items in a group with the new list (replace strategy).
+   * Validates that the user has write access and is not VIEW_EDITOR only.
+   */
+  async upsertMedia(
+    eventId: number,
+    userId: number,
+    dto: UpsertEventMediaDto,
+    locale: SupportedLocale = 'vi',
+    currentUser?: any,
+  ): Promise<EventMedia[]> {
+    // RBAC: VIEW_EDITOR cannot write media
+    const userRoleCodes: string[] = Array.isArray(currentUser?.roles)
+      ? currentUser.roles.map((r: any) => (typeof r === 'string' ? r : r.code || r.name))
+      : [];
+    if (
+      userRoleCodes.includes('VIEW_EDITOR') &&
+      !userRoleCodes.includes('TEMPLATE_MODIFY_EDITOR') &&
+      !userRoleCodes.includes('ADMIN') &&
+      !userRoleCodes.includes('SUPPER_ADMIN')
+    ) {
+      throw new ForbiddenException('User with VIEW_EDITOR role cannot modify event media');
+    }
+
+    await this.findOneForUser(eventId, userId, locale); // ownership check
+
+    // Delete existing items in this group for this event
+    await this.eventMediaRepository.delete({ eventId, groupKey: dto.groupKey });
+
+    if (!dto.items || dto.items.length === 0) {
+      return [];
+    }
+
+    // Build and save new items
+    const entities = dto.items.map((item, index) =>
+      this.eventMediaRepository.create({
+        eventId,
+        groupKey: dto.groupKey,
+        type: item.type ?? EventMediaType.IMAGE,
+        url: item.url,
+        caption: item.caption,
+        mimeType: item.mimeType,
+        fileSize: item.fileSize,
+        width: item.width,
+        height: item.height,
+        sortOrder: item.sortOrder ?? index,
+      }),
+    );
+
+    return this.eventMediaRepository.save(entities);
+  }
+
+  /**
+   * Deletes a single media item by id, verifying event ownership.
+   */
+  async deleteMediaItem(
+    mediaId: number,
+    eventId: number,
+    userId: number,
+    locale: SupportedLocale = 'vi',
+    currentUser?: any,
+  ): Promise<{ deleted: boolean }> {
+    // RBAC check
+    const userRoleCodes: string[] = Array.isArray(currentUser?.roles)
+      ? currentUser.roles.map((r: any) => (typeof r === 'string' ? r : r.code || r.name))
+      : [];
+    if (
+      userRoleCodes.includes('VIEW_EDITOR') &&
+      !userRoleCodes.includes('TEMPLATE_MODIFY_EDITOR') &&
+      !userRoleCodes.includes('ADMIN') &&
+      !userRoleCodes.includes('SUPPER_ADMIN')
+    ) {
+      throw new ForbiddenException('User with VIEW_EDITOR role cannot delete event media');
+    }
+
+    await this.findOneForUser(eventId, userId, locale); // ownership check
+
+    const media = await this.eventMediaRepository.findOne({
+      where: { id: mediaId, eventId },
+    });
+    if (!media) {
+      throw new NotFoundException('Media item not found');
+    }
+
+    await this.eventMediaRepository.remove(media);
+    return { deleted: true };
+  }
+
   async publish(id: number, userId: number, locale: SupportedLocale = 'vi'): Promise<Event> {
     const event = await this.findOneForUser(id, userId, locale);
     if (!event.slug) {
@@ -270,5 +515,173 @@ export class EventService {
       counts.total += count;
     }
     return counts;
+  }
+
+  async seedWeddingDemo(userId: number) {
+    let t1 = await this.templateRepository.findOne({ where: { slug: WEDDING_BASIC_TEMPLATE_SLUG } });
+    if (!t1) {
+      t1 = this.templateRepository.create({
+        name: 'Wedding Basic (React)',
+        slug: WEDDING_BASIC_TEMPLATE_SLUG,
+        type: TemplateType.EVENT,
+        htmlContent: WEDDING_BASIC_HTML,
+        cssContent: WEDDING_BASIC_CSS,
+        variablesSchema: WEDDING_BASIC_VARIABLES_SCHEMA,
+        editorMode: TemplateEditorMode.CODE,
+        status: TemplateStatus.PUBLISHED,
+        isPublished: true,
+        createdById: userId,
+      });
+      t1 = await this.templateRepository.save(t1);
+    }
+
+    let t2 = await this.templateRepository.findOne({ where: { slug: WEDDING_INVITE2_TEMPLATE_SLUG } });
+    if (!t2) {
+      t2 = this.templateRepository.create({
+        name: 'Wedding Invite 2 (React)',
+        slug: WEDDING_INVITE2_TEMPLATE_SLUG,
+        type: TemplateType.EVENT,
+        htmlContent: WEDDING_INVITE2_HTML,
+        cssContent: WEDDING_INVITE2_CSS,
+        variablesSchema: WEDDING_INVITE2_VARIABLES_SCHEMA,
+        editorMode: TemplateEditorMode.CODE,
+        status: TemplateStatus.PUBLISHED,
+        isPublished: true,
+        createdById: userId,
+      });
+      t2 = await this.templateRepository.save(t2);
+    }
+
+    const seededEvents: Event[] = [];
+
+    for (const item of WEDDING_DEMO_EVENTS) {
+      let event = await this.eventRepository.findOne({ where: { slug: item.slug } });
+      if (!event) {
+        event = this.eventRepository.create({
+          userId,
+          title: item.title,
+          slug: item.slug,
+          type: TemplateType.EVENT,
+          templateId: t1.id,
+          eventDate: item.eventDate ? new Date(item.eventDate) : undefined,
+          venue: item.venue,
+          eventData: item.eventData,
+          status: EventStatus.PUBLISHED,
+        });
+        event = await this.eventRepository.save(event);
+      }
+      seededEvents.push(event);
+    }
+
+    for (const item of WEDDING_INVITE2_DEMO_EVENTS) {
+      let event = await this.eventRepository.findOne({ where: { slug: item.slug } });
+      if (!event) {
+        event = this.eventRepository.create({
+          userId,
+          title: item.title,
+          slug: item.slug,
+          type: TemplateType.EVENT,
+          templateId: t2.id,
+          eventDate: item.eventDate ? new Date(item.eventDate) : undefined,
+          venue: item.venue,
+          eventData: item.eventData,
+          status: EventStatus.PUBLISHED,
+        });
+        event = await this.eventRepository.save(event);
+      }
+      seededEvents.push(event);
+    }
+
+    return {
+      message: 'Seeded wedding templates and demo events successfully',
+      templates: [t1, t2],
+      events: seededEvents,
+    };
+  }
+
+  async findPublicBySlug(slug: string, _locale?: SupportedLocale): Promise<EventInvitePayload> {
+    let event: Event | null = null;
+    try {
+      event = await this.eventRepository.findOne({
+        where: { slug },
+        relations: ['template'],
+      });
+    } catch (e) {
+      event = null;
+    }
+
+    if (event) {
+      return this.toInvitePayload(event);
+    }
+
+    const demo1 = WEDDING_DEMO_EVENTS.find((e) => e.slug === slug);
+    if (demo1) {
+      return {
+        slug: demo1.slug,
+        templateId: WEDDING_BASIC_TEMPLATE_SLUG,
+        title: demo1.title,
+        data: demo1.eventData,
+      };
+    }
+
+    const demo2 = WEDDING_INVITE2_DEMO_EVENTS.find((e) => e.slug === slug);
+    if (demo2) {
+      return {
+        slug: demo2.slug,
+        templateId: WEDDING_INVITE2_TEMPLATE_SLUG,
+        title: demo2.title,
+        data: demo2.eventData,
+      };
+    }
+
+    throw new NotFoundException(`Event "${slug}" not found`);
+  }
+
+  async listPublicPublished(): Promise<Array<{ slug: string; templateId: string; title: string }>> {
+    let dbEvents: Event[] = [];
+    try {
+      dbEvents = await this.eventRepository.find({
+        where: { status: EventStatus.PUBLISHED },
+        relations: ['template'],
+        take: 50,
+      });
+    } catch (e) {
+      dbEvents = [];
+    }
+
+    const result: Array<{ slug: string; templateId: string; title: string }> = dbEvents
+      .filter((e) => Boolean(e.slug))
+      .map((e) => ({
+        slug: e.slug!,
+        templateId: e.template?.slug || WEDDING_BASIC_TEMPLATE_SLUG,
+        title: e.title,
+      }));
+
+    for (const d of WEDDING_DEMO_EVENTS) {
+      if (!result.some((r) => r.slug === d.slug)) {
+        result.push({
+          slug: d.slug,
+          templateId: WEDDING_BASIC_TEMPLATE_SLUG,
+          title: d.title,
+        });
+      }
+    }
+
+    for (const d of WEDDING_INVITE2_DEMO_EVENTS) {
+      if (!result.some((r) => r.slug === d.slug)) {
+        result.push({
+          slug: d.slug,
+          templateId: WEDDING_INVITE2_TEMPLATE_SLUG,
+          title: d.title,
+        });
+      }
+    }
+
+    return result;
+  }
+
+  async findPublicList(): Promise<{ events: Array<{ slug: string; templateId: string; title: string }> }> {
+    const events = await this.listPublicPublished();
+    return { events };
   }
 }
