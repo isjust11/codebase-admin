@@ -36,12 +36,11 @@ export class InvitationRenderService {
       throw new NotFoundException(getMessages(locale).eventlab.templateNotFound);
     }
     const invitationUrl = this.eventService.invitationUrl(guest.publicToken);
-    const html = this.templateRenderService.mergeHtml(template.htmlContent, template.cssContent, {
-      event: event as any,
-      guest: guest as any,
-      invitationUrl,
-    });
-    const buffer = await this.htmlToPng(html);
+    const reactUrl = template.slug ? this.eventService.reactInviteUrl(template.slug) : '';
+    // Use the guest token to allow the React host to load guest data
+    const targetUrl = reactUrl ? `${reactUrl}?token=${guest.publicToken}` : invitationUrl;
+    
+    const buffer = await this.urlToPng(targetUrl);
     const media = await this.mediaService.uploadFromBuffer(
       buffer,
       `eventlab-${eventId}-${guestId}.png`,
@@ -59,7 +58,7 @@ export class InvitationRenderService {
     };
   }
 
-  private async htmlToPng(html: string): Promise<Buffer> {
+  private async urlToPng(url: string): Promise<Buffer> {
     try {
       const puppeteer = require('puppeteer');
       const browser = await puppeteer.launch({
@@ -69,7 +68,7 @@ export class InvitationRenderService {
       try {
         const page = await browser.newPage();
         await page.setViewport({ width: 1080, height: 1920, deviceScaleFactor: 2 });
-        await page.setContent(html, { waitUntil: 'networkidle0', timeout: 30000 });
+        await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 });
         const element =
           (await page.$('.el-cover')) || (await page.$('.el-invite-root')) || (await page.$('.card')) || (await page.$('body'));
         const buffer = await element.screenshot({ type: 'png' });
@@ -78,16 +77,8 @@ export class InvitationRenderService {
         await browser.close();
       }
     } catch (error: any) {
-      this.logger.warn(`Puppeteer screenshot failed, falling back to PDF raster: ${error?.message}`);
-      return this.pdfFallback(html);
+      this.logger.warn(`Puppeteer screenshot failed: ${error?.message}`);
+      throw error;
     }
-  }
-
-  private async pdfFallback(html: string): Promise<Buffer> {
-    const pdfBuffer = await htmlPdf.generatePdf(
-      { content: html },
-      { format: 'A5', printBackground: true, preferCSSPageSize: true },
-    );
-    return Buffer.from(pdfBuffer);
   }
 }

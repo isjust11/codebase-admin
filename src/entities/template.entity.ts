@@ -26,20 +26,9 @@ export class Template {
   @Column({ type: 'text', nullable: true })
   description?: string;
 
-  @Column({ type: 'longtext' })
-  htmlContent: string;
-
-  @Column({ type: 'longtext', nullable: true })
-  cssContent?: string;
-
   @Column({ type: 'json', nullable: true })
   variablesSchema?: Record<string, any>[];
 
-  @Column({ type: 'json', nullable: true })
-  layoutJson?: Record<string, any>;
-
-  @Column({ type: 'varchar', length: 16, default: TemplateEditorMode.CODE })
-  editorMode?: TemplateEditorMode | string;
 
   @Column({ nullable: true })
   categoryId?: number;

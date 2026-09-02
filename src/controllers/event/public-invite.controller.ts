@@ -32,15 +32,11 @@ export class PublicInviteController extends BaseController {
       const event = guest.event;
       const template = event?.template;
       const invitationUrl = this.eventService.invitationUrl(guest.publicToken);
-      const html = template
-        ? this.templateRenderService.mergeHtml(template.htmlContent, template.cssContent, {
-            event: event as any,
-            guest: guest as any,
-            invitationUrl,
-          })
-        : '';
+      const reactInviteUrl = template?.slug ? this.eventService.reactInviteUrl(template.slug) : undefined;
+      const invitePayload = template?.slug && event ? this.eventService.toInvitePayload({ ...event, template } as any) : undefined;
       return this.success(res, {
-        html,
+        reactInviteUrl,
+        invitePayload,
         invitationUrl,
         event: event
           ? {

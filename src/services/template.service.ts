@@ -115,16 +115,11 @@ export class TemplateService {
       type: dto.type || TemplateType.EVENT,
       thumbnailUrl: dto.thumbnailUrl,
       description: dto.description,
-      htmlContent: dto.htmlContent || '<div class="el-invite-root"></div>',
-      cssContent: dto.cssContent,
       variablesSchema: dto.variablesSchema || [],
-      layoutJson: dto.layoutJson,
-      editorMode: dto.editorMode || TemplateEditorMode.CODE,
       categoryId: dto.categoryId ? Number(dto.categoryId) : undefined,
       isPremium: dto.isPremium ?? false,
       createdById: dto.createdBy ? Number(dto.createdBy) : Number(actor.id),
     });
-    this.applyVisualCompile(entity, dto);
     this.applyStatus(entity, published ? TemplateStatus.PUBLISHED : TemplateStatus.DRAFT);
     return this.templateRepository.save(entity);
   }
@@ -143,12 +138,7 @@ export class TemplateService {
     if (dto.type) template.type = dto.type;
     if (dto.thumbnailUrl !== undefined) template.thumbnailUrl = dto.thumbnailUrl;
     if (dto.description !== undefined) template.description = dto.description;
-    if (dto.htmlContent !== undefined) template.htmlContent = dto.htmlContent;
-    if (dto.cssContent !== undefined) template.cssContent = dto.cssContent;
     if (dto.variablesSchema !== undefined) template.variablesSchema = dto.variablesSchema;
-    if (dto.layoutJson !== undefined) template.layoutJson = dto.layoutJson;
-    if (dto.editorMode !== undefined) template.editorMode = dto.editorMode;
-    this.applyVisualCompile(template, dto);
     if (dto.categoryId !== undefined) template.categoryId = dto.categoryId ? Number(dto.categoryId) : undefined;
     if (dto.isPremium !== undefined) template.isPremium = dto.isPremium;
     if (moderate && dto.isPublished !== undefined) {
@@ -209,32 +199,9 @@ export class TemplateService {
     return { deleted: true };
   }
 
-  async previewDraft(dto: Partial<TemplateDto> & { sampleData?: Record<string, any> }) {
-    let htmlContent = dto.htmlContent || '';
-    let cssContent = dto.cssContent || '';
-    let schema = dto.variablesSchema || [];
-    if (dto.editorMode === TemplateEditorMode.VISUAL || dto.layoutJson) {
-      const compiled = this.templateSectionCompilerService.compile(dto.layoutJson as any);
-      htmlContent = compiled.html;
-      cssContent = compiled.css;
-      schema = compiled.variablesSchema;
-    }
-    const sample = this.buildSampleData(
-      { name: dto.name || 'EventLab', variablesSchema: schema },
-      dto.sampleData || {},
-    );
-    const html = this.templateRenderService.mergeHtml(htmlContent, cssContent, {
-      sample,
-      event: {
-        title: sample.eventTitle,
-        eventDate: sample.eventDate,
-        venue: sample.venue,
-        coverImageUrl: sample.coverImageUrl,
-        eventData: sample,
-      },
-      invitationUrl: 'https://eventlab.app/e/preview',
-    });
-    return { html, compiled: { htmlContent, cssContent, variablesSchema: schema } };
+  private getReactInviteUrl(slug: string): string {
+    const host = process.env.REACT_APP_URL || 'https://eventlab.app';
+    return `${host}/invite/${slug}`;
   }
 
   catalogMeta() {
@@ -246,14 +213,11 @@ export class TemplateService {
 
   async preview(id: number, sampleData: Record<string, any> = {}, locale: SupportedLocale = 'vi') {
     const template = await this.findOne(id, locale);
-    if (!template.htmlContent) {
-      throw new BadRequestException(getMessages(locale).eventlab.templateEmpty);
-    }
-    const html = this.templateRenderService.mergeHtml(template.htmlContent, template.cssContent, {
-      sample: this.buildSampleData(template, sampleData),
-      invitationUrl: 'https://eventlab.app/e/preview',
-    });
-    return { html, template };
+    return { 
+      reactInviteUrl: template.slug ? this.getReactInviteUrl(template.slug) : undefined,
+      template,
+      sample: this.buildSampleData(template, sampleData)
+    };
   }
 
   async publicPreview(id: number, locale: SupportedLocale = 'vi') {
@@ -261,15 +225,8 @@ export class TemplateService {
     if (!template.isPublished && this.effectiveStatus(template) !== TemplateStatus.PUBLISHED) {
       throw new NotFoundException(getMessages(locale).eventlab.templateNotFound);
     }
-    if (!template.htmlContent) {
-      throw new BadRequestException(getMessages(locale).eventlab.templateEmpty);
-    }
-    const html = this.templateRenderService.mergeHtml(template.htmlContent, template.cssContent, {
-      sample: this.buildSampleData(template),
-      invitationUrl: 'https://eventlab.app/e/preview',
-    });
     return {
-      html,
+      reactInviteUrl: template.slug ? this.getReactInviteUrl(template.slug) : undefined,
       template: {
         id: template.id,
         name: template.name,
@@ -321,21 +278,6 @@ export class TemplateService {
     return { ...sample, ...extra };
   }
 
-  private applyVisualCompile(template: Template, dto: Partial<TemplateDto>) {
-    const visual = dto.editorMode === TemplateEditorMode.VISUAL || (!!dto.layoutJson && dto.editorMode !== TemplateEditorMode.CODE);
-    if (!visual) {
-      if (dto.editorMode) template.editorMode = dto.editorMode;
-      return;
-    }
-    const compiled = this.templateSectionCompilerService.compile(dto.layoutJson || (template.layoutJson as any));
-    template.editorMode = TemplateEditorMode.VISUAL;
-    template.layoutJson = compiled.layoutJson;
-    template.htmlContent = compiled.html;
-    template.cssContent = compiled.css;
-    if (!dto.variablesSchema) {
-      template.variablesSchema = compiled.variablesSchema;
-    }
-  }
 
   private applyStatus(template: Template, status: TemplateStatus) {
     template.status = status;

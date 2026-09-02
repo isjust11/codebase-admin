@@ -49,13 +49,6 @@ export class TemplateDto {
   @IsString()
   description?: string;
 
-  @ValidateIf((dto) => dto.editorMode !== TemplateEditorMode.VISUAL && !dto.layoutJson)
-  @IsString()
-  htmlContent?: string;
-
-  @IsOptional()
-  @IsString()
-  cssContent?: string;
 
   @IsOptional()
   @IsArray()
@@ -75,13 +68,6 @@ export class TemplateDto {
   @IsOptional()
   createdBy?: any;
 
-  @IsOptional()
-  @IsObject()
-  layoutJson?: Record<string, any>;
-
-  @IsOptional()
-  @IsString()
-  editorMode?: string;
 
   @IsOptional()
   @IsObject()
@@ -93,21 +79,6 @@ export class TemplatePreviewDto {
   @IsObject()
   sampleData?: Record<string, any>;
 
-  @IsOptional()
-  @IsString()
-  htmlContent?: string;
-
-  @IsOptional()
-  @IsString()
-  cssContent?: string;
-
-  @IsOptional()
-  @IsObject()
-  layoutJson?: Record<string, any>;
-
-  @IsOptional()
-  @IsString()
-  editorMode?: string;
 }
 
 export class TemplateRejectDto {

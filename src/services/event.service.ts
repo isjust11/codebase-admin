@@ -476,14 +476,8 @@ export class EventService {
       guest = (await this.guestRepository.findOne({ where: { id: guestId, eventId: event.id } })) || undefined;
     }
     const invitationUrl = guest ? this.invitationUrl(guest.publicToken) : this.invitationUrl('preview');
-    const html = this.templateRenderService.mergeHtml(template.htmlContent, template.cssContent, {
-      event: event as any,
-      guest: guest as any,
-      invitationUrl,
-    });
     const reactUrl = event.slug ? this.reactInviteUrl(event.slug) : undefined;
     return {
-      html,
       event,
       guest,
       invitationUrl,
@@ -524,10 +518,7 @@ export class EventService {
         name: 'Wedding Basic (React)',
         slug: WEDDING_BASIC_TEMPLATE_SLUG,
         type: TemplateType.EVENT,
-        htmlContent: WEDDING_BASIC_HTML,
-        cssContent: WEDDING_BASIC_CSS,
         variablesSchema: WEDDING_BASIC_VARIABLES_SCHEMA,
-        editorMode: TemplateEditorMode.CODE,
         status: TemplateStatus.PUBLISHED,
         isPublished: true,
         createdById: userId,
@@ -541,10 +532,7 @@ export class EventService {
         name: 'Wedding Invite 2 (React)',
         slug: WEDDING_INVITE2_TEMPLATE_SLUG,
         type: TemplateType.EVENT,
-        htmlContent: WEDDING_INVITE2_HTML,
-        cssContent: WEDDING_INVITE2_CSS,
         variablesSchema: WEDDING_INVITE2_VARIABLES_SCHEMA,
-        editorMode: TemplateEditorMode.CODE,
         status: TemplateStatus.PUBLISHED,
         isPublished: true,
         createdById: userId,

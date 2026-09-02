@@ -75,16 +75,6 @@ export class TemplateController extends BaseController {
     }
   }
 
-  @Post('preview-draft')
-  @RequirePermission('READ', 'template')
-  async previewDraft(@Body() dto: TemplatePreviewDto, @Res() res: Response) {
-    try {
-      const data = await this.templateService.previewDraft(dto);
-      return this.success(res, data);
-    } catch (error) {
-      return this.error(res, error);
-    }
-  }
 
   @Post()
   @RequirePermission('CREATE', 'template')
