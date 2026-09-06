@@ -213,7 +213,7 @@ export class EventService {
   ) {
     const event = await this.findOneForUser(id, userId, locale);
     const template = event.templateId
-      ? await this.templateRepository.findOne({ where: { id: event.templateId } })
+      ? await this.templateRepository.findOne({ where: { id: event.templateId }, relations: ['data', 'data.config'] })
       : null;
 
     let variablesSchema = template?.variablesSchema || [];
@@ -252,6 +252,14 @@ export class EventService {
       templateName: template?.name || 'Wedding Template',
       variablesSchema,
       eventData: event.eventData || {},
+      templateData: (template?.data || []).reduce((acc: any, item: any) => {
+        acc[item.fieldKey] = {
+          type: item.fieldType,
+          value: item.value,
+          config: item.config || undefined
+        };
+        return acc;
+      }, {}),
       media,
       invitePayload,
       reactInviteUrl,
@@ -467,7 +475,7 @@ export class EventService {
     if (!event.templateId) {
       throw new NotFoundException(getMessages(locale).eventlab.templateNotFound);
     }
-    const template = await this.templateRepository.findOne({ where: { id: event.templateId } });
+    const template = await this.templateRepository.findOne({ where: { id: event.templateId }, relations: ['data', 'data.config'] });
     if (!template) {
       throw new NotFoundException(getMessages(locale).eventlab.templateNotFound);
     }

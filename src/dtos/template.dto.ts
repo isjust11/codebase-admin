@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsBoolean, IsArray, IsEnum, IsObject, ValidateIf } from 'class-validator';
+import { ValidateNested, IsString, IsOptional, IsBoolean, IsArray, IsEnum, IsObject, ValidateIf } from 'class-validator';
 import { TemplateType } from '../enums/template-type.enum';
 import { TemplateEditorMode } from '../enums/template-editor-mode.enum';
 
@@ -55,6 +55,10 @@ export class TemplateDto {
   variablesSchema?: TemplateVariableDto[];
 
   @IsOptional()
+  @IsObject()
+  data?: Record<string, ConfigurableFieldDto | any>;
+
+  @IsOptional()
   categoryId?: any;
 
   @IsOptional()
@@ -85,4 +89,20 @@ export class TemplateRejectDto {
   @IsOptional()
   @IsString()
   note?: string;
+}
+
+import { Type } from 'class-transformer';
+
+export class TemplateConfigDto {
+  @IsString() @IsOptional() display?: string;
+  @IsString() @IsOptional() color?: string;
+  @IsString() @IsOptional() font?: string;
+  @IsString() @IsOptional() size?: string;
+}
+
+export class ConfigurableFieldDto {
+  @IsString() type: string;
+  @IsOptional() defaul?: any;
+  @IsOptional() value?: any;
+  @IsObject() @IsOptional() @ValidateNested() @Type(() => TemplateConfigDto) config?: TemplateConfigDto;
 }

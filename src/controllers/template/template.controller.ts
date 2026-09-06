@@ -1,3 +1,4 @@
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   Controller,
   Get,
@@ -9,7 +10,7 @@ import {
   Query,
   UseGuards,
   Request,
-  Res,
+  Res, UploadedFile, UseInterceptors
 } from '@nestjs/common';
 import { TemplateService } from '../../services/template.service';
 import { TemplateDto, TemplatePreviewDto, TemplateRejectDto } from '../../dtos/template.dto';
@@ -227,4 +228,26 @@ export class TemplateController extends BaseController {
       return this.error(res, error);
     }
   }
+
+  @Post(':id/import-schema')
+  @RequirePermission('UPDATE', 'template')
+  @UseInterceptors(FileInterceptor('file'))
+  async importSchema(
+    @Param('id') id: string,
+    @UploadedFile() file: any, // Express.Multer.File
+    @Request() req,
+    @Locale() locale: SupportedLocale,
+    @Res() res: Response,
+  ) {
+    try {
+      if (!file) {
+        return this.error(res, new Error('No file uploaded'));
+      }
+      const data = await this.templateService.importSchema(this.decode(id), file.buffer, req.user, locale);
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
 }

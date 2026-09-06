@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { TemplateData } from './template-data.entity';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { Transform } from 'class-transformer';
 import { User } from './user.entity';
 import { Category } from './category.entity';
@@ -8,6 +9,9 @@ import { TemplateEditorMode } from '../enums/template-editor-mode.enum';
 
 @Entity('templates')
 export class Template {
+  @OneToMany(() => TemplateData, (templateData) => templateData.template, { cascade: true })
+  data: TemplateData[];
+
   @PrimaryGeneratedColumn()
   id: number;
 

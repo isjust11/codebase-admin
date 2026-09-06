@@ -1,3 +1,5 @@
+import { TemplateData } from '../entities/template-data.entity';
+import { TemplateConfig } from '../entities/template-config.entity';
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -97,7 +99,7 @@ export class TemplateService {
   async findOne(id: number, locale: SupportedLocale = 'vi'): Promise<Template> {
     const template = await this.templateRepository.findOne({
       where: { id },
-      relations: ['createdBy', 'category'],
+      relations: ['createdBy', 'category', 'data', 'data.config'],
     });
     if (!template) {
       throw new NotFoundException(getMessages(locale).eventlab.templateNotFound);
@@ -119,6 +121,7 @@ export class TemplateService {
       categoryId: dto.categoryId ? Number(dto.categoryId) : undefined,
       isPremium: dto.isPremium ?? false,
       createdById: dto.createdBy ? Number(dto.createdBy) : Number(actor.id),
+      data: this.transformDtoData(dto.data),
     });
     this.applyStatus(entity, published ? TemplateStatus.PUBLISHED : TemplateStatus.DRAFT);
     return this.templateRepository.save(entity);
@@ -141,6 +144,7 @@ export class TemplateService {
     if (dto.variablesSchema !== undefined) template.variablesSchema = dto.variablesSchema;
     if (dto.categoryId !== undefined) template.categoryId = dto.categoryId ? Number(dto.categoryId) : undefined;
     if (dto.isPremium !== undefined) template.isPremium = dto.isPremium;
+    if (dto.data !== undefined) template.data = this.transformDtoData(dto.data);
     if (moderate && dto.isPublished !== undefined) {
       this.applyStatus(template, dto.isPublished ? TemplateStatus.PUBLISHED : TemplateStatus.DRAFT);
     }
@@ -292,6 +296,22 @@ export class TemplateService {
   private normalize(template: Template): Template {
     template.status = this.effectiveStatus(template);
     template.isPublished = template.status === TemplateStatus.PUBLISHED;
+    if (template.data && Array.isArray(template.data)) {
+      const mappedData: Record<string, any> = {};
+      for (const item of template.data) {
+        mappedData[item.fieldKey] = {
+          type: item.fieldType,
+          value: item.value,
+          config: item.config ? {
+            display: item.config.display,
+            color: item.config.color,
+            font: item.config.font,
+            size: item.config.size
+          } : undefined
+        };
+      }
+      (template as any).data = mappedData;
+    }
     return template;
   }
 
@@ -322,4 +342,57 @@ export class TemplateService {
       qb.andWhere('template.isPublished = false');
     }
   }
+
+  private transformDtoData(data?: Record<string, any>): TemplateData[] {
+    if (!data) return [];
+    const entities: TemplateData[] = [];
+    for (const [key, field] of Object.entries(data)) {
+      if (typeof field === 'object' && field.type) {
+        const td = new TemplateData();
+        td.fieldKey = key;
+        td.fieldType = field.type;
+        td.value = field.value || field.defaul;
+        if (field.config) {
+          const tc = new TemplateConfig();
+          tc.display = field.config.display;
+          tc.color = field.config.color;
+          tc.font = field.config.font;
+          tc.size = field.config.size;
+          td.config = tc;
+        }
+        entities.push(td);
+      }
+    }
+    return entities;
+  }
+
+  async importSchema(id: number, fileBuffer: Buffer, actor: any, locale: SupportedLocale = 'vi'): Promise<Template> {
+    const template = await this.findOne(id, locale);
+    const moderate = await this.canModerate(actor);
+    this.assertCanEdit(template, actor, moderate, locale);
+
+    let parsedData: any;
+    try {
+      const content = fileBuffer.toString('utf-8');
+      parsedData = JSON.parse(content);
+    } catch (e) {
+      throw new BadRequestException('Invalid JSON file');
+    }
+
+    // Extract data node if they uploaded the full mockData.json, else assume it's directly the data object
+    const schemaData = parsedData.data || parsedData;
+    if (!schemaData || typeof schemaData !== 'object') {
+      throw new BadRequestException('JSON must contain a "data" object');
+    }
+
+    // Delete existing template data to replace cleanly
+    await this.templateRepository.manager.delete(TemplateData, { templateId: template.id });
+
+    // Transform and assign
+    const newTemplateData = this.transformDtoData(schemaData);
+    template.data = newTemplateData;
+
+    return this.templateRepository.save(template);
+  }
+
 }
