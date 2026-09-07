@@ -43,6 +43,8 @@ import { GeminiModule } from './modules/gemini.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { HomeController } from './controllers/home.controller';
 import { Template } from './entities/template.entity';
+import { TemplateData } from './entities/template-data.entity';
+import { TemplateConfig } from './entities/template-config.entity';
 import { Event } from './entities/event.entity';
 import { EventMedia } from './entities/event-media.entity';
 import { Guest } from './entities/guest.entity';
@@ -90,6 +92,8 @@ import { ContactModule } from './modules/contact.module';
         SubscriptionPlan,
         UserSubscription,
         Template,
+        TemplateData,
+        TemplateConfig,
         Event,
         EventMedia,
         Guest,

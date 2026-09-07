@@ -4,9 +4,8 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import * as dotenv from 'dotenv';
 import { IoAdapter } from '@nestjs/platform-socket.io';
-import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import * as compression from 'compression';
+
 //config env
 dotenv.config();
 

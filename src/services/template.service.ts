@@ -96,7 +96,7 @@ export class TemplateService {
     return { data: data.map((item) => this.normalize(item)), total, page, size, totalPages: Math.ceil(total / size) };
   }
 
-  async findOne(id: number, locale: SupportedLocale = 'vi'): Promise<Template> {
+  private async findOneEntity(id: number, locale: SupportedLocale = 'vi'): Promise<Template> {
     const template = await this.templateRepository.findOne({
       where: { id },
       relations: ['createdBy', 'category', 'data', 'data.config'],
@@ -104,6 +104,11 @@ export class TemplateService {
     if (!template) {
       throw new NotFoundException(getMessages(locale).eventlab.templateNotFound);
     }
+    return template;
+  }
+
+  async findOne(id: number, locale: SupportedLocale = 'vi'): Promise<Template> {
+    const template = await this.findOneEntity(id, locale);
     return this.normalize(template);
   }
 
@@ -124,11 +129,12 @@ export class TemplateService {
       data: this.transformDtoData(dto.data),
     });
     this.applyStatus(entity, published ? TemplateStatus.PUBLISHED : TemplateStatus.DRAFT);
-    return this.templateRepository.save(entity);
+    const saved = await this.templateRepository.save(entity);
+    return this.normalize(saved);
   }
 
   async update(id: number, dto: Partial<TemplateDto>, actor: Actor, locale: SupportedLocale = 'vi'): Promise<Template> {
-    const template = await this.findOne(id, locale);
+    const template = await this.findOneEntity(id, locale);
     const moderate = await this.canModerate(actor);
     this.assertCanEdit(template, actor, moderate, locale);
     if (dto.name) {
@@ -148,11 +154,12 @@ export class TemplateService {
     if (moderate && dto.isPublished !== undefined) {
       this.applyStatus(template, dto.isPublished ? TemplateStatus.PUBLISHED : TemplateStatus.DRAFT);
     }
-    return this.templateRepository.save(template);
+    const saved = await this.templateRepository.save(template);
+    return this.normalize(saved);
   }
 
   async submit(id: number, actor: Actor, locale: SupportedLocale = 'vi'): Promise<Template> {
-    const template = await this.findOne(id, locale);
+    const template = await this.findOneEntity(id, locale);
     const moderate = await this.canModerate(actor);
     if (!moderate && Number(template.createdById) !== Number(actor.id)) {
       throw new ForbiddenException(getMessages(locale).eventlab.templateForbidden);
@@ -164,37 +171,41 @@ export class TemplateService {
     this.applyStatus(template, TemplateStatus.PENDING);
     template.submittedAt = new Date();
     template.reviewNote = undefined;
-    return this.templateRepository.save(template);
+    const saved = await this.templateRepository.save(template);
+    return this.normalize(saved);
   }
 
   async approve(id: number, locale: SupportedLocale = 'vi'): Promise<Template> {
-    const template = await this.findOne(id, locale);
+    const template = await this.findOneEntity(id, locale);
     if (this.effectiveStatus(template) !== TemplateStatus.PENDING) {
       throw new BadRequestException(getMessages(locale).eventlab.templateInvalidStatus);
     }
     this.applyStatus(template, TemplateStatus.PUBLISHED);
     template.reviewNote = undefined;
-    return this.templateRepository.save(template);
+    const saved = await this.templateRepository.save(template);
+    return this.normalize(saved);
   }
 
   async reject(id: number, note: string | undefined, locale: SupportedLocale = 'vi'): Promise<Template> {
-    const template = await this.findOne(id, locale);
+    const template = await this.findOneEntity(id, locale);
     if (this.effectiveStatus(template) !== TemplateStatus.PENDING) {
       throw new BadRequestException(getMessages(locale).eventlab.templateInvalidStatus);
     }
     this.applyStatus(template, TemplateStatus.REJECTED);
     template.reviewNote = note || '';
-    return this.templateRepository.save(template);
+    const saved = await this.templateRepository.save(template);
+    return this.normalize(saved);
   }
 
   async publish(id: number, isPublished: boolean, locale: SupportedLocale = 'vi'): Promise<Template> {
-    const template = await this.findOne(id, locale);
+    const template = await this.findOneEntity(id, locale);
     this.applyStatus(template, isPublished ? TemplateStatus.PUBLISHED : TemplateStatus.DRAFT);
-    return this.templateRepository.save(template);
+    const saved = await this.templateRepository.save(template);
+    return this.normalize(saved);
   }
 
   async remove(id: number, actor: Actor, locale: SupportedLocale = 'vi'): Promise<{ deleted: boolean }> {
-    const template = await this.findOne(id, locale);
+    const template = await this.findOneEntity(id, locale);
     const moderate = await this.canModerate(actor);
     if (!moderate && Number(template.createdById) !== Number(actor.id)) {
       throw new ForbiddenException(getMessages(locale).eventlab.templateForbidden);
@@ -299,9 +310,17 @@ export class TemplateService {
     if (template.data && Array.isArray(template.data)) {
       const mappedData: Record<string, any> = {};
       for (const item of template.data) {
+        let parsedValue = item.value;
+        if (typeof parsedValue === 'string' && (parsedValue.startsWith('{') || parsedValue.startsWith('['))) {
+          try {
+            parsedValue = JSON.parse(parsedValue);
+          } catch (e) {
+            // keep as string if parse fails
+          }
+        }
         mappedData[item.fieldKey] = {
           type: item.fieldType,
-          value: item.value,
+          value: parsedValue,
           config: item.config ? {
             display: item.config.display,
             color: item.config.color,
@@ -351,13 +370,19 @@ export class TemplateService {
         const td = new TemplateData();
         td.fieldKey = key;
         td.fieldType = field.type;
-        td.value = field.value || field.defaul;
+        
+        const val = field.value !== undefined ? field.value : field.defaul;
+        if (val !== undefined && val !== null) {
+          td.value = typeof val === 'object' ? JSON.stringify(val) : String(val);
+        }
+
         if (field.config) {
           const tc = new TemplateConfig();
           tc.display = field.config.display;
           tc.color = field.config.color;
           tc.font = field.config.font;
           tc.size = field.config.size;
+          
           td.config = tc;
         }
         entities.push(td);
@@ -367,7 +392,7 @@ export class TemplateService {
   }
 
   async importSchema(id: number, fileBuffer: Buffer, actor: any, locale: SupportedLocale = 'vi'): Promise<Template> {
-    const template = await this.findOne(id, locale);
+    const template = await this.findOneEntity(id, locale);
     const moderate = await this.canModerate(actor);
     this.assertCanEdit(template, actor, moderate, locale);
 
@@ -392,7 +417,8 @@ export class TemplateService {
     const newTemplateData = this.transformDtoData(schemaData);
     template.data = newTemplateData;
 
-    return this.templateRepository.save(template);
+    const saved = await this.templateRepository.save(template);
+    return this.normalize(saved);
   }
 
 }

@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Template } from '../entities/template.entity';
+import { TemplateData } from '../entities/template-data.entity';
+import { TemplateConfig } from '../entities/template-config.entity';
 import { TemplateService } from '../services/template.service';
 import { TemplateRenderService } from '../services/template-render.service';
 import { TemplateSectionCompilerService } from '../services/template-section-compiler.service';
@@ -9,7 +11,7 @@ import { PublicTemplateController } from '../controllers/template/public-templat
 import { AuthModule } from './auth.module';
 
 @Module({
-  imports: [AuthModule, TypeOrmModule.forFeature([Template])],
+  imports: [AuthModule, TypeOrmModule.forFeature([Template, TemplateData, TemplateConfig])],
   providers: [TemplateService, TemplateRenderService, TemplateSectionCompilerService],
   controllers: [TemplateController, PublicTemplateController],
   exports: [TemplateService, TemplateRenderService, TemplateSectionCompilerService],
