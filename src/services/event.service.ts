@@ -3,7 +3,6 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
-  ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -16,24 +15,8 @@ import { PaginatedResponse, PaginationParams } from '../dtos/filter.dto';
 import { getMessages, SupportedLocale } from '../constants/messages';
 import { EventStatus } from '../enums/event-status.enum';
 import { TemplateType } from '../enums/template-type.enum';
-import { TemplateStatus } from '../enums/template-status.enum';
-import { TemplateEditorMode } from '../enums/template-editor-mode.enum';
 import { RsvpStatus } from '../enums/rsvp-status.enum';
 import { TemplateRenderService } from './template-render.service';
-import {
-  WEDDING_BASIC_CSS,
-  WEDDING_BASIC_HTML,
-  WEDDING_BASIC_TEMPLATE_SLUG,
-  WEDDING_BASIC_VARIABLES_SCHEMA,
-  WEDDING_DEMO_EVENTS,
-} from '../constants/wedding-basic-slots';
-import {
-  WEDDING_INVITE2_CSS,
-  WEDDING_INVITE2_DEMO_EVENTS,
-  WEDDING_INVITE2_HTML,
-  WEDDING_INVITE2_TEMPLATE_SLUG,
-  WEDDING_INVITE2_VARIABLES_SCHEMA,
-} from '../constants/wedding-invite2-slots';
 
 /** Public payload for React BaseTemplateHost (templates/wedding-invite). */
 export type EventInvitePayload = {
@@ -55,7 +38,7 @@ export class EventService {
     @InjectRepository(EventMedia)
     private readonly eventMediaRepository: Repository<EventMedia>,
     private readonly templateRenderService: TemplateRenderService,
-  ) {}
+  ) { }
 
   private publicBaseUrl(): string {
     return (process.env.PUBLIC_INVITE_BASE_URL || process.env.CLIENT_URL || 'http://localhost:3200').replace(
@@ -72,17 +55,6 @@ export class EventService {
   reactInviteUrl(slug: string): string {
     const base = (process.env.REACT_TEMPLATE_HOST_URL || 'http://localhost:3000').replace(/\/$/, '');
     return `${base}/invite/${slug}`;
-  }
-
-  private parseOptionalTemplateId(templateId: unknown): number | undefined {
-    if (templateId === undefined || templateId === null || templateId === '') {
-      return undefined;
-    }
-    const parsedId = Number(templateId);
-    if (!Number.isFinite(parsedId) || parsedId <= 0) {
-      throw new BadRequestException('templateId is invalid');
-    }
-    return parsedId;
   }
 
   private slugify(input: string): string {
@@ -112,10 +84,10 @@ export class EventService {
     if (!event.slug) {
       throw new BadRequestException('Event slug is required for public invite');
     }
-    const templateSlug = event.template?.slug || WEDDING_BASIC_TEMPLATE_SLUG;
+    const templateSlug = event.template?.slug;
     return {
       slug: event.slug,
-      templateId: templateSlug,
+      templateId: templateSlug || '',
       title: event.title,
       data: event.eventData || {},
     };
@@ -154,15 +126,39 @@ export class EventService {
   async create(userId: number, dto: EventDto): Promise<Event> {
     const baseSlug = dto.slug ? this.slugify(dto.slug) : this.slugify(dto.title);
     const slug = await this.ensureUniqueSlug(baseSlug);
+
+    let eventData = dto.eventData || {};
+
+    // Auto-generate default data if empty and a template is selected
+    if (Object.keys(eventData).length === 0 && dto.templateId) {
+      const template = await this.templateRepository.findOne({
+        where: { id: dto.templateId },
+        relations: ['data']
+      });
+      if (template) {
+        if (template.data && Array.isArray(template.data)) {
+          template.data.forEach((d: any) => {
+            if (d.value !== undefined && d.value !== null) {
+              let val = d.value;
+              if (d.fieldType === 'json' || d.fieldType === 'textarea') {
+                try { val = JSON.parse(val); } catch (e) { }
+              }
+              eventData[d.fieldKey] = val;
+            }
+          });
+        }
+      }
+    }
+
     const entity = this.eventRepository.create({
       userId,
       title: dto.title,
       type: dto.type || TemplateType.EVENT,
-      templateId: this.parseOptionalTemplateId(dto.templateId),
+      templateId: dto.templateId,
       eventDate: dto.eventDate ? new Date(dto.eventDate) : undefined,
       venue: dto.venue,
       coverImageUrl: dto.coverImageUrl,
-      eventData: dto.eventData || {},
+      eventData,
       status: dto.status || EventStatus.DRAFT,
     });
     return this.eventRepository.save(entity);
@@ -177,7 +173,7 @@ export class EventService {
     if (dto.coverImageUrl !== undefined) event.coverImageUrl = dto.coverImageUrl;
     if (dto.eventData !== undefined) event.eventData = dto.eventData;
     if (dto.status !== undefined) event.status = dto.status;
-    if (dto.templateId !== undefined) event.templateId = this.parseOptionalTemplateId(dto.templateId);
+    if (dto.templateId !== undefined) event.templateId = dto.templateId;
     return this.eventRepository.save(event);
   }
 
@@ -216,15 +212,8 @@ export class EventService {
       ? await this.templateRepository.findOne({ where: { id: event.templateId }, relations: ['data', 'data.config'] })
       : null;
 
-    let variablesSchema = template?.variablesSchema || [];
-    if (!variablesSchema || variablesSchema.length === 0) {
-      const templateSlug = template?.slug || WEDDING_BASIC_TEMPLATE_SLUG;
-      if (templateSlug === WEDDING_INVITE2_TEMPLATE_SLUG) {
-        variablesSchema = WEDDING_INVITE2_VARIABLES_SCHEMA;
-      } else {
-        variablesSchema = WEDDING_BASIC_VARIABLES_SCHEMA;
-      }
-    }
+    // variablesSchema is deprecated in favor of template.data.
+    const variablesSchema: any[] = [];
 
     const invitePayload = event.slug ? this.toInvitePayload({ ...event, template: template || undefined } as Event) : null;
     const reactInviteUrl = event.slug ? this.reactInviteUrl(event.slug) : null;
@@ -248,7 +237,7 @@ export class EventService {
       venue: event.venue,
       eventDate: event.eventDate,
       templateId: event.templateId,
-      templateSlug: template?.slug || WEDDING_BASIC_TEMPLATE_SLUG,
+      templateSlug: template?.slug || 'wedding-basic',
       templateName: template?.name || 'Wedding Template',
       variablesSchema,
       eventData: event.eventData || {},
@@ -520,117 +509,31 @@ export class EventService {
   }
 
   async seedWeddingDemo(userId: number) {
-    let t1 = await this.templateRepository.findOne({ where: { slug: WEDDING_BASIC_TEMPLATE_SLUG } });
-    if (!t1) {
-      t1 = this.templateRepository.create({
-        name: 'Wedding Basic (React)',
-        slug: WEDDING_BASIC_TEMPLATE_SLUG,
-        type: TemplateType.EVENT,
-        variablesSchema: WEDDING_BASIC_VARIABLES_SCHEMA,
-        status: TemplateStatus.PUBLISHED,
-        isPublished: true,
-        createdById: userId,
-      });
-      t1 = await this.templateRepository.save(t1);
-    }
-
-    let t2 = await this.templateRepository.findOne({ where: { slug: WEDDING_INVITE2_TEMPLATE_SLUG } });
-    if (!t2) {
-      t2 = this.templateRepository.create({
-        name: 'Wedding Invite 2 (React)',
-        slug: WEDDING_INVITE2_TEMPLATE_SLUG,
-        type: TemplateType.EVENT,
-        variablesSchema: WEDDING_INVITE2_VARIABLES_SCHEMA,
-        status: TemplateStatus.PUBLISHED,
-        isPublished: true,
-        createdById: userId,
-      });
-      t2 = await this.templateRepository.save(t2);
-    }
-
-    const seededEvents: Event[] = [];
-
-    for (const item of WEDDING_DEMO_EVENTS) {
-      let event = await this.eventRepository.findOne({ where: { slug: item.slug } });
-      if (!event) {
-        event = this.eventRepository.create({
-          userId,
-          title: item.title,
-          slug: item.slug,
-          type: TemplateType.EVENT,
-          templateId: t1.id,
-          eventDate: item.eventDate ? new Date(item.eventDate) : undefined,
-          venue: item.venue,
-          eventData: item.eventData,
-          status: EventStatus.PUBLISHED,
-        });
-        event = await this.eventRepository.save(event);
-      }
-      seededEvents.push(event);
-    }
-
-    for (const item of WEDDING_INVITE2_DEMO_EVENTS) {
-      let event = await this.eventRepository.findOne({ where: { slug: item.slug } });
-      if (!event) {
-        event = this.eventRepository.create({
-          userId,
-          title: item.title,
-          slug: item.slug,
-          type: TemplateType.EVENT,
-          templateId: t2.id,
-          eventDate: item.eventDate ? new Date(item.eventDate) : undefined,
-          venue: item.venue,
-          eventData: item.eventData,
-          status: EventStatus.PUBLISHED,
-        });
-        event = await this.eventRepository.save(event);
-      }
-      seededEvents.push(event);
-    }
-
     return {
-      message: 'Seeded wedding templates and demo events successfully',
-      templates: [t1, t2],
-      events: seededEvents,
+      message: 'Seeding disabled (constants removed)',
+      templates: [],
+      events: [],
     };
   }
 
   async findPublicBySlug(slug: string, _locale?: SupportedLocale): Promise<EventInvitePayload> {
-    let event: Event | null = null;
     try {
-      event = await this.eventRepository.findOne({
+      const event = await this.eventRepository.findOne({
         where: { slug },
         relations: ['template'],
       });
-    } catch (e) {
-      event = null;
-    }
 
-    if (event) {
+      if (!event) {
+        throw new NotFoundException(`Event "${slug}" not found`);
+      }
+
       return this.toInvitePayload(event);
+    } catch (e) {
+      if (e instanceof NotFoundException) {
+        throw e;
+      }
+      throw new NotFoundException(`Event "${slug}" not found`);
     }
-
-    const demo1 = WEDDING_DEMO_EVENTS.find((e) => e.slug === slug);
-    if (demo1) {
-      return {
-        slug: demo1.slug,
-        templateId: WEDDING_BASIC_TEMPLATE_SLUG,
-        title: demo1.title,
-        data: demo1.eventData,
-      };
-    }
-
-    const demo2 = WEDDING_INVITE2_DEMO_EVENTS.find((e) => e.slug === slug);
-    if (demo2) {
-      return {
-        slug: demo2.slug,
-        templateId: WEDDING_INVITE2_TEMPLATE_SLUG,
-        title: demo2.title,
-        data: demo2.eventData,
-      };
-    }
-
-    throw new NotFoundException(`Event "${slug}" not found`);
   }
 
   async listPublicPublished(): Promise<Array<{ slug: string; templateId: string; title: string }>> {
@@ -649,29 +552,9 @@ export class EventService {
       .filter((e) => Boolean(e.slug))
       .map((e) => ({
         slug: e.slug!,
-        templateId: e.template?.slug || WEDDING_BASIC_TEMPLATE_SLUG,
+        templateId: e.template?.slug || 'wedding-basic',
         title: e.title,
       }));
-
-    for (const d of WEDDING_DEMO_EVENTS) {
-      if (!result.some((r) => r.slug === d.slug)) {
-        result.push({
-          slug: d.slug,
-          templateId: WEDDING_BASIC_TEMPLATE_SLUG,
-          title: d.title,
-        });
-      }
-    }
-
-    for (const d of WEDDING_INVITE2_DEMO_EVENTS) {
-      if (!result.some((r) => r.slug === d.slug)) {
-        result.push({
-          slug: d.slug,
-          templateId: WEDDING_INVITE2_TEMPLATE_SLUG,
-          title: d.title,
-        });
-      }
-    }
 
     return result;
   }

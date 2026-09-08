@@ -54,7 +54,9 @@ export class TemplateService {
     const qb = this.templateRepository
       .createQueryBuilder('template')
       .leftJoinAndSelect('template.createdBy', 'createdBy')
-      .leftJoinAndSelect('template.category', 'category');
+      .leftJoinAndSelect('template.category', 'category')
+      .leftJoinAndSelect('template.data', 'data')
+      .leftJoinAndSelect('data.config', 'config');
     if (search) {
       qb.andWhere('(template.name LIKE :search OR template.slug LIKE :search)', { search: `%${search}%` });
     }
