@@ -17,6 +17,9 @@ export class TemplateData {
   @Column({ type: 'varchar', length: 128 })
   fieldKey: string;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  label: string;
+
   @Column({ type: 'varchar', length: 32 })
   fieldType: string;
 

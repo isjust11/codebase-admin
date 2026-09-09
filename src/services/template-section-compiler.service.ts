@@ -11,50 +11,8 @@ import { TemplateSectionType } from '../enums/template-section-type.enum';
 export type CompiledTemplate = {
   html: string;
   css: string;
-  variablesSchema: Array<{
-    key: string;
-    label: string;
-    type: string;
-    scope: 'event' | 'guest' | 'system';
-    required?: boolean;
-    defaultValue?: any;
-  }>;
   layoutJson: LayoutJson;
 };
-
-const VARIABLE_CATALOG: CompiledTemplate['variablesSchema'] = [
-  { key: 'eventTitle', label: 'Tên sự kiện', type: 'text', scope: 'event', required: true },
-  { key: 'brideName', label: 'Tên cô dâu', type: 'text', scope: 'event', required: true, defaultValue: 'Lan' },
-  { key: 'groomName', label: 'Tên chú rể', type: 'text', scope: 'event', required: true, defaultValue: 'Minh' },
-  { key: 'eventDate', label: 'Ngày sự kiện', type: 'date', scope: 'event', required: true, defaultValue: '2026-12-12' },
-  { key: 'coverImageUrl', label: 'Ảnh bìa', type: 'image', scope: 'event' },
-  { key: 'guestName', label: 'Tên khách', type: 'text', scope: 'guest', required: true, defaultValue: 'Quý khách' },
-  { key: 'personalMessage', label: 'Lời nhắn khách', type: 'text', scope: 'guest' },
-  { key: 'bridePhoto', label: 'Ảnh cô dâu', type: 'image', scope: 'event' },
-  { key: 'brideBio', label: 'Giới thiệu cô dâu', type: 'richtext', scope: 'event', defaultValue: 'Cô dâu hiền hậu, yêu hoa và trà.' },
-  { key: 'groomPhoto', label: 'Ảnh chú rể', type: 'image', scope: 'event' },
-  { key: 'groomBio', label: 'Giới thiệu chú rể', type: 'richtext', scope: 'event', defaultValue: 'Chú rể trầm tính, thích du lịch.' },
-  { key: 'familiesTitle', label: 'Tiêu đề gia đình', type: 'text', scope: 'event', defaultValue: 'Hai bên gia đình' },
-  { key: 'brideFather', label: 'Bố cô dâu', type: 'text', scope: 'event' },
-  { key: 'brideMother', label: 'Mẹ cô dâu', type: 'text', scope: 'event' },
-  { key: 'brideFamilyNote', label: 'Ghi chú nhà gái', type: 'text', scope: 'event' },
-  { key: 'groomFather', label: 'Bố chú rể', type: 'text', scope: 'event' },
-  { key: 'groomMother', label: 'Mẹ chú rể', type: 'text', scope: 'event' },
-  { key: 'groomFamilyNote', label: 'Ghi chú nhà trai', type: 'text', scope: 'event' },
-  { key: 'storyItems', label: 'Mốc chuyện tình', type: 'json', scope: 'event', defaultValue: [
-    { year: '2019', title: 'Gặp nhau', text: 'Một buổi cà phê tình cờ.' },
-    { year: '2023', title: 'Cầu hôn', text: 'Lời hứa cho cả đời.' },
-  ] },
-  { key: 'galleryImages', label: 'Album ảnh', type: 'gallery', scope: 'event' },
-  { key: 'ceremonyTime', label: 'Giờ lễ cưới', type: 'text', scope: 'event', defaultValue: '09:00' },
-  { key: 'ceremonyVenue', label: 'Địa điểm lễ', type: 'text', scope: 'event' },
-  { key: 'receptionTime', label: 'Giờ tiệc', type: 'text', scope: 'event', defaultValue: '18:00' },
-  { key: 'receptionVenue', label: 'Địa điểm tiệc', type: 'text', scope: 'event' },
-  { key: 'mapQuery', label: 'Địa chỉ / Google Maps', type: 'map', scope: 'event' },
-  { key: 'dressCode', label: 'Dress code', type: 'text', scope: 'event', defaultValue: 'Formal / Pastel' },
-  { key: 'coupleMessage', label: 'Lời của cặp đôi', type: 'richtext', scope: 'event', defaultValue: 'Cảm ơn vì đã đến chia vui cùng chúng mình.' },
-  { key: 'audioUrl', label: 'Nhạc nền', type: 'url', scope: 'event' },
-];
 
 const SECTION_VARS: Record<string, string[]> = {
   [TemplateSectionType.COVER]: ['coverImageUrl', 'eventTitle', 'brideName', 'groomName', 'eventDate'],
@@ -104,8 +62,7 @@ export class TemplateSectionCompilerService {
         keys.add(key);
       }
     }
-    const variablesSchema = VARIABLE_CATALOG.filter((item) => keys.has(item.key));
-    return { html, css, variablesSchema, layoutJson };
+    return { html, css, layoutJson };
   }
 
   starters() {

@@ -121,8 +121,8 @@ export class TemplateController extends BaseController {
     @Res() res: Response,
   ) {
     try {
-      const data = await this.templateService.preview(this.decode(id), dto?.sampleData || {}, locale);
-      return this.success(res, data);
+      // const data = await this.templateService.preview(this.decode(id), dto?.sampleData || {}, locale);
+      // return this.success(res, data);
     } catch (error) {
       return this.error(res, error);
     }

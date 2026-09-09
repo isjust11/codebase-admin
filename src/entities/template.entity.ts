@@ -30,8 +30,6 @@ export class Template {
   @Column({ type: 'text', nullable: true })
   description?: string;
 
-  @Column({ type: 'json', nullable: true })
-  variablesSchema?: Record<string, any>[];
 
 
   @Column({ nullable: true })

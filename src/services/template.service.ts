@@ -27,7 +27,7 @@ export class TemplateService {
     private readonly templateRenderService: TemplateRenderService,
     private readonly templateSectionCompilerService: TemplateSectionCompilerService,
     private readonly roleService: RoleService,
-  ) {}
+  ) { }
 
   async canModerate(user?: Actor): Promise<boolean> {
     if (!user) return false;
@@ -124,7 +124,7 @@ export class TemplateService {
       type: dto.type || TemplateType.EVENT,
       thumbnailUrl: dto.thumbnailUrl,
       description: dto.description,
-      variablesSchema: dto.variablesSchema || [],
+
       categoryId: dto.categoryId ? Number(dto.categoryId) : undefined,
       isPremium: dto.isPremium ?? false,
       createdById: dto.createdBy ? Number(dto.createdBy) : Number(actor.id),
@@ -149,7 +149,7 @@ export class TemplateService {
     if (dto.type) template.type = dto.type;
     if (dto.thumbnailUrl !== undefined) template.thumbnailUrl = dto.thumbnailUrl;
     if (dto.description !== undefined) template.description = dto.description;
-    if (dto.variablesSchema !== undefined) template.variablesSchema = dto.variablesSchema;
+
     if (dto.categoryId !== undefined) template.categoryId = dto.categoryId ? Number(dto.categoryId) : undefined;
     if (dto.isPremium !== undefined) template.isPremium = dto.isPremium;
     if (dto.data !== undefined) template.data = this.transformDtoData(dto.data);
@@ -228,15 +228,6 @@ export class TemplateService {
     };
   }
 
-  async preview(id: number, sampleData: Record<string, any> = {}, locale: SupportedLocale = 'vi') {
-    const template = await this.findOne(id, locale);
-    return { 
-      reactInviteUrl: template.slug ? this.getReactInviteUrl(template.slug) : undefined,
-      template,
-      sample: this.buildSampleData(template, sampleData)
-    };
-  }
-
   async publicPreview(id: number, locale: SupportedLocale = 'vi') {
     const template = await this.findOne(id, locale);
     if (!template.isPublished && this.effectiveStatus(template) !== TemplateStatus.PUBLISHED) {
@@ -254,45 +245,6 @@ export class TemplateService {
         status: TemplateStatus.PUBLISHED,
       },
     };
-  }
-
-  private buildSampleData(
-    template: Pick<Template, 'name'> & { variablesSchema?: Template['variablesSchema'] },
-    extra: Record<string, any> = {},
-  ): Record<string, any> {
-    const sample: Record<string, any> = {
-      guestName: 'Nguyễn Văn A',
-      brideName: 'Lan',
-      groomName: 'Minh',
-      eventTitle: template.name,
-      eventDate: '2026-12-12',
-      venue: 'Trung tâm hội nghị EventLab',
-      familiesTitle: 'Hai bên gia đình',
-      brideFather: 'Nguyễn Văn B',
-      brideMother: 'Trần Thị C',
-      groomFather: 'Lê Văn D',
-      groomMother: 'Phạm Thị E',
-      ceremonyTime: '09:00',
-      ceremonyVenue: 'Nhà văn hoá phường',
-      receptionTime: '18:00',
-      receptionVenue: 'Trung tâm hội nghị EventLab',
-      mapQuery: 'Ho Chi Minh City',
-      coupleMessage: 'Cảm ơn vì đã đến chia vui cùng chúng mình.',
-      dressCode: 'Formal / Pastel',
-      galleryImages: [],
-      storyItems: [
-        { year: '2019', title: 'Gặp nhau', text: 'Một buổi cà phê tình cờ.' },
-        { year: '2023', title: 'Cầu hôn', text: 'Lời hứa cho cả đời.' },
-      ],
-    };
-    for (const variable of template.variablesSchema || []) {
-      const key = variable?.key;
-      if (!key) continue;
-      if (variable.defaultValue !== undefined && variable.defaultValue !== null && variable.defaultValue !== '') {
-        sample[key] = variable.defaultValue;
-      }
-    }
-    return { ...sample, ...extra };
   }
 
 
@@ -313,23 +265,32 @@ export class TemplateService {
       const mappedData: Record<string, any> = {};
       for (const item of template.data) {
         let parsedValue = item.value;
-        if (typeof parsedValue === 'string' && (parsedValue.startsWith('{') || parsedValue.startsWith('['))) {
+        if (item.fieldType === 'RAW') {
           try {
-            parsedValue = JSON.parse(parsedValue);
+            parsedValue = item.value !== undefined && item.value !== null ? JSON.parse(item.value) : item.value;
           } catch (e) {
             // keep as string if parse fails
           }
+          mappedData[item.fieldKey] = parsedValue;
+        } else {
+          if (typeof parsedValue === 'string' && (parsedValue.startsWith('{') || parsedValue.startsWith('['))) {
+            try {
+              parsedValue = JSON.parse(parsedValue);
+            } catch (e) {
+              // keep as string if parse fails
+            }
+          }
+          mappedData[item.fieldKey] = {
+            type: item.fieldType,
+            value: parsedValue,
+            config: item.config ? {
+              display: item.config.display,
+              color: item.config.color,
+              font: item.config.font,
+              size: item.config.size
+            } : undefined
+          };
         }
-        mappedData[item.fieldKey] = {
-          type: item.fieldType,
-          value: parsedValue,
-          config: item.config ? {
-            display: item.config.display,
-            color: item.config.color,
-            font: item.config.font,
-            size: item.config.size
-          } : undefined
-        };
       }
       (template as any).data = mappedData;
     }
@@ -368,11 +329,13 @@ export class TemplateService {
     if (!data) return [];
     const entities: TemplateData[] = [];
     for (const [key, field] of Object.entries(data)) {
-      if (typeof field === 'object' && field.type) {
+      if (field === undefined || field === null) continue;
+
+      if (typeof field === 'object' && !Array.isArray(field) && field.type) {
         const td = new TemplateData();
         td.fieldKey = key;
         td.fieldType = field.type;
-        
+
         const val = field.value !== undefined ? field.value : field.defaul;
         if (val !== undefined && val !== null) {
           td.value = typeof val === 'object' ? JSON.stringify(val) : String(val);
@@ -384,9 +347,15 @@ export class TemplateService {
           tc.color = field.config.color;
           tc.font = field.config.font;
           tc.size = field.config.size;
-          
+
           td.config = tc;
         }
+        entities.push(td);
+      } else {
+        const td = new TemplateData();
+        td.fieldKey = key;
+        td.fieldType = 'RAW';
+        td.value = JSON.stringify(field);
         entities.push(td);
       }
     }

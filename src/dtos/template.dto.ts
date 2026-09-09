@@ -2,29 +2,6 @@ import { ValidateNested, IsString, IsOptional, IsBoolean, IsArray, IsEnum, IsObj
 import { TemplateType } from '../enums/template-type.enum';
 import { TemplateEditorMode } from '../enums/template-editor-mode.enum';
 
-export class TemplateVariableDto {
-  @IsString()
-  key: string;
-
-  @IsOptional()
-  @IsString()
-  label?: string;
-
-  @IsOptional()
-  @IsString()
-  type?: string;
-
-  @IsOptional()
-  @IsString()
-  scope?: string;
-
-  @IsOptional()
-  @IsBoolean()
-  required?: boolean;
-
-  @IsOptional()
-  defaultValue?: any;
-}
 
 export class TemplateDto {
   @IsOptional()
@@ -50,9 +27,6 @@ export class TemplateDto {
   description?: string;
 
 
-  @IsOptional()
-  @IsArray()
-  variablesSchema?: TemplateVariableDto[];
 
   @IsOptional()
   @IsObject()
