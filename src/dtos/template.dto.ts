@@ -76,6 +76,11 @@ export class TemplateConfigDto {
 
 export class ConfigurableFieldDto {
   @IsString() type: string;
+  @IsOptional() @IsString() labelVi?: string;
+  @IsOptional() @IsString() labelEn?: string;
+  @IsOptional() @IsString() placeHolder?: string;
+  @IsOptional() @IsBoolean() required?: boolean;
+  @IsOptional() @IsObject() itemSchema?: Record<string, any>;
   @IsOptional() defaul?: any;
   @IsOptional() value?: any;
   @IsObject() @IsOptional() @ValidateNested() @Type(() => TemplateConfigDto) config?: TemplateConfigDto;

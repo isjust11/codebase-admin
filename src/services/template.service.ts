@@ -282,6 +282,11 @@ export class TemplateService {
           }
           mappedData[item.fieldKey] = {
             type: item.fieldType,
+            labelVi: item.labelVi,
+            labelEn: item.labelEn,
+            placeHolder: item.placeHolder,
+            required: item.required,
+            itemSchema: item.itemSchema,
             value: parsedValue,
             config: item.config ? {
               display: item.config.display,
@@ -325,7 +330,7 @@ export class TemplateService {
     }
   }
 
-  private transformDtoData(data?: Record<string, any>): TemplateData[] {
+  private transformDtoData(data?: Record<string, any>, templateId?: number): TemplateData[] {
     if (!data) return [];
     const entities: TemplateData[] = [];
     for (const [key, field] of Object.entries(data)) {
@@ -333,8 +338,14 @@ export class TemplateService {
 
       if (typeof field === 'object' && !Array.isArray(field) && field.type) {
         const td = new TemplateData();
+        td.templateId = templateId ?? 0;
         td.fieldKey = key;
         td.fieldType = field.type;
+        td.labelVi = field.labelVi;
+        td.labelEn = field.labelEn;
+        td.placeHolder = field.placeHolder;
+        td.required = !!field.required;
+        td.itemSchema = field.itemSchema;
 
         const val = field.value !== undefined ? field.value : field.defaul;
         if (val !== undefined && val !== null) {

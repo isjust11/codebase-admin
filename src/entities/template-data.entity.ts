@@ -18,7 +18,19 @@ export class TemplateData {
   fieldKey: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  label: string;
+  labelVi: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  labelEn: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  placeHolder: string;
+
+  @Column({ type: 'boolean', default: false })
+  required: boolean;
+
+  @Column({ type: 'json', nullable: true })
+  itemSchema: Record<string, any>;
 
   @Column({ type: 'varchar', length: 32 })
   fieldType: string;
