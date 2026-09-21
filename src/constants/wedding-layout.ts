@@ -5,6 +5,10 @@ export type LayoutTheme = {
   fontHeading: string;
   fontBody: string;
   background: string;
+  /** Optional extended tokens (aligned with React Host `--el-*`). */
+  accentSoft?: string;
+  ink?: string;
+  muted?: string;
 };
 
 export type LayoutSection = {
@@ -20,10 +24,10 @@ export type LayoutJson = {
 };
 
 export const DEFAULT_THEME: LayoutTheme = {
-  primaryColor: '#c9a227',
-  fontHeading: '"Playfair Display", serif',
-  fontBody: '"Source Sans 3", "Noto Sans", sans-serif',
-  background: '#f7f0e8',
+  primaryColor: '#ef4065',
+  fontHeading: '"Gloock", "Playfair Display", serif',
+  fontBody: '"Lora", "Source Sans 3", "Noto Sans", sans-serif',
+  background: '#fff5f7',
 };
 
 export const SECTION_CATALOG: Array<{

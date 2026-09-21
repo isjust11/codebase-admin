@@ -152,7 +152,9 @@ export class TemplateService {
 
     if (dto.categoryId !== undefined) template.categoryId = dto.categoryId ? Number(dto.categoryId) : undefined;
     if (dto.isPremium !== undefined) template.isPremium = dto.isPremium;
-    if (dto.data !== undefined) template.data = this.transformDtoData(dto.data);
+    if (dto.data !== undefined) {
+      template.data = this.transformDtoData(dto.data, template.id, template.data);
+    }
     if (moderate && dto.isPublished !== undefined) {
       this.applyStatus(template, dto.isPublished ? TemplateStatus.PUBLISHED : TemplateStatus.DRAFT);
     }
@@ -281,6 +283,7 @@ export class TemplateService {
             }
           }
           mappedData[item.fieldKey] = {
+            id: item.id,
             type: item.fieldType,
             labelVi: item.labelVi,
             labelEn: item.labelEn,
@@ -289,6 +292,7 @@ export class TemplateService {
             itemSchema: item.itemSchema,
             value: parsedValue,
             config: item.config ? {
+              id: item.config.id,
               display: item.config.display,
               color: item.config.color,
               font: item.config.font,
@@ -330,15 +334,23 @@ export class TemplateService {
     }
   }
 
-  private transformDtoData(data?: Record<string, any>, templateId?: number): TemplateData[] {
+  private transformDtoData(
+    data?: Record<string, any>,
+    templateId?: number,
+    existing?: TemplateData[],
+  ): TemplateData[] {
     if (!data) return [];
+    const existingByKey = new Map((existing || []).map((row) => [row.fieldKey, row]));
     const entities: TemplateData[] = [];
     for (const [key, field] of Object.entries(data)) {
       if (field === undefined || field === null) continue;
+      const existingRow = existingByKey.get(key);
 
       if (typeof field === 'object' && !Array.isArray(field) && field.type) {
         const td = new TemplateData();
-        td.templateId = templateId ?? 0;
+        const rowId = field.id ?? existingRow?.id;
+        if (rowId != null) td.id = Number(rowId);
+        td.templateId = templateId ?? existingRow?.templateId ?? 0;
         td.fieldKey = key;
         td.fieldType = field.type;
         td.labelVi = field.labelVi;
@@ -354,16 +366,24 @@ export class TemplateService {
 
         if (field.config) {
           const tc = new TemplateConfig();
+          const configId = field.config.id ?? existingRow?.config?.id;
+          if (configId != null) {
+            tc.id = Number(configId);
+            if (td.id) tc.templateDataId = td.id;
+          }
           tc.display = field.config.display;
           tc.color = field.config.color;
           tc.font = field.config.font;
           tc.size = field.config.size;
-
           td.config = tc;
+        } else if (existingRow?.config) {
+          td.config = existingRow.config;
         }
         entities.push(td);
       } else {
         const td = new TemplateData();
+        if (existingRow?.id != null) td.id = existingRow.id;
+        td.templateId = templateId ?? existingRow?.templateId ?? 0;
         td.fieldKey = key;
         td.fieldType = 'RAW';
         td.value = JSON.stringify(field);
@@ -396,7 +416,7 @@ export class TemplateService {
     await this.templateRepository.manager.delete(TemplateData, { templateId: template.id });
 
     // Transform and assign
-    const newTemplateData = this.transformDtoData(schemaData);
+    const newTemplateData = this.transformDtoData(schemaData, template.id);
     template.data = newTemplateData;
 
     const saved = await this.templateRepository.save(template);

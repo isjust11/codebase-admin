@@ -1,9 +1,13 @@
-import { Controller, Get, Param, UseGuards, Res, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, Res, NotFoundException } from '@nestjs/common';
 import { EventService } from '../../services/event.service';
+import { GuestService } from '../../services/guest.service';
+import { PublicEventRsvpDto } from '../../dtos/guest.dto';
 import { BaseController } from '../base/base.controller';
 import { JwtAuthGuard, Public } from '../../guards/jwt-auth.guard';
 import { PermissionGuard } from '../../guards/permission.guard';
 import { Response } from 'express';
+import { Locale } from '../../decorators/locale.decorator';
+import { SupportedLocale } from '../../constants/messages';
 
 /**
  * Public JSON API for React BaseTemplateHost (templates/wedding-invite).
@@ -12,7 +16,10 @@ import { Response } from 'express';
 @Controller('public/events')
 @UseGuards(JwtAuthGuard, PermissionGuard)
 export class PublicEventsController extends BaseController {
-  constructor(private readonly eventService: EventService) {
+  constructor(
+    private readonly eventService: EventService,
+    private readonly guestService: GuestService,
+  ) {
     super();
   }
 
@@ -43,6 +50,27 @@ export class PublicEventsController extends BaseController {
             : { message: error.message, available: [] };
         return res.status(404).json(payload);
       }
+      return this.error(res, error);
+    }
+  }
+
+  @Public()
+  @Post(':slug/rsvp')
+  async rsvpBySlug(
+    @Param('slug') slug: string,
+    @Body() dto: PublicEventRsvpDto,
+    @Locale() locale: SupportedLocale,
+    @Res() res: Response,
+  ) {
+    try {
+      const guest = await this.guestService.rsvpByEventSlug(slug, dto, locale);
+      return res.status(200).json({
+        ok: true,
+        rsvpStatus: guest.rsvpStatus,
+        plusOnes: guest.plusOnes,
+        respondedAt: guest.respondedAt,
+      });
+    } catch (error) {
       return this.error(res, error);
     }
   }

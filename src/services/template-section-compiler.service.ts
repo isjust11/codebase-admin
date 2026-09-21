@@ -51,9 +51,15 @@ export class TemplateSectionCompilerService {
     const theme = layoutJson.theme || DEFAULT_THEME;
     const css = `${BASE_SECTION_CSS}
 .el-invite-root {
+  --el-accent: ${theme.primaryColor};
   --el-primary-color: ${theme.primaryColor};
+  --el-primary: ${theme.primaryColor};
+  --el-font-display: ${theme.fontHeading};
   --el-font-heading: ${theme.fontHeading};
+  --el-heading: ${theme.fontHeading};
   --el-font-body: ${theme.fontBody};
+  --el-body: ${theme.fontBody};
+  --el-bg: ${theme.background};
   --el-background: ${theme.background};
 }`;
     const keys = new Set<string>();

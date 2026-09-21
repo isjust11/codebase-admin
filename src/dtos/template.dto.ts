@@ -68,6 +68,7 @@ export class TemplateRejectDto {
 import { Type } from 'class-transformer';
 
 export class TemplateConfigDto {
+  @IsOptional() id?: number;
   @IsString() @IsOptional() display?: string;
   @IsString() @IsOptional() color?: string;
   @IsString() @IsOptional() font?: string;
@@ -75,6 +76,7 @@ export class TemplateConfigDto {
 }
 
 export class ConfigurableFieldDto {
+  @IsOptional() id?: number;
   @IsString() type: string;
   @IsOptional() @IsString() labelVi?: string;
   @IsOptional() @IsString() labelEn?: string;

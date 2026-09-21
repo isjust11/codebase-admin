@@ -147,4 +147,63 @@ export class GuestService {
     guest.respondedAt = new Date();
     return this.guestRepository.save(guest);
   }
+
+  /**
+   * Open RSVP on public invite page: find-or-create guest by name under event slug.
+   */
+  async rsvpByEventSlug(
+    slug: string,
+    input: {
+      name: string;
+      attending?: boolean;
+      status?: RsvpStatus;
+      guests?: number;
+      plusOnes?: number;
+      note?: string;
+    },
+    locale: SupportedLocale = 'vi',
+  ): Promise<Guest> {
+    const name = String(input.name || '').trim();
+    if (!name) {
+      throw new BadRequestException('Name is required');
+    }
+
+    const event = await this.eventService.findEntityBySlug(slug, locale);
+    let guest = await this.guestRepository
+      .createQueryBuilder('guest')
+      .where('guest.eventId = :eventId', { eventId: event.id })
+      .andWhere('LOWER(guest.name) = LOWER(:name)', { name })
+      .getOne();
+
+    if (!guest) {
+      guest = this.guestRepository.create({
+        eventId: event.id,
+        name,
+        source: GuestSource.MANUAL,
+        extraData: { via: 'public_rsvp_form' },
+        publicToken: this.generateToken(),
+        rsvpStatus: RsvpStatus.PENDING,
+        plusOnes: 0,
+      });
+    }
+
+    const status =
+      input.status ||
+      (input.attending === false
+        ? RsvpStatus.DECLINED
+        : input.attending === true
+          ? RsvpStatus.ATTENDING
+          : RsvpStatus.ATTENDING);
+
+    guest.rsvpStatus = status;
+    guest.rsvpNote = input.note;
+    const partySize = input.guests ?? (input.plusOnes != null ? input.plusOnes + 1 : undefined);
+    if (status === RsvpStatus.ATTENDING || status === RsvpStatus.MAYBE) {
+      guest.plusOnes = Math.max(0, (partySize ?? guest.plusOnes + 1) - 1);
+    } else {
+      guest.plusOnes = 0;
+    }
+    guest.respondedAt = new Date();
+    return this.guestRepository.save(guest);
+  }
 }

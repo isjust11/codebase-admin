@@ -517,23 +517,19 @@ export class EventService {
   }
 
   async findPublicBySlug(slug: string, _locale?: SupportedLocale): Promise<EventInvitePayload> {
-    try {
-      const event = await this.eventRepository.findOne({
-        where: { slug },
-        relations: ['template'],
-      });
+    const event = await this.findEntityBySlug(slug, _locale);
+    return this.toInvitePayload(event);
+  }
 
-      if (!event) {
-        throw new NotFoundException(`Event "${slug}" not found`);
-      }
-
-      return this.toInvitePayload(event);
-    } catch (e) {
-      if (e instanceof NotFoundException) {
-        throw e;
-      }
-      throw new NotFoundException(`Event "${slug}" not found`);
+  async findEntityBySlug(slug: string, locale: SupportedLocale = 'vi'): Promise<Event> {
+    const event = await this.eventRepository.findOne({
+      where: { slug },
+      relations: ['template'],
+    });
+    if (!event) {
+      throw new NotFoundException(getMessages(locale).eventlab.eventNotFound);
     }
+    return event;
   }
 
   async listPublicPublished(): Promise<Array<{ slug: string; templateId: string; title: string }>> {
