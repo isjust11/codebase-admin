@@ -80,16 +80,47 @@ export class EventService {
     }
   }
 
+  /** Theme row is `{ tokens, css }` in template_data. Public invite needs both. */
+  private readTemplateTheme(template?: { data?: unknown }): Record<string, any> | undefined {
+    const rows = template?.data;
+    if (!Array.isArray(rows)) return undefined;
+    const row = rows.find((item: any) => item?.fieldKey === 'theme' || item?.fieldType === 'THEME');
+    if (!row?.value || typeof row.value !== 'string') return undefined;
+    try {
+      const parsed = JSON.parse(row.value);
+      if (parsed?.tokens && typeof parsed.tokens === 'object') {
+        return { ...parsed.tokens, css: parsed.css || '' };
+      }
+      return parsed;
+    } catch {
+      return undefined;
+    }
+  }
+
   toInvitePayload(event: Event): EventInvitePayload {
     if (!event.slug) {
       throw new BadRequestException('Event slug is required for public invite');
     }
     const templateSlug = event.template?.slug;
+    const data: Record<string, any> = { ...(event.eventData || {}) };
+    const storedTheme = this.readTemplateTheme(event.template);
+    if (storedTheme) {
+      const current = data.theme;
+      const hasTokens =
+        current &&
+        typeof current === 'object' &&
+        (current.accent || current.tokens || current.type === 'THEME' || current.value);
+      if (!hasTokens) {
+        data.theme = storedTheme;
+      } else if (!current.css && storedTheme.css) {
+        data.theme = { ...current, css: storedTheme.css };
+      }
+    }
     return {
       slug: event.slug,
       templateId: templateSlug || '',
       title: event.title,
-      data: event.eventData || {},
+      data,
     };
   }
 
@@ -140,10 +171,22 @@ export class EventService {
           template.data.forEach((d: any) => {
             if (d.value !== undefined && d.value !== null) {
               let val = d.value;
-              if (d.fieldType === 'json' || d.fieldType === 'textarea') {
+              if (
+                typeof val === 'string' &&
+                (d.fieldType === 'json' ||
+                  d.fieldType === 'textarea' ||
+                  d.fieldType === 'RAW' ||
+                  d.fieldType === 'THEME' ||
+                  val.startsWith('{') ||
+                  val.startsWith('['))
+              ) {
                 try { val = JSON.parse(val); } catch (e) { }
               }
-              eventData[d.fieldKey] = val;
+              if (d.fieldKey === 'theme' && val && typeof val === 'object' && val.tokens) {
+                eventData.theme = { ...val.tokens, css: val.css || '' };
+              } else {
+                eventData[d.fieldKey] = val;
+              }
             }
           });
         }
@@ -310,7 +353,7 @@ export class EventService {
 
     const savedEvent = await this.eventRepository.save(event);
     const template = savedEvent.templateId
-      ? await this.templateRepository.findOne({ where: { id: savedEvent.templateId } })
+      ? await this.templateRepository.findOne({ where: { id: savedEvent.templateId }, relations: ['data'] })
       : null;
 
     const invitePayload = savedEvent.slug
@@ -524,7 +567,7 @@ export class EventService {
   async findEntityBySlug(slug: string, locale: SupportedLocale = 'vi'): Promise<Event> {
     const event = await this.eventRepository.findOne({
       where: { slug },
-      relations: ['template'],
+      relations: ['template', 'template.data'],
     });
     if (!event) {
       throw new NotFoundException(getMessages(locale).eventlab.eventNotFound);

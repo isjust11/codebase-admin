@@ -16,6 +16,7 @@ import { TemplateEditorMode } from '../enums/template-editor-mode.enum';
 import { RoleService } from './role.service';
 import { RoleEnum } from '../enums/role.enum';
 import { SECTION_CATALOG } from '../constants/wedding-layout';
+import { Base64EncryptionUtil } from '../utils/base64Encryption.util';
 
 type Actor = { id: number; roles?: any[]; isAdmin?: boolean };
 
@@ -274,6 +275,21 @@ export class TemplateService {
             // keep as string if parse fails
           }
           mappedData[item.fieldKey] = parsedValue;
+        } else if (item.fieldType === 'THEME' || item.fieldKey === 'theme') {
+          let parsed: any = {};
+          try {
+            parsed = item.value ? JSON.parse(item.value) : {};
+          } catch {
+            parsed = {};
+          }
+          const tokens = parsed.tokens && typeof parsed.tokens === 'object' ? parsed.tokens : parsed;
+          const { css: _css, tokens: _tokens, ...flat } = tokens;
+          mappedData.theme = {
+            id: item.id,
+            type: 'THEME',
+            value: flat,
+            css: parsed.css || '',
+          };
         } else {
           if (typeof parsedValue === 'string' && (parsedValue.startsWith('{') || parsedValue.startsWith('['))) {
             try {
@@ -334,6 +350,100 @@ export class TemplateService {
     }
   }
 
+  private cssSafe(value: unknown): string {
+    return String(value ?? '')
+      .replace(/[<>{};]/g, '')
+      .trim();
+  }
+
+  /** Compile theme tokens (+ optional per-field config) into a stylesheet stored with the template. */
+  private compileThemeCss(
+    theme: Record<string, any>,
+    fields: Array<{ key: string; config?: Record<string, any> }> = [],
+  ): string {
+    const v = (key: string, fallback: string) => this.cssSafe(theme[key] || fallback) || fallback;
+    const lines = [
+      '.el-invite-root {',
+      `  --el-accent: ${v('accent', '#ef4065')};`,
+      `  --el-accent-soft: ${v('accentSoft', '#ffb3c3')};`,
+      `  --el-ink: ${v('ink', '#a82046')};`,
+      `  --el-muted: ${v('muted', '#c9244d')};`,
+      `  --el-bg: ${v('bg', '#fff5f7')};`,
+      `  --el-bg-soft: ${v('bgSoft', '#fff0f4')};`,
+      `  --el-on-accent: ${v('onAccent', '#ffffff')};`,
+      `  --el-font-display: ${v('fontDisplay', '"Gloock", "Lora", serif')};`,
+      `  --el-font-script: ${v('fontScript', '"Pinyon Script", cursive')};`,
+      `  --el-font-body: ${v('fontBody', '"Lora", Georgia, serif')};`,
+      `  --el-font-sans: ${v('fontSans', '"DM Sans", system-ui, sans-serif')};`,
+      `  --el-primary-color: ${v('accent', '#ef4065')};`,
+      `  --el-primary: ${v('accent', '#ef4065')};`,
+      `  --el-background: ${v('bg', '#fff5f7')};`,
+      `  --el-font-heading: ${v('fontDisplay', '"Gloock", "Lora", serif')};`,
+      '  color: var(--el-ink);',
+      '  background: var(--el-bg);',
+      '  font-family: var(--el-font-body);',
+      '}',
+    ];
+
+    for (const field of fields) {
+      const config = field.config;
+      if (!config) continue;
+      const decls: string[] = [];
+      if (config.color) decls.push(`color: ${this.cssSafe(config.color)}`);
+      if (config.font) decls.push(`font-family: ${this.cssSafe(config.font)}`);
+      if (config.size) {
+        const size = this.cssSafe(config.size);
+        decls.push(`font-size: ${/^\d+(\.\d+)?$/.test(size) ? `${size}px` : size}`);
+      }
+      if (config.display === '0' || config.display === 'false') decls.push('display: none');
+      if (!decls.length) continue;
+      lines.push(`[data-slot="${this.cssSafe(field.key)}"] { ${decls.join('; ')}; }`);
+    }
+
+    return lines.join('\n');
+  }
+
+  private themeTokensFromField(field: any): Record<string, any> {
+    if (!field || typeof field !== 'object') return {};
+    if (field.type === 'THEME' || field.type === 'RAW') {
+      const value = field.value ?? field.defaul ?? field;
+      if (typeof value === 'string') {
+        try {
+          return this.themeTokensFromField(JSON.parse(value));
+        } catch {
+          return {};
+        }
+      }
+      if (value && typeof value === 'object') return this.themeTokensFromField(value);
+    }
+    const source = field.tokens && typeof field.tokens === 'object' ? field.tokens : field;
+    const tokens = { ...source };
+    delete tokens.type;
+    delete tokens.id;
+    delete tokens.value;
+    delete tokens.defaul;
+    delete tokens.css;
+    delete tokens.tokens;
+    delete tokens.config;
+    return tokens;
+  }
+
+  /** Numeric id or base64-encrypted id from admin responses (`MTc0` → 174). Never returns NaN. */
+  private parseEntityId(value: unknown): number | undefined {
+    if (value == null || value === '') return undefined;
+    if (typeof value === 'number') {
+      return Number.isFinite(value) && value > 0 ? value : undefined;
+    }
+    const text = String(value).trim();
+    if (!text) return undefined;
+    if (/^\d+$/.test(text)) {
+      const numeric = Number(text);
+      return numeric > 0 ? numeric : undefined;
+    }
+    const decoded = Base64EncryptionUtil.decrypt(text);
+    return Number.isFinite(decoded) && decoded > 0 ? decoded : undefined;
+  }
+
   private transformDtoData(
     data?: Record<string, any>,
     templateId?: number,
@@ -342,14 +452,21 @@ export class TemplateService {
     if (!data) return [];
     const existingByKey = new Map((existing || []).map((row) => [row.fieldKey, row]));
     const entities: TemplateData[] = [];
+    const fieldStyles: Array<{ key: string; config?: Record<string, any> }> = [];
+    let themeSource: any = data.theme;
+
     for (const [key, field] of Object.entries(data)) {
       if (field === undefined || field === null) continue;
+      if (key === 'theme') {
+        themeSource = field;
+        continue;
+      }
       const existingRow = existingByKey.get(key);
 
       if (typeof field === 'object' && !Array.isArray(field) && field.type) {
         const td = new TemplateData();
-        const rowId = field.id ?? existingRow?.id;
-        if (rowId != null) td.id = Number(rowId);
+        const rowId = this.parseEntityId(field.id) ?? this.parseEntityId(existingRow?.id);
+        if (rowId != null) td.id = rowId;
         td.templateId = templateId ?? existingRow?.templateId ?? 0;
         td.fieldKey = key;
         td.fieldType = field.type;
@@ -364,11 +481,11 @@ export class TemplateService {
           td.value = typeof val === 'object' ? JSON.stringify(val) : String(val);
         }
 
-        if (field.config) {
+        if (field.config && typeof field.config === 'object') {
           const tc = new TemplateConfig();
-          const configId = field.config.id ?? existingRow?.config?.id;
+          const configId = this.parseEntityId(field.config.id) ?? this.parseEntityId(existingRow?.config?.id);
           if (configId != null) {
-            tc.id = Number(configId);
+            tc.id = configId;
             if (td.id) tc.templateDataId = td.id;
           }
           tc.display = field.config.display;
@@ -379,10 +496,12 @@ export class TemplateService {
         } else if (existingRow?.config) {
           td.config = existingRow.config;
         }
+        if (td.config) fieldStyles.push({ key, config: td.config as any });
         entities.push(td);
       } else {
         const td = new TemplateData();
-        if (existingRow?.id != null) td.id = existingRow.id;
+        const rowId = this.parseEntityId(existingRow?.id);
+        if (rowId != null) td.id = rowId;
         td.templateId = templateId ?? existingRow?.templateId ?? 0;
         td.fieldKey = key;
         td.fieldType = 'RAW';
@@ -390,6 +509,23 @@ export class TemplateService {
         entities.push(td);
       }
     }
+
+    if (themeSource) {
+      const tokens = this.themeTokensFromField(themeSource);
+      const css = this.compileThemeCss(tokens, fieldStyles);
+      const existingRow = existingByKey.get('theme');
+      const td = new TemplateData();
+      const rowId = this.parseEntityId(themeSource?.id) ?? this.parseEntityId(existingRow?.id);
+      if (rowId != null) td.id = rowId;
+      td.templateId = templateId ?? existingRow?.templateId ?? 0;
+      td.fieldKey = 'theme';
+      td.fieldType = 'THEME';
+      td.labelVi = 'Theme CSS';
+      td.labelEn = 'Theme CSS';
+      td.value = JSON.stringify({ tokens, css });
+      entities.push(td);
+    }
+
     return entities;
   }
 
