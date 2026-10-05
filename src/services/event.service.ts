@@ -80,18 +80,44 @@ export class EventService {
     }
   }
 
-  /** Theme row is `{ tokens, css }` in template_data. Public invite needs both. */
+  /** Drop wrapper keys. Keep color tokens and newer theme objects (music, effects, …). */
+  private flattenTheme(raw: unknown): Record<string, any> | undefined {
+    if (typeof raw === 'string') {
+      try {
+        return this.flattenTheme(JSON.parse(raw));
+      } catch {
+        return undefined;
+      }
+    }
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
+    const obj = raw as Record<string, any>;
+
+    if (obj.tokens && typeof obj.tokens === 'object' && !Array.isArray(obj.tokens)) {
+      const { tokens, ...rest } = obj;
+      return { ...(this.flattenTheme(tokens) || {}), ...this.withoutThemeMeta(rest) };
+    }
+
+    if ((obj.type === 'THEME' || obj.type === 'RAW') && obj.value != null) {
+      const { value, ...rest } = obj;
+      return { ...(this.flattenTheme(value) || {}), ...this.withoutThemeMeta(rest) };
+    }
+
+    return this.withoutThemeMeta(obj);
+  }
+
+  private withoutThemeMeta(obj: Record<string, any>): Record<string, any> {
+    const { type: _type, id: _id, defaul: _defaul, ...rest } = obj;
+    return rest;
+  }
+
+  /** Theme row is `{ tokens, css, …extra }` in template_data. Public invite needs the full object. */
   private readTemplateTheme(template?: { data?: unknown }): Record<string, any> | undefined {
     const rows = template?.data;
     if (!Array.isArray(rows)) return undefined;
     const row = rows.find((item: any) => item?.fieldKey === 'theme' || item?.fieldType === 'THEME');
     if (!row?.value || typeof row.value !== 'string') return undefined;
     try {
-      const parsed = JSON.parse(row.value);
-      if (parsed?.tokens && typeof parsed.tokens === 'object') {
-        return { ...parsed.tokens, css: parsed.css || '' };
-      }
-      return parsed;
+      return this.flattenTheme(JSON.parse(row.value));
     } catch {
       return undefined;
     }
@@ -104,17 +130,12 @@ export class EventService {
     const templateSlug = event.template?.slug;
     const data: Record<string, any> = { ...(event.eventData || {}) };
     const storedTheme = this.readTemplateTheme(event.template);
-    if (storedTheme) {
-      const current = data.theme;
-      const hasTokens =
-        current &&
-        typeof current === 'object' &&
-        (current.accent || current.tokens || current.type === 'THEME' || current.value);
-      if (!hasTokens) {
-        data.theme = storedTheme;
-      } else if (!current.css && storedTheme.css) {
-        data.theme = { ...current, css: storedTheme.css };
-      }
+    const currentTheme = this.flattenTheme(data.theme);
+    if (storedTheme || currentTheme) {
+      const merged = { ...(storedTheme || {}), ...(currentTheme || {}) };
+      const css = String(currentTheme?.css || storedTheme?.css || '');
+      if (css) merged.css = css;
+      data.theme = merged;
     }
     return {
       slug: event.slug,
@@ -182,8 +203,8 @@ export class EventService {
               ) {
                 try { val = JSON.parse(val); } catch (e) { }
               }
-              if (d.fieldKey === 'theme' && val && typeof val === 'object' && val.tokens) {
-                eventData.theme = { ...val.tokens, css: val.css || '' };
+              if (d.fieldKey === 'theme') {
+                eventData.theme = this.flattenTheme(val) || val;
               } else {
                 eventData[d.fieldKey] = val;
               }
