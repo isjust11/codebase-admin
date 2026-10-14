@@ -53,6 +53,8 @@ import { Wish } from './entities/wish.entity';
 import { TemplateModule } from './modules/template.module';
 import { EventModule } from './modules/event.module';
 import { ContactModule } from './modules/contact.module';
+import { InviteEffect } from './entities/invite-effect.entity';
+import { InviteEffectModule } from './modules/invite-effect.module';
 
 @Module({
   imports: [
@@ -99,6 +101,7 @@ import { ContactModule } from './modules/contact.module';
         Guest,
         Contact,
         Wish,
+        InviteEffect,
       ],
       // synchronize: auto-update schema from entities (dev only).
       // migrationsRun: runs migrations on startup — InitialSchema runs before SeedsCommonData.
@@ -142,6 +145,7 @@ import { ContactModule } from './modules/contact.module';
     TemplateModule,
     EventModule,
     ContactModule,
+    InviteEffectModule,
   ],
   controllers: [FcmController, DeepLinkController, HomeController],
 })
