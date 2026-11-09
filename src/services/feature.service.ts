@@ -95,6 +95,7 @@ export class FeatureService {
     async update(id: number, updateFeatureDto: FeatureDto, locale: SupportedLocale = 'vi'): Promise<Feature> {
         const feature = await this.findOne(id, locale);
         Object.assign(feature, updateFeatureDto);
+        feature.featureTypeId = Base64EncryptionUtil.decrypt(updateFeatureDto.featureTypeId ?? '');
         if (!updateFeatureDto.parentId || updateFeatureDto.parentId === '') {
             feature.parent = undefined;
             feature.parentId = undefined;

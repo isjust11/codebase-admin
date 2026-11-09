@@ -61,6 +61,7 @@ export class EventService {
     return input
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[\u0111\u0110]/g, 'd')
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '')
@@ -176,7 +177,7 @@ export class EventService {
   }
 
   async create(userId: number, dto: EventDto): Promise<Event> {
-    const baseSlug = dto.slug ? this.slugify(dto.slug) : this.slugify(dto.title);
+    const baseSlug = this.slugify(dto.title);
     const slug = await this.ensureUniqueSlug(baseSlug);
 
     let eventData = dto.eventData || {};
@@ -230,7 +231,13 @@ export class EventService {
 
   async update(id: number, userId: number, dto: Partial<EventDto>, locale: SupportedLocale = 'vi'): Promise<Event> {
     const event = await this.findOneForUser(id, userId, locale);
-    if (dto.title !== undefined) event.title = dto.title;
+    // Slug luôn được sinh từ title (không nhập tay): đổi title → sinh lại slug.
+    if (dto.title !== undefined && dto.title !== event.title) {
+      event.title = dto.title;
+      event.slug = await this.ensureUniqueSlug(this.slugify(dto.title), event.id);
+    } else if (!event.slug) {
+      event.slug = await this.ensureUniqueSlug(this.slugify(event.title), event.id);
+    }
     if (dto.type !== undefined) event.type = dto.type;
     if (dto.eventDate !== undefined) event.eventDate = dto.eventDate ? new Date(dto.eventDate) : undefined;
     if (dto.venue !== undefined) event.venue = dto.venue;
