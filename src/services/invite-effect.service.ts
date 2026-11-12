@@ -27,6 +27,15 @@ const DEFAULT_EFFECTS: InviteEffectDto[] = [
     sortOrder: 2,
   },
   {
+    slug: 'hearts',
+    themeKey: 'effectHearts',
+    name: 'Tim bay',
+    description: 'Trái tim bay lên khi mở thiệp và trôi nhẹ trên trang.',
+    kind: 'ambient',
+    defaultEnabled: true,
+    sortOrder: 6,
+  },
+  {
     slug: 'envelope',
     themeKey: 'effectEnvelope',
     name: 'Phong bì',
