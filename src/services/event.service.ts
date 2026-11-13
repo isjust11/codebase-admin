@@ -204,9 +204,8 @@ export class EventService {
               ) {
                 try { val = JSON.parse(val); } catch (e) { }
               }
-              if (d.fieldKey === 'theme') {
-                eventData.theme = this.flattenTheme(val) || val;
-              } else {
+              // The theme stays on the template; `eventData.theme` only stores this event's overrides.
+              if (d.fieldKey !== 'theme' && d.fieldType !== 'THEME') {
                 eventData[d.fieldKey] = val;
               }
             }

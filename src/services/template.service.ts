@@ -251,6 +251,39 @@ export class TemplateService {
   }
 
 
+  /** Published templates for the public landing page; card fields only, newest first. */
+  async publicList(type?: TemplateType) {
+    const qb = this.templateRepository
+      .createQueryBuilder('template')
+      .leftJoinAndSelect('template.category', 'category')
+      .where('template.isPublished = :published', { published: true });
+    if (type) qb.andWhere('template.type = :type', { type });
+    const rows = await qb.orderBy('template.id', 'DESC').take(200).getMany();
+    return rows.map((t) => ({
+      name: t.name,
+      slug: t.slug,
+      type: t.type,
+      description: t.description || '',
+      thumbnailUrl: t.thumbnailUrl || '',
+      isPremium: !!t.isPremium,
+      category: t.category?.name || '',
+      createdAt: t.createdAt,
+    }));
+  }
+
+  /** Sample content of a published template so the invite host can render a live demo. */
+  async publicDemo(slug: string, locale: SupportedLocale = 'vi') {
+    const entity = await this.templateRepository.findOne({
+      where: { slug, isPublished: true },
+      relations: ['data', 'data.config'],
+    });
+    if (!entity) {
+      throw new NotFoundException(getMessages(locale).eventlab.templateNotFound);
+    }
+    const template = this.normalize(entity);
+    return { templateId: template.slug, title: template.name, data: template.data || {} };
+  }
+
   private applyStatus(template: Template, status: TemplateStatus) {
     template.status = status;
     template.isPublished = status === TemplateStatus.PUBLISHED;

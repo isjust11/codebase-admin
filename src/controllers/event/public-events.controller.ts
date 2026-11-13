@@ -2,6 +2,8 @@ import { Controller, Get, Post, Body, Param, UseGuards, Res, NotFoundException }
 import { EventService } from '../../services/event.service';
 import { GuestService } from '../../services/guest.service';
 import { PublicEventRsvpDto } from '../../dtos/guest.dto';
+import { CreateWishDto } from '../../dtos/wish.dto';
+import { WishService } from '../../services/wish.service';
 import { BaseController } from '../base/base.controller';
 import { JwtAuthGuard, Public } from '../../guards/jwt-auth.guard';
 import { PermissionGuard } from '../../guards/permission.guard';
@@ -19,6 +21,7 @@ export class PublicEventsController extends BaseController {
   constructor(
     private readonly eventService: EventService,
     private readonly guestService: GuestService,
+    private readonly wishService: WishService,
   ) {
     super();
   }
@@ -70,6 +73,31 @@ export class PublicEventsController extends BaseController {
         plusOnes: guest.plusOnes,
         respondedAt: guest.respondedAt,
       });
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Public()
+  @Get(':slug/wishes')
+  async listWishes(@Param('slug') slug: string, @Locale() locale: SupportedLocale, @Res() res: Response) {
+    try {
+      return res.status(200).json(await this.wishService.listApprovedBySlug(slug, locale));
+    } catch (error) {
+      return this.error(res, error);
+    }
+  }
+
+  @Public()
+  @Post(':slug/wishes')
+  async createWish(
+    @Param('slug') slug: string,
+    @Body() dto: CreateWishDto,
+    @Locale() locale: SupportedLocale,
+    @Res() res: Response,
+  ) {
+    try {
+      return res.status(200).json(await this.wishService.createBySlug(slug, dto, locale));
     } catch (error) {
       return this.error(res, error);
     }
