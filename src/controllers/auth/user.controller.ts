@@ -10,6 +10,7 @@ import { BaseController } from '../base/base.controller';
 import { Response } from 'express';
 import { Locale } from 'src/decorators/locale.decorator';
 import { SupportedLocale } from 'src/constants/messages';
+import { RoleEnum } from 'src/enums/role.enum';
 
 @Controller('users')
 @UseGuards(PermissionGuard)
@@ -61,7 +62,7 @@ export class UserController extends BaseController {
   @RequirePermission('CREATE', 'user')
   async create(@Body() createUserDto: RegisterDto, @Res() res: Response) {
     try {
-      const result = await this.userService.create(createUserDto);
+      const result = await this.userService.create(createUserDto, RoleEnum.ADMIN);
       return this.success(res, result);
     } catch (error) {
       this.error(res, error);

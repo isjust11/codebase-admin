@@ -67,7 +67,7 @@ export class UserService {
     });
   }
 
-  async create(createUserDto: RegisterDto): Promise<User> {
+  async create(createUserDto: RegisterDto, defaultRole: RoleEnum = RoleEnum.USER): Promise<User> {
 
     const user = this.userRepository.create({
       username: createUserDto.username,
@@ -93,30 +93,11 @@ export class UserService {
     // Tìm subscription plan FREE
     const freeSubscriptionPlan = await this.createFreeSubscription(user.id);
 
-    // Tìm role ADMIN nếu là tài khoản đầu tiên
-    let roleIds: number[] = [];
-    if (isFirstUser) {
-      const superAdminRole = await this.roleRepository.findOne({
-        where: {
-          code: RoleEnum.SUPPER_ADMIN,
-        },
-      });
-      if (superAdminRole) {
-        roleIds = [superAdminRole.id];
-      }
-      user.roles = [superAdminRole!];
-      user.isAdmin = true;
-    } else {
-      const adminRole = await this.roleRepository.findOne({
-        where: {
-          code: RoleEnum.ADMIN,
-        },
-      });
-      if (adminRole) {
-        roleIds = [adminRole.id];
-      }
-      user.roles = [adminRole!];
-    }
+    // Tài khoản đầu tiên là SUPPER_ADMIN; còn lại nhận role mặc định (USER khi tự đăng ký)
+    const roleCode = isFirstUser ? RoleEnum.SUPPER_ADMIN : defaultRole;
+    const role = await this.roleRepository.findOne({ where: { code: roleCode } });
+    user.roles = role ? [role] : [];
+    if (isFirstUser) user.isAdmin = true;
 
     const savedUser = await this.userRepository.save(user);
     if (savedUser) {

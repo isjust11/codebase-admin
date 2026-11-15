@@ -325,16 +325,13 @@ export class AuthService {
         return {
           code: RegisterCode.Ok,
           message: m.pinSent,
-          data: {
-            ...user,
-            pin: pin
-          }
+          data: { email: user.email },
         };
       }
       return {
         code: RegisterCode.Ok,
         message: m.registerSuccess,
-        data: user
+        data: { email: user.email },
       };
     } else {
       if (validateUser.code === RegisterCode.ExistUsernameNotVerified) {
@@ -347,13 +344,10 @@ export class AuthService {
         return {
           code: RegisterCode.Ok,
           message: m.pinSent,
-          data: {
-            ...validateUser.data,
-            pin: pin
-          }
+          data: { email: validateUser.data.email },
         };
       }
-      return validateUser;
+      return { code: validateUser.code, message: validateUser.message, data: null };
     }
   }
 
