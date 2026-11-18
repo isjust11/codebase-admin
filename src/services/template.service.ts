@@ -125,7 +125,6 @@ export class TemplateService {
       type: dto.type || TemplateType.EVENT,
       thumbnailUrl: dto.thumbnailUrl,
       description: dto.description,
-
       categoryId: dto.categoryId ? Number(dto.categoryId) : undefined,
       isPremium: dto.isPremium ?? false,
       createdById: dto.createdBy ? Number(dto.createdBy) : Number(actor.id),
@@ -521,10 +520,21 @@ export class TemplateService {
             tc.id = configId;
             if (td.id) tc.templateDataId = td.id;
           }
-          tc.display = field.config.display;
+          const displayFromEnabled =
+            typeof field.enabled === 'boolean' ? (field.enabled ? '1' : '0') : undefined;
+          tc.display = field.config.display ?? displayFromEnabled;
           tc.color = field.config.color;
           tc.font = field.config.font;
           tc.size = field.config.size;
+          td.config = tc;
+        } else if (typeof field.enabled === 'boolean') {
+          const tc = new TemplateConfig();
+          const configId = this.parseEntityId(existingRow?.config?.id);
+          if (configId != null) {
+            tc.id = configId;
+            if (td.id) tc.templateDataId = td.id;
+          }
+          tc.display = field.enabled ? '1' : '0';
           td.config = tc;
         } else if (existingRow?.config) {
           td.config = existingRow.config;
