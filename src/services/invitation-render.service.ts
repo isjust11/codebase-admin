@@ -35,10 +35,10 @@ export class InvitationRenderService {
     if (!template) {
       throw new NotFoundException(getMessages(locale).eventlab.templateNotFound);
     }
-    const invitationUrl = this.eventService.invitationUrl(guest.publicToken);
-    const reactUrl = template.slug ? this.eventService.reactInviteUrl(template.slug) : '';
-    // Use the guest token to allow the React host to load guest data
-    const targetUrl = reactUrl ? `${reactUrl}?token=${guest.publicToken}` : invitationUrl;
+    const invitationUrl = event.slug
+      ? this.eventService.guestInviteUrl(event.slug, guest.publicToken, guest.name)
+      : this.eventService.invitationUrl(guest.publicToken);
+    const targetUrl = invitationUrl;
     
     const buffer = await this.urlToPng(targetUrl);
     const media = await this.mediaService.uploadFromBuffer(

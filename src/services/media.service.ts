@@ -69,16 +69,20 @@ export class MediaService {
     return `${this.endpoint.replace(/\/$/, '')}/${this.bucketName}/${key}`;
   }
 
-  async findAll(userId: number): Promise<Media[]> {
+  async findAll(userId: number, mimeTypePrefix?: string): Promise<Media[]> {
     const medias = await this.mediaRepository.find({
       where: { isDeleted: false, userId },
+      order: { createdAt: 'DESC' },
     });
-    for (const m of medias) {
+    const filtered = mimeTypePrefix
+      ? medias.filter((m) => (m.mimeType || '').toLowerCase().startsWith(mimeTypePrefix.toLowerCase()))
+      : medias;
+    for (const m of filtered) {
       if (m.filename) {
         m.url = await this.buildPublicUrl(m.filename);
       }
     }
-    return medias;
+    return filtered;
   }
 
   async findById(id: number, userId: number, locale: SupportedLocale = 'vi'): Promise<Media> {

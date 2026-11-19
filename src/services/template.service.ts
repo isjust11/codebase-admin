@@ -448,8 +448,13 @@ export class TemplateService {
       }
       if (value && typeof value === 'object') return this.themeTokensFromField(value);
     }
-    const source = field.tokens && typeof field.tokens === 'object' ? field.tokens : field;
-    const tokens = { ...source };
+    // Prefer nested `tokens`, then overlay sibling keys so admin edits on the wrapper win.
+    if (field.tokens && typeof field.tokens === 'object' && !Array.isArray(field.tokens)) {
+      const { tokens, css: _css, type: _type, id: _id, value: _value, defaul: _defaul, config: _config, ...siblings } =
+        field;
+      return { ...this.themeTokensFromField(tokens), ...siblings };
+    }
+    const tokens = { ...field };
     delete tokens.type;
     delete tokens.id;
     delete tokens.value;

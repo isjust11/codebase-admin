@@ -16,6 +16,10 @@ export class DeepLinkController extends BaseController {
     return (process.env.PUBLIC_INVITE_BASE_URL || process.env.WEB_URL || process.env.CLIENT_URL || 'http://localhost:3200').replace(/\/$/, '');
   }
 
+  private reactInviteHost(): string {
+    return (process.env.REACT_TEMPLATE_HOST_URL || 'http://localhost:3000').replace(/\/$/, '');
+  }
+
   private appScheme(): string {
     return process.env.APP_SCHEME || 'eventlab';
   }
@@ -49,7 +53,8 @@ export class DeepLinkController extends BaseController {
    */
   @Get('e/:token')
   async inviteDeepLink(@Param('token') token: string, @Res() res: Response, @Req() req: Request) {
-    const webInviteUrl = `${this.publicBaseUrl()}/e/${token}`;
+    // Prefer React invite host; landing also keeps /e/:token as a legacy redirect.
+    const webInviteUrl = `${this.reactInviteHost()}/e/${encodeURIComponent(token)}`;
     const userAgent = req.headers['user-agent'];
 
     if (this.isDesktopUserAgent(userAgent)) {

@@ -31,9 +31,12 @@ export class PublicInviteController extends BaseController {
       const guest = await this.guestService.findByPublicToken(token, locale);
       const event = guest.event;
       const template = event?.template;
-      const invitationUrl = this.eventService.invitationUrl(guest.publicToken);
-      const reactInviteUrl = template?.slug ? this.eventService.reactInviteUrl(template.slug) : undefined;
-      const invitePayload = template?.slug && event ? this.eventService.toInvitePayload({ ...event, template } as any) : undefined;
+      const invitationUrl = event?.slug
+        ? this.eventService.guestInviteUrl(event.slug, guest.publicToken, guest.name)
+        : this.eventService.invitationUrl(guest.publicToken);
+      const reactInviteUrl = event?.slug ? this.eventService.reactInviteUrl(event.slug) : undefined;
+      const invitePayload =
+        event?.slug && template ? this.eventService.toInvitePayload({ ...event, template } as any) : undefined;
       return this.success(res, {
         reactInviteUrl,
         invitePayload,

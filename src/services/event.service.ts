@@ -47,14 +47,30 @@ export class EventService {
     );
   }
 
+  private reactInviteHost(): string {
+    return (process.env.REACT_TEMPLATE_HOST_URL || 'http://localhost:3000').replace(/\/$/, '');
+  }
+
+  /**
+   * Short personal link on the invite host.
+   * Host `/e/:token` resolves the guest and redirects to `/invite/{eventSlug}?to=&token=`.
+   */
   invitationUrl(token: string): string {
-    return `${this.publicBaseUrl()}/e/${token}`;
+    return `${this.reactInviteHost()}/e/${encodeURIComponent(token)}`;
   }
 
   /** React invite host URL (wedding-invite /invite/:slug). */
   reactInviteUrl(slug: string): string {
-    const base = (process.env.REACT_TEMPLATE_HOST_URL || 'http://localhost:3000').replace(/\/$/, '');
-    return `${base}/invite/${slug}`;
+    return `${this.reactInviteHost()}/invite/${encodeURIComponent(slug)}`;
+  }
+
+  /** Full personal invite: greet by name + guest token for RSVP/tracking. */
+  guestInviteUrl(eventSlug: string, token: string, guestName?: string): string {
+    const params = new URLSearchParams();
+    if (guestName?.trim()) params.set('to', guestName.trim());
+    if (token) params.set('token', token);
+    const qs = params.toString();
+    return `${this.reactInviteUrl(eventSlug)}${qs ? `?${qs}` : ''}`;
   }
 
   private slugify(input: string): string {
@@ -542,7 +558,13 @@ export class EventService {
     if (guestId) {
       guest = (await this.guestRepository.findOne({ where: { id: guestId, eventId: event.id } })) || undefined;
     }
-    const invitationUrl = guest ? this.invitationUrl(guest.publicToken) : this.invitationUrl('preview');
+    const invitationUrl = guest
+      ? event.slug
+        ? this.guestInviteUrl(event.slug, guest.publicToken, guest.name)
+        : this.invitationUrl(guest.publicToken)
+      : event.slug
+        ? this.reactInviteUrl(event.slug)
+        : this.invitationUrl('preview');
     const reactUrl = event.slug ? this.reactInviteUrl(event.slug) : undefined;
     return {
       event,

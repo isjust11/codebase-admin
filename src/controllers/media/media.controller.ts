@@ -33,6 +33,19 @@ export class MediaController extends BaseController {
     return await this.mediaService.findAllWithPagination(filter);
   }
 
+  /**
+   * Kho lưu trữ của user hiện tại (ảnh/nhạc đã upload).
+   * Không cần quyền admin READ media — chỉ JWT của chính chủ.
+   * Query: mimeType=audio | image | video (prefix match)
+   */
+  @Get('mine')
+  async getMine(
+    @Request() req,
+    @Query('mimeType') mimeType?: string,
+  ): Promise<Media[]> {
+    return this.mediaService.findAll(req.user.id, mimeType || undefined);
+  }
+
   @Get(':id')
   @RequirePermission('READ', 'media')
   async findOne(@Param('id') id: string, @Locale() locale: SupportedLocale, @Request() req): Promise<Media> {

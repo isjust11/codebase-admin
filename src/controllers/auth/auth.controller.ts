@@ -3,12 +3,14 @@ import { AuthService } from '../../services/auth.service';
 import { LoginDto, RegisterDto, ResendEmailDto, ResetPasswordDto, VerifyPinDto, ResendPinDto } from '../../dtos/auth.dto';
 import { MobileSocialLoginDto } from '../../dtos/mobile-social-login.dto';
 import { JwtAuthGuard, Public } from '../../guards/jwt-auth.guard';
-import { AuthGuard } from '@nestjs/passport';
+import { GoogleOAuthGuard } from '../../guards/strategies/google-oauth.guard';
+import { FacebookOAuthGuard } from '../../guards/strategies/facebook-oauth.guard';
 import { Response } from 'express';
 import { BaseController } from '../base/base.controller';
 import { UpdateProfileDto } from '../../dtos/update-profile-dto';
 import { Locale } from '../../decorators/locale.decorator';
 import { SupportedLocale } from '../../constants/messages';
+import { resolveOAuthClientOrigin } from '../../utils/oauth-client.util';
 import axios from 'axios';
 
 @Controller('auth')
@@ -109,43 +111,43 @@ export class AuthController extends BaseController {
 
   @Public()
   @Get('google')
-  @UseGuards(AuthGuard('google'))
-  async googleAuth(@Request() req) {
-    console.log('Starting Google authentication process');
+  @UseGuards(GoogleOAuthGuard)
+  async googleAuth() {
+    // Passport redirects to Google
   }
 
   @Public()
   @Get('google/callback')
-  @UseGuards(AuthGuard('google'))
-  async googleAuthCallback(@Request() req, @Res() res: Response) {
+  @UseGuards(GoogleOAuthGuard)
+  async googleAuthCallback(@Request() req, @Res() res: Response, @Query('state') state?: string) {
+    const clientOrigin = resolveOAuthClientOrigin(state);
     try {
-      const userInfo = req.user;
-      const tempToken = await this.authService.createTempToken(userInfo);
-      res.redirect(`${process.env.CLIENT_URL}/success?token=${tempToken}`);
+      const tempToken = await this.authService.createTempToken(req.user);
+      res.redirect(`${clientOrigin}/success?token=${tempToken}`);
     } catch (_error) {
       console.error('Google authentication error:', _error);
-      res.redirect(`${process.env.CLIENT_URL}/error?message=Authentication failed`);
+      res.redirect(`${clientOrigin}/error?message=${encodeURIComponent('Authentication failed')}`);
     }
   }
 
   @Public()
   @Get('facebook')
-  @UseGuards(AuthGuard('facebook'))
-  async facebookAuth(@Request() req) {
-    console.log('Starting Facebook authentication process');
+  @UseGuards(FacebookOAuthGuard)
+  async facebookAuth() {
+    // Passport redirects to Facebook
   }
 
   @Public()
   @Get('facebook/callback')
-  @UseGuards(AuthGuard('facebook'))
-  async facebookAuthCallback(@Request() req, @Res() res: Response) {
+  @UseGuards(FacebookOAuthGuard)
+  async facebookAuthCallback(@Request() req, @Res() res: Response, @Query('state') state?: string) {
+    const clientOrigin = resolveOAuthClientOrigin(state);
     try {
-      const userInfo = req.user;
-      const tempToken = await this.authService.createTempToken(userInfo);
-      res.redirect(`${process.env.CLIENT_URL}/success?token=${tempToken}`);
+      const tempToken = await this.authService.createTempToken(req.user);
+      res.redirect(`${clientOrigin}/success?token=${tempToken}`);
     } catch (_error) {
       console.error('Facebook authentication error:', _error);
-      res.redirect(`${process.env.CLIENT_URL}/error?message=Authentication failed`);
+      res.redirect(`${clientOrigin}/error?message=${encodeURIComponent('Authentication failed')}`);
     }
   }
 

@@ -28,7 +28,7 @@ export class GuestService {
     params: PaginationParams,
     locale: SupportedLocale = 'vi',
   ): Promise<PaginatedResponse<Guest>> {
-    await this.eventService.findOneForUser(eventId, userId, locale);
+    const event = await this.eventService.findOneForUser(eventId, userId, locale);
     const { page = 1, size = 20, search = '' } = params;
     const skip = (page - 1) * size;
     const qb = this.guestRepository.createQueryBuilder('guest').where('guest.eventId = :eventId', { eventId });
@@ -40,7 +40,9 @@ export class GuestService {
     const [data, total] = await qb.orderBy('guest.id', 'DESC').skip(skip).take(size).getManyAndCount();
     const withUrls = data.map((g) => ({
       ...g,
-      invitationUrl: this.eventService.invitationUrl(g.publicToken),
+      invitationUrl: event.slug
+        ? this.eventService.guestInviteUrl(event.slug, g.publicToken, g.name)
+        : this.eventService.invitationUrl(g.publicToken),
     }));
     return { data: withUrls as any, total, page, size, totalPages: Math.ceil(total / size) };
   }
@@ -55,7 +57,7 @@ export class GuestService {
   }
 
   async create(eventId: number, userId: number, dto: GuestDto, locale: SupportedLocale = 'vi'): Promise<Guest> {
-    await this.eventService.findOneForUser(eventId, userId, locale);
+    const event = await this.eventService.findOneForUser(eventId, userId, locale);
     const guest = this.guestRepository.create({
       eventId,
       name: dto.name,
@@ -69,7 +71,10 @@ export class GuestService {
       plusOnes: 0,
     });
     const saved = await this.guestRepository.save(guest);
-    return { ...saved, invitationUrl: this.eventService.invitationUrl(saved.publicToken) } as any;
+    const invitationUrl = event.slug
+      ? this.eventService.guestInviteUrl(event.slug, saved.publicToken, saved.name)
+      : this.eventService.invitationUrl(saved.publicToken);
+    return { ...saved, invitationUrl } as any;
   }
 
   async update(
